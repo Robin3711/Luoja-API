@@ -9,3 +9,26 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model Question {
+  id             Int      @id @default(autoincrement())
+  qcmId          String
+  questionNumber Int
+  question       String
+  answer1        String
+  answer2        String
+  answer3        String
+  answer4        String
+  correct1       Boolean
+  correct2       Boolean
+  correct3       Boolean
+  correct4       Boolean
+
+  qcm            QCM      @relation(fields: [qcmId], references: [id], onDelete: Cascade)
+}
+
+model QCM {
+  id             String     @id @default(uuid())
+  currentQuestion Int        @default(0)
+  questions      Question[]
+}
