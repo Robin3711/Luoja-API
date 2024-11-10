@@ -180,7 +180,7 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
     res.status(200).json({correct: wasCorrect, correctAnswer: correctAnswer});
 }
 
-export async function getResults(req: Request, res: Response) {
+export async function getQuizInfos(req: Request, res: Response) {
     const quizId = req.params.id;
 
     assert(quizId, string());
@@ -199,9 +199,11 @@ export async function getResults(req: Request, res: Response) {
         return;
     }
 
-    const correctAnswers = quiz.questions.map(question => question.wasCorrect);
+    const numberOfQuestions = quiz.questions.length;
 
     const questionCursor = quiz.questionCursor;
 
-    res.status(200).json({correctAnswers: correctAnswers, questionCursor: questionCursor});
+    const results = quiz.questions.map(question => question.wasCorrect);
+
+    res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
 }
