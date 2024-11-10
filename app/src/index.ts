@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import * as quiz from './requestHandlers.ts/quiz';
 
 const app = express();
-const PORT = 4000;
+const PORT = 3000;
 const PROTOCOL = process.env.PROTOCOL || 'HTTP'; // 'http' par défaut
 const DOMAIN = process.env.DOMAIN || 'localhost'; // 'localhost' par défaut
 

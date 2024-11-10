@@ -2,7 +2,6 @@
 
 ## Documentation API
 
-
 ### **GET** /quiz : Permet de créer un nouveau quiz paramétré.
 
 Example de requête : 
@@ -89,4 +88,20 @@ Valeur de retour : Les résultats du quiz.
   "questionCursor": 0,
   "numberOfQuestions": 10
 }
+```
+
+## Commande de lancement de l'API en dev
+
+```bash
+sudo docker run -it -p 3000:3000 --name mimir docker.luoja.fr/mimir
+```
+
+## Commande de lancement de l'image WEB en production
+
+```bash
+sudo docker run -d --restart always --name mimir --network internal_network \
+-e PROTOCOL=HTTPS \
+-e DOMAIN=luoja.fr \
+-v /etc/letsencrypt:/etc/letsencrypt:ro \
+docker.luoja.fr/mimir    
 ```
