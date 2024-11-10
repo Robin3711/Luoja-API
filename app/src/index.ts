@@ -1,4 +1,5 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response } from "express";
+import * as quiz from './requestHandlers.ts/quiz';
 
 const app = express();
 const PORT = 4000;
@@ -8,12 +9,22 @@ const DOMAIN = process.env.DOMAIN || 'localhost'; // 'localhost' par défaut
 const fs = require('fs');
 const https = require('https');
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
+app.use(express.json());
+
+app.get("/quiz", async (req: Request, res: Response) => {
+    quiz.createQuiz(req, res);
 });
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`);
+app.get("/quiz/:id/question", async (req: Request, res: Response) => {
+    quiz.getCurrentQuestion(req, res);
+});
+
+app.post("/quiz/:id/answer", async (req: Request, res: Response) => {
+    quiz.verifyCurrentQuestionAnswer(req, res);
+});
+
+app.get("/quiz/:id/results", async (req: Request, res: Response) => {
+    quiz.getResults(req, res);
 });
 
 if (PROTOCOL === 'HTTPS') {
