@@ -14,8 +14,12 @@ app.get("/quiz/:id/question", async (req: Request, res: Response) => {
     quiz.getCurrentQuestion(req, res);
 });
 
-app.get("/quiz/:id/answer", async (req: Request, res: Response) => {
-    quiz.getCurrentQuestionAnswer(req, res);
+app.post("/quiz/:id/answer", async (req: Request, res: Response) => {
+    quiz.verifyCurrentQuestionAnswer(req, res);
+});
+
+app.get("/quiz/:id/results", async (req: Request, res: Response) => {
+    quiz.getResults(req, res);
 });
 
 app.listen(port, () => {
