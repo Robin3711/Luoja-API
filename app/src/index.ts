@@ -1,4 +1,6 @@
 import express, { Request, Response } from "express";
+import cors from 'cors';
+
 import * as quiz from './requestHandlers.ts/quiz';
 
 const app = express();
@@ -8,6 +10,8 @@ const DOMAIN = process.env.DOMAIN || 'localhost'; // 'localhost' par défaut
 
 const fs = require('fs');
 const https = require('https');
+
+app.use(cors());
 
 app.use(express.json());
 
