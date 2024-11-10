@@ -12,23 +12,20 @@ datasource db {
 
 model Question {
   id             Int      @id @default(autoincrement())
-  qcmId          String
-  questionNumber Int
+  quizId         String
   question       String
-  answer1        String
-  answer2        String
-  answer3        String
-  answer4        String
-  correct1       Boolean
-  correct2       Boolean
-  correct3       Boolean
-  correct4       Boolean
+  trueOrFalse    Boolean
+  correctAnswer  String
+  falseAnswer1   String?
+  falseAnswer2   String?
+  falseAnswer3   String?
 
-  qcm            QCM      @relation(fields: [qcmId], references: [id], onDelete: Cascade)
+  quiz           Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
-model QCM {
-  id             String     @id @default(uuid())
-  currentQuestion Int        @default(0)
+model Quiz {
+  id             String     @id
+  currentQuestion Int      @default(0)
+
   questions      Question[]
 }
