@@ -72,11 +72,11 @@ Valeur de retour : La réponse est-elle correcte ?
 }
 ```
 
-### **GET** /quiz/:id/results : Permet de récupérer les résultats du quiz.
+### **GET** /quiz/:id/infos : Permet de récupérer les informations du quiz.
 
 Example de requête : 
 ```
-http://localhost:3000/quiz/large-laws-chew/results
+http://localhost:3000/quiz/large-laws-chew/infos
 ```
 
 Paramètres :
@@ -86,7 +86,8 @@ Valeur de retour : Les résultats du quiz.
 
 ```json
 {
-  "correctAnswers": [false, true, false, false, false],
-  "questionCursor": 2
+  "results": [false, false, false, false, false, false, false, false, false, false],
+  "questionCursor": 0,
+  "numberOfQuestions": 10
 }
 ```
