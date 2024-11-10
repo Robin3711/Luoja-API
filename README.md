@@ -11,7 +11,7 @@ sudo docker run -it -p 3000:3000 --name mimir docker.luoja.fr/mimir
 ```bash
 sudo docker run -d --restart always --name mimir --network internal_network \
 -e PROTOCOL=HTTPS \
--e DOMAIN=api.luoja.fr \
+-e DOMAIN=luoja.fr \
 -v /etc/letsencrypt:/etc/letsencrypt:ro \
 docker.luoja.fr/mimir    
 ```
