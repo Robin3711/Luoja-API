@@ -14,18 +14,19 @@ model Question {
   id             Int      @id @default(autoincrement())
   quizId         String
   question       String
-  trueOrFalse    Boolean
+  trueFalse      Boolean
   correctAnswer  String
   falseAnswer1   String?
   falseAnswer2   String?
   falseAnswer3   String?
+  wasCorrect     Boolean  @default(false)
 
   quiz           Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {
   id             String     @id
-  currentQuestion Int      @default(0)
+  questionCursor Int        @default(0)
 
   questions      Question[]
 }
