@@ -1,92 +1,17 @@
 # Mimir - API
 
-## Documentation API
+## Commande de lancement de l'API en dev
 
-
-### **GET** /quiz : Permet de créer un nouveau quiz paramétré.
-
-Example de requête : 
-```
-http://localhost:3000/quiz?amount=5&category=9&difficulty=easy
+```bash
+sudo docker run -it -p 3000:3000 --name mimir docker.luoja.fr/mimir
 ```
 
-Paramètres :
-- amount : Nombre de questions à récupérer
-- category : Catégorie de questions à récupérer
-- difficulty : Difficulté des questions à récupérer
+## Commande de lancement de l'image WEB en production
 
-Valeur de retour : L'identifiant du quiz créé.
-
-```json
-{
-  "quizId": "large-laws-chew"
-}
-```
-
-### **GET** /quiz/:id/question : Permet de récupérer la question courante du quiz.
-
-Example de requête : 
-```
-http://localhost:3000/quiz/large-laws-chew/question
-```
-
-Paramètres :
-- id : Identifiant du quiz
-
-Valeur de retour : La question courante du quiz.
-
-```json
-{
-  "question": "Romanian belongs to the Romance language family, shared with French, Spanish, Portuguese and Italian. ",
-  "answers": [
-    "True",
-    "False"
-  ]
-}
-```
-
-### **POST** /quiz/:id/answer : Permet de répondre à la question courante du quiz.
-
-Example de requête : 
-```
-http://localhost:3000/quiz/large-laws-chew/answer
-```
-
-Paramètres :
-- id : Identifiant du quiz
-
-Corps de la requête : La réponse à la question courante du quiz.
-
-```json
-{
-  "answer": "True"
-}
-```
-
-Valeur de retour : La réponse est-elle correcte ?
-
-```json
-{
-    "correct": false,
-    "correctAnswer": "100"
-}
-```
-
-### **GET** /quiz/:id/results : Permet de récupérer les résultats du quiz.
-
-Example de requête : 
-```
-http://localhost:3000/quiz/large-laws-chew/results
-```
-
-Paramètres :
-- id : Identifiant du quiz
-
-Valeur de retour : Les résultats du quiz.
-
-```json
-{
-  "correctAnswers": [false, true, false, false, false],
-  "questionCursor": 2
-}
+```bash
+sudo docker run -d --restart always --name mimir --network internal_network \
+-e PROTOCOL=HTTPS \
+-e DOMAIN=luoja.fr \
+-v /etc/letsencrypt:/etc/letsencrypt:ro \
+docker.luoja.fr/mimir    
 ```
