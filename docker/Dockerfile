@@ -8,4 +8,4 @@ RUN npm install -y
 
 RUN npx prisma db push --accept-data-loss
 
-CMD npm start
+CMD ["npm", "start"]
