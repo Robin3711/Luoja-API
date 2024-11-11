@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { fetchQuestions } from "../model/opentdb";
-import { assert, object, string,refine, enums } from "superstruct";
+import { assert, object, string,refine, enums, optional } from "superstruct";
 import { prisma } from "../model/db";
 import { humanId } from "human-id";
 
@@ -15,17 +15,16 @@ const CreateQuizQuerySchema = object({
         return true;
     }
     ),
-    category: refine(string(), 'category', value => {
+    category: optional(refine(string(), 'category', value => {
         if (isNaN(parseInt(value))) {
             throw new Error('Category must be a number');
         }
         if (parseInt(value) < 9 || parseInt(value) > 32) {
             throw new Error('Category must be between 9 and 32');
         }
-
         return true;
-    }),
-    difficulty: enums(['easy', 'medium', 'hard'])
+    })),
+    difficulty: optional(enums(['easy', 'medium', 'hard']))
 });
 
 export async function createQuiz(req: Request, res: Response) {
@@ -34,11 +33,11 @@ export async function createQuiz(req: Request, res: Response) {
         assert(req.query, CreateQuizQuerySchema);
 
         const amount = req.query.amount as string;
-        const category = req.query.category as string;
-        const difficulty = req.query.difficulty as string;
-        
-        const questionData = await fetchQuestions(amount, category, difficulty);
+        const category = req.query.category as string | undefined;
+        const difficulty = req.query.difficulty as string | undefined;
 
+        const questionData = await fetchQuestions(amount, category, difficulty);    
+        
         const quizId = humanId({separator: '-', capitalize: false});
 
         await prisma.quiz.create({

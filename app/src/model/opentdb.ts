@@ -1,5 +1,17 @@
-export async function fetchQuestions(amount: string, category: string, difficulty: string) {
-    const response = await fetch(`https://opentdb.com/api.php?amount=${amount}&category=${category}&difficulty=${difficulty}`);
+export async function fetchQuestions(amount: string, category?: string, difficulty?: string) {
+
+    let url = `https://opentdb.com/api.php?amount=${amount}`;
+
+
+    if (category) {
+        url += `&category=${category}`;
+    }
+    
+    if (difficulty) {
+        url += `&difficulty=${difficulty}`;
+    }
+
+    const response = await fetch(url);
 
     const data = await response.json(); 
 
