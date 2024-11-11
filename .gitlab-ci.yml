@@ -14,4 +14,4 @@ docker:
     - docker tag mimir docker.luoja.fr/mimir
     - docker push docker.luoja.fr/mimir
   rules:
-    - if: '$CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release"
+    - if: $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release"
