@@ -5,7 +5,7 @@ docker:
   stage: docker
   image: docker:latest
   services:
-    - docker:dind   
+    - docker:dind
   script:
     - cp -r ./app ./docker/
     - cd docker
@@ -13,3 +13,5 @@ docker:
     - docker build -t mimir .
     - docker tag mimir docker.luoja.fr/mimir
     - docker push docker.luoja.fr/mimir
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release"
