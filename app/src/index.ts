@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from 'cors';
 
-import * as quiz from './requestHandlers.ts/quiz';
+import * as quiz from './requestHandlers/quiz';
 
 const app = express();
 const PORT = 3000;
