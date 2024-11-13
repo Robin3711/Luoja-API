@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node src/index.ts",
-    "dev": "ts-node-dev src/index.ts"
+    "dev": "ts-node-dev src/index.ts",
+    "lint": "eslint ./src/**/*.js --fix"
   },
   "author": "",
   "license": "ISC",
@@ -29,3 +30,4 @@
     "uuid": "^11.0.2"
   }
 }
+
