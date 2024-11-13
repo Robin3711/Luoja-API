@@ -1,8 +1,24 @@
 stages:
+  - docker
   - lint
   - pages
   - test
-  - docker
+
+docker:
+  stage: docker
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - cp -r ./app ./docker/
+    - cd docker
+    - docker login -u gitlab-ci -p $DOCKER_REGISTRY_PASSWORD docker.luoja.fr
+    - docker build -t mimir .
+    - docker tag mimir docker.luoja.fr/mimir
+    - docker push docker.luoja.fr/mimir
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release"
+
 
 lint:
   when: always
@@ -58,18 +74,3 @@ pages:
       - public
     expire_in: 30 days
     when: always
-
-docker:
-  stage: docker
-  image: docker:latest
-  services:
-    - docker:dind
-  script:
-    - cp -r ./app ./docker/
-    - cd docker
-    - docker login -u gitlab-ci -p $DOCKER_REGISTRY_PASSWORD docker.luoja.fr
-    - docker build -t mimir .
-    - docker tag mimir docker.luoja.fr/mimir
-    - docker push docker.luoja.fr/mimir
-  rules:
-    - if: $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release"
