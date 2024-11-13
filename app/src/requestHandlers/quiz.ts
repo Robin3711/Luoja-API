@@ -98,8 +98,8 @@ export async function getCurrentQuestion(req: Request, res: Response) {
     let questionCursor = quiz.questionCursor;
 
     if (questionCursor === quiz.questions.length) {
-        questionCursor = 0;
-    }
+         ResetQuizz(quizId);
+        }
 
     const question = quiz.questions[questionCursor];
 
@@ -204,5 +204,50 @@ export async function getQuizInfos(req: Request, res: Response) {
 
     const results = quiz.questions.map(question => question.wasCorrect);
 
+
+
+
     res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
+}
+
+
+export async function ResetQuizz(quizId: string) {
+   
+
+    const quiz = await prisma.quiz.findUnique({
+        where: {
+            id: quizId
+        },
+        include: {
+            questions: true
+        }
+    
+    });
+
+    if (!quiz) {
+        return;
+    }
+
+    quiz.questionCursor = 0;
+
+    for (let question of quiz.questions) {
+        question.wasCorrect = false;
+    }
+
+    await prisma.quiz.update({
+        where: {
+            id: quizId
+        },
+        data: {
+            questionCursor: quiz.questionCursor,
+            questions: {
+                updateMany: {
+                    where: {},
+                    data: {
+                        wasCorrect: false
+                    }
+                }
+            }
+        }
+    });
 }
