@@ -4,9 +4,24 @@ import { prisma } from "../src/model/db";
 import { fetchQuestions } from "../src/model/opentdb";
 import { humanId } from "human-id";
 
-jest.mock("../model/db");
-jest.mock("../model/opentdb");
+jest.mock("../src/model/db");
+jest.mock("../src/model/opentdb");
 jest.mock("human-id");
+
+jest.mock('../src/model/db', () => ({
+    prisma: {
+        quiz: {
+            create: jest.fn(),
+            findUnique: jest.fn(),
+            update: jest.fn(),
+        },
+        question: {
+            create: jest.fn(),
+            update: jest.fn(), // Assurez-vous que `update` est bien mocké ici
+        },
+    },
+}));
+
 
 describe("Contrôleur de Quiz", () => {
     let req: Partial<Request>;
@@ -19,11 +34,12 @@ describe("Contrôleur de Quiz", () => {
         statusMock = jest.fn().mockReturnValue({ json: jsonMock });
         req = { query: {}, params: {}, body: {} };
         res = { status: statusMock };
+        jest.clearAllMocks(); // Assure l’isolation des mocks entre chaque test
     });
 
-    describe("créerQuiz", () => {
+    describe("createQuiz", () => {
         it("devrait créer un quiz et retourner quizId", async () => {
-            req.query = { amount: "10", category: "9", difficulty: "facile" };
+            req.query = { amount: "10", category: "9", difficulty: "hard" };
             (fetchQuestions as jest.Mock).mockResolvedValue({ results: [{ question: "Q1", correct_answer: "A1", incorrect_answers: ["A2", "A3", "A4"] }] });
             (humanId as jest.Mock).mockReturnValue("quiz-id");
             (prisma.quiz.create as jest.Mock).mockResolvedValue({});
@@ -41,11 +57,11 @@ describe("Contrôleur de Quiz", () => {
             await createQuiz(req as Request, res as Response);
 
             expect(statusMock).toHaveBeenCalledWith(400);
-            expect(jsonMock).toHaveBeenCalledWith({ erreur: expect.any(String) });
+            expect(jsonMock).toHaveBeenCalledWith({ error: expect.any(String) });
         });
     });
 
-    describe("obtenirQuestionActuelle", () => {
+    describe("getCurrentQuestion", () => {
         it("devrait retourner la question actuelle et les réponses mélangées", async () => {
             req.params = { id: "quiz-id" };
             (prisma.quiz.findUnique as jest.Mock).mockResolvedValue({
@@ -73,7 +89,7 @@ describe("Contrôleur de Quiz", () => {
         });
     });
 
-    describe("vérifierRéponseQuestionActuelle", () => {
+    describe("verifyCurrentQuestionAnswer", () => {
         it("devrait vérifier la réponse et mettre à jour la question", async () => {
             req.params = { id: "quiz-id" };
             req.body = { answer: "A1" };
@@ -102,7 +118,7 @@ describe("Contrôleur de Quiz", () => {
         });
     });
 
-    describe("obtenirInfosQuiz", () => {
+    describe("getQuizInfos", () => {
         it("devrait retourner les informations du quiz", async () => {
             req.params = { id: "quiz-id" };
             (prisma.quiz.findUnique as jest.Mock).mockResolvedValue({
@@ -131,7 +147,7 @@ describe("Contrôleur de Quiz", () => {
         });
     });
 
-    describe("réinitialiserQuiz", () => {
+    describe("resetQuiz", () => {
         it("devrait réinitialiser le quiz", async () => {
             (prisma.quiz.findUnique as jest.Mock).mockResolvedValue({
                 id: "quiz-id",
