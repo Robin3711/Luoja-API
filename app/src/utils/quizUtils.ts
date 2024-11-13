@@ -6,7 +6,10 @@ export async function getUniqueId() {
     const allowedAttempts = 10;
 
     for(let i = 0; i < allowedAttempts; i++) {
-        const id = humanId();
+        const id = humanId({
+            separator: '-',
+            capitalize: false
+        });
 
         let quiz = await prisma.quiz.findUnique({
             where: {
@@ -30,15 +33,16 @@ export async function resetProgress(quizId: string) {
             id: quizId
         },
         data: {
-            questionCursor: 0,
-            questions: {
-                updateMany: {
-                    where: {},
-                    data: {
-                        wasCorrect: false
-                    }
-                }
-            }
+            questionCursor: 0
+        }
+    });
+
+    await prisma.question.updateMany({
+        where: {
+            quizId: quizId
+        },
+        data: {
+            wasCorrect: false
         }
     });
 }

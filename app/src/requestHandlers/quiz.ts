@@ -166,17 +166,18 @@ export async function verifyAnswer(req: Request, res: Response) {
         let nextQuestion = questionCursor + 1;
 
         if (questionCursor === quiz.questions.length - 1) {
-            resetProgress(quizId)
+            await resetProgress(quizId)
         }
-
-        await prisma.quiz.update({
-            where: {
-                id: quizId
-            },
-            data: {
-                questionCursor: nextQuestion
-            }
-        });
+        else {
+            await prisma.quiz.update({
+                where: {
+                    id: quizId
+                },
+                data: {
+                    questionCursor: nextQuestion
+                }
+            });
+        }
 
         res.status(200).json({correct: wasCorrect});
     }
