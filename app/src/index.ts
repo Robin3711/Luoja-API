@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/quiz", async (req: Request, res: Response) => {
-    quiz.createQuiz(req, res);
+    quiz.create(req, res);
 });
 
 app.get("/quiz/:id/question", async (req: Request, res: Response) => {
