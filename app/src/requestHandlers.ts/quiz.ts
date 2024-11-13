@@ -177,7 +177,7 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         }
     });
 
-    res.status(200).json({correctAnswer: correctAnswer});
+    res.status(200).json({correct: wasCorrect});
 }
 
 export async function getQuizInfos(req: Request, res: Response) {
