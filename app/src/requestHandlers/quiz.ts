@@ -97,10 +97,6 @@ export async function getCurrentQuestion(req: Request, res: Response) {
 
     let questionCursor = quiz.questionCursor;
 
-    if (questionCursor === quiz.questions.length) {
-        questionCursor = 0;
-    }
-
     const question = quiz.questions[questionCursor];
 
     let answers = [];
@@ -146,21 +142,6 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
 
     let questionCursor = quiz.questionCursor;
 
-    let nextQuestion = questionCursor + 1;
-
-    if (questionCursor === quiz.questions.length - 1) {
-        nextQuestion = 0;
-    }
-
-    await prisma.quiz.update({
-        where: {
-            id: quizId
-        },
-        data: {
-            questionCursor: nextQuestion
-        }
-    });
-
     const question = quiz.questions[questionCursor];
 
     const correctAnswer = question.correctAnswer;
@@ -173,6 +154,21 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         },
         data: {
             wasCorrect: wasCorrect
+        }
+    });
+
+    let nextQuestion = questionCursor + 1;
+
+    if (questionCursor === quiz.questions.length - 1) {
+        resetQuiz(quizId)
+    }
+
+    await prisma.quiz.update({
+        where: {
+            id: quizId
+        },
+        data: {
+            questionCursor: nextQuestion
         }
     });
 
@@ -204,5 +200,43 @@ export async function getQuizInfos(req: Request, res: Response) {
 
     const results = quiz.questions.map(question => question.wasCorrect);
 
+
+
+
     res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
+}
+
+
+export async function resetQuiz(quizId: string) {
+
+    const quiz = await prisma.quiz.findUnique({
+        where: {
+            id: quizId
+        },
+        include: {
+            questions: true
+        }
+    
+    });
+
+    if (!quiz) {
+        return;
+    }
+
+    await prisma.quiz.update({
+        where: {
+            id: quizId
+        },
+        data: {
+            questionCursor: 0,
+            questions: {
+                updateMany: {
+                    where: {},
+                    data: {
+                        wasCorrect: false
+                    }
+                }
+            }
+        }
+    });
 }
