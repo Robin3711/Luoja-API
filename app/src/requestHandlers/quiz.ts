@@ -1,8 +1,8 @@
+import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { fetchQuestions } from "../model/opentdb";
+import { getUniqueId, resetProgress } from "../utils/quizUtils";
 import { assert, object, string,refine, enums, optional } from "superstruct";
-import { prisma } from "../model/db";
-import { humanId } from "human-id";
 
 const CreateQuizQuerySchema = object({
     amount: refine(string(), 'amount', value => {
@@ -38,7 +38,7 @@ export async function createQuiz(req: Request, res: Response) {
 
         const questionData = await fetchQuestions(amount, category, difficulty);    
         
-        const quizId = humanId({separator: '-', capitalize: false});
+        const quizId = await getUniqueId();
 
         await prisma.quiz.create({
             data: {
@@ -77,166 +77,142 @@ export async function createQuiz(req: Request, res: Response) {
 }
 
 export async function getCurrentQuestion(req: Request, res: Response) {
-    const quizId = req.params.id;
+    try{
+        const quizId = req.params.id;
 
-    assert(quizId, string());
+        assert(quizId, string());
 
-    const quiz = await prisma.quiz.findUnique({
-        where: {
-            id: quizId
-        },
-        include: {
-            questions: true
-        }
-    });
-
-    if (!quiz) {
-        res.status(404).json({erreur: "Quiz non trouvé"});
-        return;
-    }
-
-    let questionCursor = quiz.questionCursor;
-
-    const question = quiz.questions[questionCursor];
-
-    let answers = [];
-
-    if (question.trueFalse) {
-        answers = [question.correctAnswer, question.falseAnswer1];
-    }
-    else {
-        answers = [question.correctAnswer, question.falseAnswer1, question.falseAnswer2, question.falseAnswer3];
-    }
-
-    for (let i = answers.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [answers[i], answers[j]] = [answers[j], answers[i]];
-    }
-
-    res.status(200).json({
-        question: question.question,
-        answers: answers
-    });
-}
-
-export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
-    const quizId = req.params.id;
-    const answer = req.body.answer;
-
-    assert(quizId, string());
-    assert(answer, string());
-
-    const quiz = await prisma.quiz.findUnique({
-        where: {
-            id: quizId
-        },
-        include: {
-            questions: true
-        }
-    });
-
-    if (!quiz) {
-        res.status(404).json({erreur: "Quiz non trouvé"});
-        return;
-    }
-
-    let questionCursor = quiz.questionCursor;
-
-    const question = quiz.questions[questionCursor];
-
-    const correctAnswer = question.correctAnswer;
-
-    const wasCorrect = answer === correctAnswer;
-    
-    await prisma.question.update({
-        where: {
-            id: question.id
-        },
-        data: {
-            wasCorrect: wasCorrect
-        }
-    });
-
-    let nextQuestion = questionCursor + 1;
-
-    if (questionCursor === quiz.questions.length - 1) {
-        resetQuiz(quizId)
-    }
-
-    await prisma.quiz.update({
-        where: {
-            id: quizId
-        },
-        data: {
-            questionCursor: nextQuestion
-        }
-    });
-
-    res.status(200).json({correct: wasCorrect});
-}
-
-export async function getQuizInfos(req: Request, res: Response) {
-    const quizId = req.params.id;
-
-    assert(quizId, string());
-
-    const quiz = await prisma.quiz.findUnique({
-        where: {
-            id: quizId
-        },
-        include: {
-            questions: true
-        }
-    });
-
-    if (!quiz) {
-        res.status(404).json({erreur: "Quiz non trouvé"});
-        return;
-    }
-
-    const numberOfQuestions = quiz.questions.length;
-
-    const questionCursor = quiz.questionCursor;
-
-    const results = quiz.questions.map(question => question.wasCorrect);
-
-
-
-
-    res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
-}
-
-
-export async function resetQuiz(quizId: string) {
-
-    const quiz = await prisma.quiz.findUnique({
-        where: {
-            id: quizId
-        },
-        include: {
-            questions: true
-        }
-    
-    });
-
-    if (!quiz) {
-        return;
-    }
-
-    await prisma.quiz.update({
-        where: {
-            id: quizId
-        },
-        data: {
-            questionCursor: 0,
-            questions: {
-                updateMany: {
-                    where: {},
-                    data: {
-                        wasCorrect: false
-                    }
-                }
+        const quiz = await prisma.quiz.findUnique({
+            where: {
+                id: quizId
+            },
+            include: {
+                questions: true
             }
+        });
+
+        if (!quiz) {
+            res.status(404).json({erreur: "Quiz non trouvé"});
+            return;
         }
-    });
+
+        let questionCursor = quiz.questionCursor;
+
+        const question = quiz.questions[questionCursor];
+
+        let answers = [];
+
+        if (question.trueFalse) {
+            answers = [question.correctAnswer, question.falseAnswer1];
+        }
+        else {
+            answers = [question.correctAnswer, question.falseAnswer1, question.falseAnswer2, question.falseAnswer3];
+        }
+
+        for (let i = answers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [answers[i], answers[j]] = [answers[j], answers[i]];
+        }
+
+        res.status(200).json({
+            question: question.question,
+            answers: answers
+        });
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }
+}
+
+export async function verifyAnswer(req: Request, res: Response) {
+
+    try{
+        const quizId = req.params.id;
+        const answer = req.body.answer;
+
+        assert(quizId, string());
+        assert(answer, string());
+
+        const quiz = await prisma.quiz.findUnique({
+            where: {
+                id: quizId
+            },
+            include: {
+                questions: true
+            }
+        });
+
+        if (!quiz) {
+            throw new Error("Quiz non trouvé");
+        }
+
+        let questionCursor = quiz.questionCursor;
+
+        const question = quiz.questions[questionCursor];
+
+        const correctAnswer = question.correctAnswer;
+
+        const wasCorrect = answer === correctAnswer;
+        
+        await prisma.question.update({
+            where: {
+                id: question.id
+            },
+            data: {
+                wasCorrect: wasCorrect
+            }
+        });
+
+        let nextQuestion = questionCursor + 1;
+
+        if (questionCursor === quiz.questions.length - 1) {
+            resetProgress(quizId)
+        }
+
+        await prisma.quiz.update({
+            where: {
+                id: quizId
+            },
+            data: {
+                questionCursor: nextQuestion
+            }
+        });
+
+        res.status(200).json({correct: wasCorrect});
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }
+}
+
+export async function getInfos(req: Request, res: Response) {
+    try{
+        const quizId = req.params.id;
+
+        assert(quizId, string());
+
+        const quiz = await prisma.quiz.findUnique({
+            where: {
+                id: quizId
+            },
+            include: {
+                questions: true
+            }
+        });
+
+        if (!quiz) {
+            throw new Error("Quiz non trouvé");
+        }
+
+        const numberOfQuestions = quiz.questions.length;
+
+        const questionCursor = quiz.questionCursor;
+
+        const results = quiz.questions.map(question => question.wasCorrect);
+
+        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }    
 }
