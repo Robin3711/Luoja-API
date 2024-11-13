@@ -27,7 +27,7 @@ const CreateQuizQuerySchema = object({
     difficulty: optional(enums(['easy', 'medium', 'hard']))
 });
 
-export async function createQuiz(req: Request, res: Response) {
+export async function create(req: Request, res: Response) {
 
     try{
         assert(req.query, CreateQuizQuerySchema);

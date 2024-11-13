@@ -23,7 +23,6 @@ export async function getUniqueId() {
     }
 
     throw new Error("Impossible de générer un identifiant unique pour le quiz");
-
 }
 
 export async function resetProgress(quizId: string) {

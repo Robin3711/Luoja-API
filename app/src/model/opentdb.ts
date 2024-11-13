@@ -2,7 +2,6 @@ export async function fetchQuestions(amount: string, category?: string, difficul
 
     let url = `https://opentdb.com/api.php?amount=${amount}`;
 
-
     if (category) {
         url += `&category=${category}`;
     }
