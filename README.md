@@ -66,7 +66,7 @@ Valeur de retour : La réponse est-elle correcte ?
 
 ```json
 {
-    "correctAnswer": "False"
+    "correct": false
 }
 ```
 
