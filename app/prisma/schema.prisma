@@ -9,3 +9,23 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model Question {
+  id             Int       @id @default(autoincrement())
+  quizId         String
+  question       String
+  trueFalse      Boolean
+  correctAnswer  String
+  falseAnswer1   String?
+  falseAnswer2   String?
+  falseAnswer3   String?
+  wasCorrect     Boolean   @default(false)
+
+  quiz           Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id             String     @id
+  questionCursor Int        @default(0)
+  questions      Question[]
+}
