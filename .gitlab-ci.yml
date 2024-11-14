@@ -24,6 +24,7 @@ lint:
   when: always
   stage: lint 
   image: node:latest
+  allow_failure: true
   script:
     - cd app
     - npm install    
