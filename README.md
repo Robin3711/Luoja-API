@@ -105,3 +105,28 @@ sudo docker run -d --restart always --name mimir --network internal_network \
 -v /etc/letsencrypt:/etc/letsencrypt:ro \
 docker.luoja.fr/mimir    
 ```
+
+### CI/CD : Organisation du Pipeline : 
+
+L'objectif du pipeline de ce projet est de corriger le code, et de déployer régulièrement 
+des version stables de l'application.
+
+La finalité est de n'avoir sur dev et les branches suivantes que du code propre et fonctionnel,
+et d'avoir à tout moment une API fonctionnel
+
+#### stages : 
+		
+1. build :   
+		- build de l'image docker de l'API  
+		- réalisé à chaque commit sur main ou release pour avoir une version prête à déployer.  
+		- image docker stocké sur le dépot docker de l'équipe.  		
+
+2. lint et tests :   
+		- linting et tests unitaires du code.   
+		- réalisé à chaque commit sur la branche dev pour vérifier que le code marche encore.  
+		- résultats affiché dans les pages.  
+ 
+3. pages :   
+		- affiche les résultats du linting et des tests.   
+
+
