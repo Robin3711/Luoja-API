@@ -1,9 +1,23 @@
 module.exports = {
-    preset: 'ts-jest',  // Utilise ts-jest pour la compilation TypeScript
-    testEnvironment: 'node',
-    setupFiles: ['./jest.setup.js'],  // Pour activer jest-fetch-mock
-    transform: {
-      '^.+\\.(ts|tsx)$': 'ts-jest',
-    },
-  };
-  
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  rootDir: '.',
+  testMatch: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  clearMocks: true,
+  coverageDirectory: './coverage',
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/node_modules/**'],
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputDirectory: './reports',
+        outputName: 'junit.xml',
+      },
+    ],
+  ],
+};
