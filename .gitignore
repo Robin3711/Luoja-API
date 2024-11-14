@@ -170,4 +170,7 @@ dist
 .history
 .ionide
 
+#gitlab-ci-local
+.gitlab-ci-local/
+
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,database
