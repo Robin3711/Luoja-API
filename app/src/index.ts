@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/quiz", async (req: Request, res: Response) => {
-    quiz.createQuiz(req, res);
+    quiz.create(req, res);
 });
 
 app.get("/quiz/:id/question", async (req: Request, res: Response) => {
@@ -24,11 +24,11 @@ app.get("/quiz/:id/question", async (req: Request, res: Response) => {
 });
 
 app.post("/quiz/:id/answer", async (req: Request, res: Response) => {
-    quiz.verifyCurrentQuestionAnswer(req, res);
+    quiz.verifyAnswer(req, res);
 });
 
 app.get("/quiz/:id/infos", async (req: Request, res: Response) => {
-  quiz.getQuizInfos(req, res);
+  quiz.getInfos(req, res);
 });
 
 if (PROTOCOL === 'HTTPS') {

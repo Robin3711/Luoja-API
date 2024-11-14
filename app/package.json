@@ -26,6 +26,7 @@
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "express": "^5.0.1",
+    "html-entities": "^2.5.2",
     "human-id": "^4.1.1",
     "superstruct": "^2.0.2",
     "uuid": "^11.0.2"
