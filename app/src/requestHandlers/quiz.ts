@@ -4,6 +4,7 @@ import { fetchQuestions } from "../model/opentdb";
 import { getUniqueId, resetProgress } from "../utils/quizUtils";
 import { assert, object, string,refine, enums, optional } from "superstruct";
 
+// Schema for the query parameters of the createQuiz endpoint
 const CreateQuizQuerySchema = object({
     amount: refine(string(), 'amount', value => {
         if (isNaN(parseInt(value))) {
@@ -27,6 +28,9 @@ const CreateQuizQuerySchema = object({
     difficulty: optional(enums(['easy', 'medium', 'hard']))
 });
 
+//Fonction pur créer un quiz
+// Recoit une CreateQuizQuerySchema en paramètre sous forme de Request et une Response
+// Retourne un objet JSON contenant l'id du quiz créé
 export async function create(req: Request, res: Response) {
 
     try{
@@ -76,6 +80,9 @@ export async function create(req: Request, res: Response) {
     }
 }
 
+//Fonction pour obtenir la question courante
+// Recoit un id de quiz en paramètre sous forme de Request et une Response
+// Retourne un objet JSON contenant la question et la reponse
 export async function getCurrentQuestion(req: Request, res: Response) {
     try{
         const quizId = req.params.id;
@@ -124,6 +131,11 @@ export async function getCurrentQuestion(req: Request, res: Response) {
     }
 }
 
+
+
+//Fonction pour vérifier la réponse à la question courante
+// Recoit un id de quiz et une réponse en paramètre sous forme de Request et une Response
+// Retourne un objet JSON contenant si la réponse est correcte ou non
 export async function verifyAnswer(req: Request, res: Response) {
 
     try{
@@ -186,6 +198,10 @@ export async function verifyAnswer(req: Request, res: Response) {
     }
 }
 
+
+//Fonction pour obtenir les informations du quiz
+// Recoit un id de quiz en paramètre sous forme de Request et une Response
+// Retourne un objet JSON contenant les résultats, le curseur de question et le nombre de questionsYYYYY
 export async function getInfos(req: Request, res: Response) {
     try{
         const quizId = req.params.id;

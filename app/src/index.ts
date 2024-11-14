@@ -15,18 +15,22 @@ app.use(cors());
 
 app.use(express.json());
 
+// Route get de l'API pour créer un quiz 
 app.get("/quiz", async (req: Request, res: Response) => {
     quiz.create(req, res);
 });
 
+// Route get de l'API pour obtenir la question courante
 app.get("/quiz/:id/question", async (req: Request, res: Response) => {
     quiz.getCurrentQuestion(req, res);
 });
 
+// Route post de l'API pour vérifier la réponse à la question courante
 app.post("/quiz/:id/answer", async (req: Request, res: Response) => {
     quiz.verifyAnswer(req, res);
 });
 
+// Route get de l'API pour obtenir les informations du quiz
 app.get("/quiz/:id/infos", async (req: Request, res: Response) => {
   quiz.getInfos(req, res);
 });
