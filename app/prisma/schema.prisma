@@ -11,8 +11,8 @@ datasource db {
 }
 
 model Question {
-  id_Question             Int       @id @default(autoincrement())
-  quizId         Int 
+  id             Int       @id @default(autoincrement())
+  quizId         String
   question       String
   trueFalse      Boolean
   correctAnswer  String
@@ -21,61 +21,11 @@ model Question {
   falseAnswer3   String?
   wasCorrect     Boolean   @default(false)
 
-  quiz           Quiz      @relation(fields: [quizId], references: [id_Quiz], onDelete: Cascade)
-  ReponseQuestionUser StateReponseQuestionUser[]
+  quiz           Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
 model Quiz {
-  id_Quiz             Int      @id
+  id             String     @id
   questionCursor Int        @default(0)
   questions      Question[]
-  public        Boolean    @default(true)
-  title         String
-
-   user          User?      @relation(fields: [userId], references: [id_name], onDelete: Cascade)
-   userId        String?
 }
-
-
-model User {
-  id_name String   @id 
-  password String 
-  QuizCreated Quiz[]
-
-  QuizState QuizState[]
-}
-
-
-model QuizState{
-  id_State String @id
-  quizId String
-  questionCursor Int
-  StateReponseQuestionUser StateReponseQuestionUser[]
-  user User? @relation(fields: [userId], references: [id_name], onDelete: Cascade)
-  userId String?
-
-  
-  
-}
-
-model QuizUseAnonymus{
-  id_QuizUseAnonymus Int @id @default(autoincrement())
-  quizId String
-  questionCursor Int
-  
-}
-
-
-
-model StateReponseQuestionUser{
-  id Int @id @default(autoincrement())
-  QuestionId Int
-  id_State String
-  response Boolean
-  state QuizState @relation(fields: [id_State], references: [id_State])
-  question Question @relation(fields: [QuestionId], references: [id_Question])
-  
-
-}
-
-
