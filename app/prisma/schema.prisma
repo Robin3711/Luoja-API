@@ -58,12 +58,6 @@ model QuizState{
   
 }
 
-model QuizUseAnonymus{
-  id_QuizUseAnonymus Int @id @default(autoincrement())
-  quizId String
-  questionCursor Int
-  
-}
 
 
 
