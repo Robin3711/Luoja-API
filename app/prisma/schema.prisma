@@ -12,7 +12,7 @@ datasource db {
 
 model Question {
   id_Question             Int       @id @default(autoincrement())
-  quizId         String
+  quizId         Int 
   question       String
   trueFalse      Boolean
   correctAnswer  String
@@ -26,10 +26,10 @@ model Question {
 }
 
 model Quiz {
-  id_Quiz             String     @id
+  id_Quiz             Int      @id
   questionCursor Int        @default(0)
   questions      Question[]
-  public        Boolean    @default(false)
+  public        Boolean    @default(true)
   title         String
 
    user          User?      @relation(fields: [userId], references: [id_name], onDelete: Cascade)
@@ -38,29 +38,41 @@ model Quiz {
 
 
 model User {
-  id_name String   @id
+  id_name String   @id 
   password String 
   QuizCreated Quiz[]
+
+  QuizState QuizState[]
 }
 
 
-model QuizStateByUser{
-  id_State Int @id @default(autoincrement())
-  userId String
+model QuizState{
+  id_State String @id
   quizId String
   questionCursor Int
   StateReponseQuestionUser StateReponseQuestionUser[]
+  user User? @relation(fields: [userId], references: [id_name], onDelete: Cascade)
+  userId String?
+
   
   
 }
+
+model QuizUseAnonymus{
+  id_QuizUseAnonymus Int @id @default(autoincrement())
+  quizId String
+  questionCursor Int
+  
+}
+
 
 
 model StateReponseQuestionUser{
   id Int @id @default(autoincrement())
   QuestionId Int
-  id_State Int
+  id_State String
   response Boolean
-  state QuizStateByUser @relation(fields: [id_State], references: [id_State])
+  state QuizState @relation(fields: [id_State], references: [id_State])
   question Question @relation(fields: [QuestionId], references: [id_Question])
   
 
