@@ -61,7 +61,8 @@ model QuizGameResponse {
 
 model User {
   id              Int                @id @default(autoincrement())
-  hash            String
+  email           String             @unique
+  password        String
 
   quiz            Quiz[]
   quizGame        QuizGame[]
