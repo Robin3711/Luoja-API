@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import cors from 'cors';
 
 import * as quiz from './requestHandlers/quiz';
+import * as user from './requestHandlers/user';
 
 const app = express();
 const PORT = 3000;
@@ -33,6 +34,18 @@ app.post("/quiz/:id/answer", async (req: Request, res: Response) => {
 // Route get de l'API pour obtenir les informations du quiz
 app.get("/quiz/:id/infos", async (req: Request, res: Response) => {
   quiz.getInfos(req, res);
+});
+
+app.post('/user/register', (req: Request, res: Response) => {
+  user.createUser(req, res);
+});
+
+app.post('/user/login', (req: Request, res: Response) => {
+  user.login(req, res);
+});
+
+app.get('/user/infos', (req: Request, res: Response) => {
+  user.getInfos(req, res);
 });
 
 if (PROTOCOL === 'HTTPS') {
