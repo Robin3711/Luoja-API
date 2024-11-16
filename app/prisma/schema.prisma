@@ -15,6 +15,10 @@ model Quiz {
   userId          Int?
   title           String
   public          Boolean            @default(false)
+  category        String
+  difficulty      String
+     
+
 
   questions       Question[]
   quizGames       QuizGame[]

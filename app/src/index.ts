@@ -16,10 +16,16 @@ app.use(cors());
 
 app.use(express.json());
 
-// Route get de l'API pour créer un quiz 
+// Route get de l'API pour recupérer les question d'un quiz
 app.get("/quiz", async (req: Request, res: Response) => {
-    quiz.create(req, res);
+    quiz.recup(req, res);
 });
+
+// Route post de l'API pour créer un quiz
+app.post("/quiz", async (req: Request, res: Response) => {
+    quiz.createQuiz(req, res);
+}
+
 
 // Route get de l'API pour obtenir la question courante
 app.get("/quiz/:id/question", async (req: Request, res: Response) => {

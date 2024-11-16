@@ -1,10 +1,43 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { fetchQuestions } from "../model/opentdb";
-import { getUniqueId, resetProgress } from "../utils/quizUtils";
-import { assert, object, string,refine, enums, optional } from "superstruct";
+//import { getUniqueId, resetProgress } from "../utils/quizUtils";
+import { assert, object, string, refine, enums, optional, array, boolean } from "superstruct";
+import { Question } from "@prisma/client";
+import { title } from "process";
+
 
 // Schema for the query parameters of the createQuiz endpoint
+const RecupQuerySchema = object({
+    amount: refine(string(), 'amount', value => {
+        if (isNaN(parseInt(value))) {
+            throw new Error('Amount must be a number');
+        }
+        if (parseInt(value) < 1 || parseInt(value) > 50) {
+            throw new Error('Amount must be between 1 and 50');
+        }
+        return true;
+    }
+),
+category: optional(refine(string(), 'category', value => {
+    if (isNaN(parseInt(value))) {
+        throw new Error('Category must be a number');
+    }
+    if (parseInt(value) < 9 || parseInt(value) > 32) {
+        throw new Error('Category must be between 9 and 32');
+    }
+    return true;
+})),
+difficulty: optional(enums(['easy', 'medium', 'hard']))
+});
+
+
+const QuestionSchema = object({
+    question: string(),
+    correctAnswer: string(),
+    incorrectAnswers: array(string())
+});
+
 const CreateQuizQuerySchema = object({
     amount: refine(string(), 'amount', value => {
         if (isNaN(parseInt(value))) {
@@ -25,16 +58,26 @@ const CreateQuizQuerySchema = object({
         }
         return true;
     })),
-    difficulty: optional(enums(['easy', 'medium', 'hard']))
+    difficulty: optional(enums(['easy', 'medium', 'hard'])),
+
+
+    title: string(),
+    public: optional(boolean()),
+    
+
+    //recupérer les questions donc plusieurs questions
+    questions: array(QuestionSchema) 
+   
+
 });
 
-//Fonction pur créer un quiz
+//Fonction pour donner les question d'un quiz
 // Recoit une CreateQuizQuerySchema en paramètre sous forme de Request et une Response
-// Retourne un objet JSON contenant l'id du quiz créé
-export async function create(req: Request, res: Response) {
+// Retourne ules question que l'utilisateur peut modifier
+export async function recup(req: Request, res: Response) {
 
     try{
-        assert(req.query, CreateQuizQuerySchema);
+        assert(req.query, RecupQuerySchema);
 
         const amount = req.query.amount as string;
         const category = req.query.category as string | undefined;
@@ -42,43 +85,55 @@ export async function create(req: Request, res: Response) {
 
         const questionData = await fetchQuestions(amount, category, difficulty);    
         
-        const quizId = await getUniqueId();
-
-        await prisma.quiz.create({
-            data: {
-                id: quizId,
-            }
-        });
-
-        for (let question of questionData.results) {
-
-            let trueFalse = true;
-
-            if (question.incorrect_answers.length == 3) {
-                trueFalse = false; 
-            }
-
-            await prisma.question.create({
-                data: {
-                    question: question.question,
-                    trueFalse: trueFalse,
-                    correctAnswer: question.correct_answer,
-                    falseAnswer1: question.incorrect_answers[0],
-                    falseAnswer2: question.incorrect_answers[1],
-                    falseAnswer3: question.incorrect_answers[2],
-                    quiz: {
-                        connect: { id: quizId }
-                    }
-                }
-            });
-        }
-
-        return res.status(200).json({quizId: quizId});
+       
+        return res.status(200).json({questionData});
     }
     catch (error: any) {
         res.status(400).json({error: error.message});
     }
 }
+
+export async function createQuiz(req: Request, res: Response) {
+
+    try{
+        assert(req.query, CreateQuizQuerySchema);
+        const publicQuiz = req.query.public  as boolean | true;
+
+            const quiz = await prisma.quiz.create({
+            data: {
+                title: req.query.title as string,
+                category: req.query.category as string,
+                difficulty: req.query.difficulty as string,
+                public:  publicQuiz// Convertir en booléen
+            }
+        });
+
+
+      // Parcourez les questions et créez-les
+       // Parcourez les questions et créez-les
+       for (let question of req.query.questions) {
+        let trueFalse = question.incorrectAnswers.length === 1;
+
+        await prisma.question.create({
+            data: {
+                question: question.question,
+                trueFalse: trueFalse,
+                correctAnswer: question.correctAnswer,
+                falseAnswer1: question.incorrectAnswers[0] || null,
+                falseAnswer2: question.incorrectAnswers[1] || null,
+                falseAnswer3: question.incorrectAnswers[2] || null,
+                quiz: {
+                    connect: { id: quiz.id }
+                }
+            }
+        });
+    }
+    res.status(200).json({quizId: quiz.id});
+}
+catch (error: any) {
+    res.status(400).json({error: error.message});
+}
+
 
 //Fonction pour obtenir la question courante
 // Recoit un id de quiz en paramètre sous forme de Request et une Response
