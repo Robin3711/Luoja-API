@@ -54,13 +54,14 @@ model QuizGame {
 }
 
 model QuizGameResponse {
-  id              Int                 @id @default(autoincrement())
   questionId      Int
   gameId          String
   response        Boolean
 
-  quizGame        QuizGame            @relation(fields: [gameId], references: [id])
-  question        Question            @relation(fields: [questionId], references: [id])
+  quizGame        QuizGame            @relation(fields: [gameId], references: [id] , onDelete: Cascade)
+  question        Question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, gameId])
 }
 
 model User {

@@ -5,6 +5,7 @@ import { fetchQuestions } from "../model/opentdb";
 import { assert, object, string, refine, enums, optional, array, boolean } from "superstruct";
 import { Question } from "@prisma/client";
 import { title } from "process";
+import { resetProgress } from "../utils/quizUtils";
 
 
 // Schema for the query parameters of the createQuiz endpoint
@@ -207,12 +208,16 @@ export async function verifyAnswer(req: Request, res: Response) {
         assert(quizId, string());
         assert(answer, string());
 
-        const quiz = await prisma.quiz.findUnique({
+        const quiz = await prisma.quizGame.findUnique({
             where: {
                 id: quizId
             },
             include: {
-                questions: true
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                }
             }
         });
 
@@ -222,30 +227,34 @@ export async function verifyAnswer(req: Request, res: Response) {
 
         let questionCursor = quiz.questionCursor;
 
-        const question = quiz.questions[questionCursor];
+        const question = quiz.quiz.questions[questionCursor];
 
         const correctAnswer = question.correctAnswer;
 
         const wasCorrect = answer === correctAnswer;
         
-        await prisma.question.update({
+        await prisma.quizGameResponse.update({
             where: {
-                id: question.id
+                questionId_gameId: {
+                    questionId: question.id,
+                    gameId: quizId    
+                }    
             },
+
             data: {
-                wasCorrect: wasCorrect
-            }
-        });
+                response: wasCorrect
+        }}
+    );
 
         let nextQuestion = questionCursor + 1;
 
-        if (questionCursor === quiz.questions.length - 1) {
+        if (questionCursor === quiz.quiz.questions.length - 1) {
             await resetProgress(quizId)
         }
         else {
-            await prisma.quiz.update({
+            await prisma.quizGame.update({
                 where: {
-                    id: quizId
+                    id:  quizId
                 },
                 data: {
                     questionCursor: nextQuestion
@@ -270,12 +279,16 @@ export async function getInfos(req: Request, res: Response) {
 
         assert(quizId, string());
 
-        const quiz = await prisma.quiz.findUnique({
+        const quiz = await prisma.quizGame.findUnique({
             where: {
                 id: quizId
             },
             include: {
-                questions: true
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                }
             }
         });
 
@@ -283,12 +296,31 @@ export async function getInfos(req: Request, res: Response) {
             throw new Error("Quiz non trouvé");
         }
 
-        const numberOfQuestions = quiz.questions.length;
+        const numberOfQuestions = quiz.quiz.questions.length;
 
         const questionCursor = quiz.questionCursor;
 
-        const results = quiz.questions.map(question => question.wasCorrect);
+        let results = [];
+        let questionsIds = quiz.quiz.questions.map((question: Question) => question.id);
+        for (let questionId of questionsIds) {
+            let response = await prisma.quizGameResponse.findUnique({
+                where: {
+                    questionId_gameId: {
+                        questionId: questionId,
+                        gameId: quizId
+                    }
+                }
+            });
 
+            if (!response) {
+                throw new Error("Réponse non trouvée");
+            }
+
+            results.push(response.response);
+        }
+      
+
+      
         res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
     }
     catch (error: any) {
