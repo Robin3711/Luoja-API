@@ -90,6 +90,70 @@ Valeur de retour : Les résultats du quiz.
 }
 ```
 
+### **POST** /user/register : Permet d'enregistrer un nouvel utilisateur.
+
+Example de requête : 
+```
+http://localhost:3000/user/register
+```
+
+Corps de la requête : Les informations de l'utilisateur.
+
+```json
+{
+  "email" : "test@luoja.fr",
+  "password" : "mysupersecurepassword"
+}
+```
+
+Valeur de retour : Le token d'authentification de l'utilisateur.
+
+```json
+{
+  "token": "supersecuretoken"
+}
+```
+
+### **POST** /user/login : Permet de connecter un utilisateur.
+
+Example de requête : 
+```
+http://localhost:3000/user/login
+```
+
+Corps de la requête : Les informations de l'utilisateur.
+
+```json
+{
+  "email" : "test@luoja.fr",
+  "password" : "mysupersecurepassword"
+}
+```
+
+Valeur de retour : Le token d'authentification de l'utilisateur
+
+```json
+{
+  "token": "supersecuretoken"
+}
+```
+
+### **GET** /user/infos : Permet de récupérer les informations de l'utilisateur.
+
+Example de requête : 
+```
+http://localhost:3000/user/infos
+```
+
+Headers :
+- token : Token d'authentification de l'utilisateur
+
+Valeur de retour : Les informations de l'utilisateur.
+
+```json
+A déterminer 
+```
+
 ## Commande de lancement de l'API en dev
 
 ```bash
