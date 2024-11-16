@@ -24,7 +24,7 @@ app.get("/quiz", async (req: Request, res: Response) => {
 // Route post de l'API pour créer un quiz
 app.post("/quiz", async (req: Request, res: Response) => {
     quiz.createQuiz(req, res);
-}
+});
 
 
 // Route get de l'API pour obtenir la question courante

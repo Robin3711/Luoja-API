@@ -133,6 +133,9 @@ export async function createQuiz(req: Request, res: Response) {
 catch (error: any) {
     res.status(400).json({error: error.message});
 }
+}
+
+
 
 
 //Fonction pour obtenir la question courante
@@ -144,12 +147,16 @@ export async function getCurrentQuestion(req: Request, res: Response) {
 
         assert(quizId, string());
 
-        const quiz = await prisma.quiz.findUnique({
+        const quiz = await prisma.quizGame.findUnique({
             where: {
                 id: quizId
             },
             include: {
-                questions: true
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                }
             }
         });
 
@@ -160,7 +167,7 @@ export async function getCurrentQuestion(req: Request, res: Response) {
 
         let questionCursor = quiz.questionCursor;
 
-        const question = quiz.questions[questionCursor];
+        const question = quiz.quiz.questions[questionCursor];
 
         let answers = [];
 
