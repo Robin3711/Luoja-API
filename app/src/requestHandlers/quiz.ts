@@ -365,6 +365,28 @@ export async function getInfos(req: Request, res: Response) {
 }
 
 
+//Recherche un quiz par son titre ou une partie de son titre
+
+export async function searchQuiz(req: Request, res: Response) {
+    try {
+        const title = req.query.title as string;
+        assert(title, string());
+
+        const quizzes = await prisma.quiz.findMany({
+            where: {
+                title: {
+                    contains: title
+                }
+            }
+        });
+
+        res.status(200).json({quizzes: quizzes});
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }
+}
+
 //Fonction pour cloner un quiz
 // Recoit un id de quiz en paramètre sous forme de Request et une Response
 // Retourne un objet JSON contenant les questions du quiz

@@ -42,6 +42,11 @@ app.get("/quiz/:id/infos", async (req: Request, res: Response) => {
   quiz.getInfos(req, res);
 });
 
+// Route get de l'API pour obtenir une liste de quiz 
+app.get("/quiz/list", async (req: Request, res: Response) => {
+  quiz.searchQuiz(req, res);
+});
+
 // Route pour cloner un quiz
 app.get('/cloneQuiz/:id', async (req: Request, res: Response) => {
   await quiz.cloneQuiz(req, res);
