@@ -6,6 +6,7 @@ import { assert, object, string, refine, enums, optional, array, boolean, intege
 import { Question } from "@prisma/client";
 import { title } from "process";
 import { resetProgress } from "../utils/quizUtils";
+import { getUserId,getUserById } from "../utils/userUtils"; 
 
 
 // Schema for the query parameters of the createQuiz endpoint
@@ -97,21 +98,56 @@ export async function recup(req: Request, res: Response) {
 export async function createQuiz(req: Request, res: Response) {
 
     try{
+
+
+
+        let user= undefined
+        let userExist= true
+        //recupérer le user id
+        const userId = await getUserId(req);
+        if (userId == undefined) {
+
+            userExist = false;
+        }
+        else
+        {
+         user = await getUserById(userId);
+        if (user == null) {
+            return res.status(404).json({error: "Utilisateur introuvable"});
+        }
+        }
+
+
         assert(req.query, CreateQuizQuerySchema);
         const publicQuiz = req.query.public  as boolean | true;
 
-            const quiz = await prisma.quiz.create({
-            data: {
-                title: req.query.title as string,
-                category: req.query.category as string,
-                difficulty: req.query.difficulty as string,
-                public:  publicQuiz// Convertir en booléen
-            }
+        let quiz;
+        if(userExist == false)
+        {
+            quiz = await prisma.quiz.create({
+                data: {
+                    title: req.query.title as string,
+                    category: req.query.category as string,
+                    difficulty: req.query.difficulty as string,
+                    public:  publicQuiz// Convertir en booléen
+                }
+            });     
+        }
+        else
+          {
+            quiz = await prisma.quiz.create({
+                data: {
+                    title: req.query.title as string,
+                    category: req.query.category as string,
+                    difficulty: req.query.difficulty as string,
+                    public:  publicQuiz,// Convertir en booléen
+                    user: user ? { connect: { id: user.id } } : undefined
+          }
+
         });
-
-
-      // Parcourez les questions et créez-les
-       // Parcourez les questions et créez-les
+    }
+    
+     
        for (let question of req.query.questions) {
         let trueFalse = question.incorrectAnswers.length === 1;
 
