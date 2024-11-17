@@ -5,6 +5,7 @@ import { fetchQuestions } from "../model/opentdb";
 import { assert, object, string, refine, enums, optional, array, boolean, integer } from "superstruct";
 import { Question } from "@prisma/client";
 import { title } from "process";
+
 import { resetProgress } from "../utils/quizUtils";
 import { getUserId,getUserById } from "../utils/userUtils"; 
 
@@ -364,6 +365,94 @@ export async function getInfos(req: Request, res: Response) {
     }    
 }
 
+//Fonction pour jouer un quiz
+// Recoit un id de quiz en paramètre sous forme de Request et une Response
+// Retoune un id de Gamequiz
+
+export async function playQuiz(req: Request, res: Response) {
+    try {
+        const quizId = req.params.id;
+
+
+        let user= undefined
+        let userExist= true
+        //recupérer le user id
+        const userId = await getUserId(req);
+        if (userId == undefined) {
+
+            userExist = false;
+        }
+        else
+        {
+         user = await getUserById(userId);
+        if (user == null) {
+            return res.status(404).json({error: "Utilisateur introuvable"});
+        }
+        }
+
+
+        assert (quizId, integer());
+        const id = await getUniqueId();
+
+        if (userExist) {
+            await prisma.quizGame.create({
+                data: {
+                    id: id,
+                    questionCursor: 0,
+                    quiz: {
+                        connect: { id: quizId }
+                    },
+                    user: {
+                        connect: { id: user!.id }
+                    }
+                }
+            });
+        }
+        else    
+        {
+        await prisma.quizGame.create({
+            data: {
+                id: id,
+                questionCursor: 0,
+                quiz: {
+                    connect: { id: quizId }
+                }
+                
+
+
+            }
+        });
+    }
+
+        //parcour les questions  assosicer a un quiz et crée les réponses
+
+        const questions = await prisma.question.findMany({
+            where: {
+                quizId: quizId
+            }
+        });
+
+        for (let question of questions) {
+            await prisma.quizGameResponse.create({
+                data: {
+                    question: {
+                        connect: { id: question.id }
+                    },
+                    quizGame: {
+                        connect: { id: id }
+                    },
+                    response: false
+                }
+            });
+        }
+
+
+        res.status(200).json({id: id});
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }
+}
 
 //Recherche un quiz par son titre ou une partie de son titre
 

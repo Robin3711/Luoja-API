@@ -42,6 +42,13 @@ app.get("/quiz/:id/infos", async (req: Request, res: Response) => {
   quiz.getInfos(req, res);
 });
 
+
+//Route pour pouvoir jouer à un quiz
+app.post("/quiz/:id/play", async (req: Request, res: Response) => {
+  quiz.playQuiz(req, res);
+});
+
+
 // Route get de l'API pour obtenir une liste de quiz 
 app.get("/quiz/list", async (req: Request, res: Response) => {
   quiz.searchQuiz(req, res);
