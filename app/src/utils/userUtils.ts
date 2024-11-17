@@ -5,7 +5,7 @@ import { prisma } from "../model/db";
 
 
 //Recupère  l'id l'utilisateur connecté
-export async function    getUserId(req: Request): number | undefined {
+export async function    getUserId(req: Request): Promise<number | undefined> {
     const token = req.headers.token;
         
     if (!token) {
