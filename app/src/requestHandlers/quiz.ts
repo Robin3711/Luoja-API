@@ -2,7 +2,7 @@ import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { fetchQuestions } from "../model/opentdb";
 //import { getUniqueId, resetProgress } from "../utils/quizUtils";
-import { assert, object, string, refine, enums, optional, array, boolean } from "superstruct";
+import { assert, object, string, refine, enums, optional, array, boolean, integer } from "superstruct";
 import { Question } from "@prisma/client";
 import { title } from "process";
 import { resetProgress } from "../utils/quizUtils";
@@ -326,4 +326,42 @@ export async function getInfos(req: Request, res: Response) {
     catch (error: any) {
         res.status(400).json({error: error.message});
     }    
+}
+
+
+//Fonction pour cloner un quiz
+// Recoit un id de quiz en paramètre sous forme de Request et une Response
+// Retourne un objet JSON contenant les questions du quiz
+export async function cloneQuiz(req: Request, res: Response) {
+    try{
+        const quizId = req.params.id;
+
+        assert(quizId, integer());
+
+        const quiz = await prisma.quiz.findUnique({
+            where: {
+                id: quizId
+            },
+            include: {
+                questions: true
+            }
+        });
+
+        if (!quiz) {
+            throw new Error("Quiz non trouvé");
+        }
+
+        let questions = quiz.questions.map((question: Question) => {
+            return {
+                question: question.question,
+                correctAnswer: question.correctAnswer,
+                incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
+            }
+        });
+
+        res.status(200).json({questions: questions});
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }
 }
