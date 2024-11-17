@@ -42,6 +42,14 @@ app.get("/quiz/:id/infos", async (req: Request, res: Response) => {
   quiz.getInfos(req, res);
 });
 
+
+//Route pour pouvoir jouer à un quiz
+app.post("/quiz/:id/play", async (req: Request, res: Response) => {
+  quiz.playQuiz(req, res);
+});
+
+
+
 app.post('/user/register', (req: Request, res: Response) => {
   user.createUser(req, res);
 });

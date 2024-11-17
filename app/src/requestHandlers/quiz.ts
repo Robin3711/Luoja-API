@@ -2,10 +2,10 @@ import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { fetchQuestions } from "../model/opentdb";
 //import { getUniqueId, resetProgress } from "../utils/quizUtils";
-import { assert, object, string, refine, enums, optional, array, boolean } from "superstruct";
+import { assert, object, string, refine, enums, optional, array, boolean, integer } from "superstruct";
 import { Question } from "@prisma/client";
 import { title } from "process";
-import { resetProgress } from "../utils/quizUtils";
+import { getUniqueId, resetProgress } from "../utils/quizUtils";
 
 
 // Schema for the query parameters of the createQuiz endpoint
@@ -326,4 +326,63 @@ export async function getInfos(req: Request, res: Response) {
     catch (error: any) {
         res.status(400).json({error: error.message});
     }    
+}
+
+
+//Fonction pour jouer un quiz
+// Recoit un id de quiz en paramètre sous forme de Request et une Response
+// Retoune un id de Gamequiz
+
+export async function playQuiz(req: Request, res: Response) {
+    try {
+        const quizId = req.params.id;
+
+
+
+
+        assert (quizId, integer());
+        const id = await getUniqueId();
+
+        await prisma.quizGame.create({
+            data: {
+                id: id,
+                questionCursor: 0,
+                quiz: {
+                    connect: { id: quizId }
+                }
+                
+
+
+            }
+        });
+
+
+        //parcour les questions  assosicer a un quiz et crée les réponses
+
+        const questions = await prisma.question.findMany({
+            where: {
+                quizId: quizId
+            }
+        });
+
+        for (let question of questions) {
+            await prisma.quizGameResponse.create({
+                data: {
+                    question: {
+                        connect: { id: question.id }
+                    },
+                    quizGame: {
+                        connect: { id: id }
+                    },
+                    response: false
+                }
+            });
+        }
+
+
+        res.status(200).json({id: id});
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }
 }
