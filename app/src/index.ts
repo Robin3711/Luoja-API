@@ -50,6 +50,12 @@ app.post("/quiz/:id/play", async (req: Request, res: Response) => {
 
 
 
+// Route pour cloner un quiz
+app.get('/cloneQuiz/:id', async (req: Request, res: Response) => {
+  await quiz.cloneQuiz(req, res);
+});
+
+
 app.post('/user/register', (req: Request, res: Response) => {
   user.createUser(req, res);
 });
