@@ -6,6 +6,7 @@ import { assert, object, string, refine, enums, optional, array, boolean, intege
 import { Question } from "@prisma/client";
 import { title } from "process";
 import { getUniqueId, resetProgress } from "../utils/quizUtils";
+import { getUserId,getUserById } from "../utils/userUtils";
 
 
 // Schema for the query parameters of the createQuiz endpoint
@@ -338,11 +339,42 @@ export async function playQuiz(req: Request, res: Response) {
         const quizId = req.params.id;
 
 
+        let user= undefined
+        let userExist= true
+        //recupérer le user id
+        const userId = await getUserId(req);
+        if (userId == undefined) {
+
+            userExist = false;
+        }
+        else
+        {
+         user = await getUserById(userId);
+        if (user == null) {
+            return res.status(404).json({error: "Utilisateur introuvable"});
+        }
+        }
 
 
         assert (quizId, integer());
         const id = await getUniqueId();
 
+        if (userExist) {
+            await prisma.quizGame.create({
+                data: {
+                    id: id,
+                    questionCursor: 0,
+                    quiz: {
+                        connect: { id: quizId }
+                    },
+                    user: {
+                        connect: { id: user!.id }
+                    }
+                }
+            });
+        }
+        else    
+        {
         await prisma.quizGame.create({
             data: {
                 id: id,
@@ -355,7 +387,7 @@ export async function playQuiz(req: Request, res: Response) {
 
             }
         });
-
+    }
 
         //parcour les questions  assosicer a un quiz et crée les réponses
 
