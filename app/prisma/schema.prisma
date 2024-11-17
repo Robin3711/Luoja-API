@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,64 +8,63 @@ datasource db {
 }
 
 model Quiz {
-  id              Int                @id @default(autoincrement())
-  userId          Int?
-  title           String
-  public          Boolean            @default(false)
-  category        String
-  difficulty      String
-     
+  id         Int        @id @default(autoincrement())
+  title      String
+  category   Int?       @default(0)
+  difficulty String?    @default("any")
+  
+  questions  Question[]
+  games      Game[]
 
+  userId     Int?
+  public     Boolean    @default(false)
 
-  questions       Question[]
-  quizGames       QuizGame[]
-
-  user            User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Question {
-  id              Int                @id @default(autoincrement())
-  quizId          Int
-  question        String
-  trueFalse       Boolean
-  correctAnswer   String
-  falseAnswer1    String?
-  falseAnswer2    String?
-  falseAnswer3    String?
+  id            Int      @id @default(autoincrement())
+  quizId        Int
+  text          String
+  trueFalse     Boolean
+  correctAnswer String
+  falseAnswer1  String?
+  falseAnswer2  String?
+  falseAnswer3  String?
 
-  quizGameResponse QuizGameResponse[]
+  answers       Answer[]
 
-  quiz            Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
-model QuizGame {
-  id              String              @id
-  userId          Int?
-  quizId          Int
-  questionCursor  Int
-  
-  quizGameResponse QuizGameResponse[]
+model Game {
+  id             String   @id
+  userId         Int?
+  quizId         Int
+  questionCursor Int
 
-  user            User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz            Quiz                @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers        Answer[]
+
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
-model QuizGameResponse {
-  questionId      Int
-  gameId          String
-  response        Boolean
+model Answer {
+  questionId Int
+  gameId     String
+  correct    Boolean
 
-  quizGame        QuizGame            @relation(fields: [gameId], references: [id] , onDelete: Cascade)
-  question        Question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@id([questionId, gameId])
 }
 
 model User {
-  id              Int                @id @default(autoincrement())
-  email           String             @unique
-  password        String
+  id     Int      @id @default(autoincrement())
+  email  String   @unique
+  password String
 
-  quiz            Quiz[]
-  quizGame        QuizGame[]
+  quizs   Quiz[]
+  games   Game[]
 }
