@@ -1,8 +1,8 @@
 import { prisma } from "../model/db";
 import { humanId } from "human-id";
 
+// Fonction qui permet de récupérer un identifiant unique pour un quiz
 export async function getUniqueId() {
-
     const allowedAttempts = 10;
 
     for(let i = 0; i < allowedAttempts; i++) {
@@ -11,7 +11,7 @@ export async function getUniqueId() {
             capitalize: false
         });
 
-        let quiz = await prisma.quizGame.findUnique({
+        let quiz = await prisma.game.findUnique({
             where: {
                 id: id
             }
@@ -25,25 +25,25 @@ export async function getUniqueId() {
     throw new Error("Impossible de générer un identifiant unique pour le quiz");
 }
 
-export async function resetProgress(quizId: string) {
-
-    await prisma.quizGame.update({
+// Fonction qui permet de réinitialiser la progression d'un quiz
+export async function resetProgress(quizGameId: string) {
+    await prisma.game.update({
         where: {
-            id: quizId
+            id: quizGameId
         },
         data: {
             questionCursor: 0
         }
     });
 
-    await prisma.quizGameResponse.updateMany({
+    await prisma.answer.updateMany({
         where: {
-            quizGame: {
-                id: quizId
+            game: {
+                id: quizGameId
             }
         },
         data: {
-            response: false
+            correct: false
         }
     });
 }
