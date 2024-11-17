@@ -19,7 +19,7 @@ app.use(express.json());
 
 // Route post de l'API pour créer un quiz
 app.post("/quiz", async (req: Request, res: Response) => {
-  quiz.createQuiz(req, res);
+  quiz.create(req, res);
 });
 
 // Route get de l'API pour récupérer des questions de l'API OpenTDB
@@ -29,7 +29,7 @@ app.get("/questions", async (req: Request, res: Response) => {
 
 //Route pour pouvoir jouer à un quiz
 app.get("/quiz/:id/play", async (req: Request, res: Response) => {
-  game.createGame(req, res);
+  game.create(req, res);
 });
 
 // Route get de l'API pour obtenir la question courante
