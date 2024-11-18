@@ -10,4 +10,8 @@ RUN npx prisma db push --accept-data-loss
 
 EXPOSE 3000
 
+ARG JWT_SECRET
+
+ENV JWT_SECRET=$JWT_SECRET
+
 CMD ["npm", "start"]
