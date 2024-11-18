@@ -1,11 +1,12 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-import { fetchQuestions } from "../model/opentdb";
-import { getUniqueId, resetProgress } from "../utils/quizUtils";
-import { assert, object, string,refine, enums, optional } from "superstruct";
+import { assert, object, string, refine, enums, optional, array } from "superstruct";
 
-// Schema for the query parameters of the createQuiz endpoint
-const CreateQuizQuerySchema = object({
+import * as openTDB from "../model/opentdb";
+import * as userUtils from "../utils/userUtils";
+
+// Schéma pour la requête de récupération de questions
+const OpenTDBQuerySchema = object({
     amount: refine(string(), 'amount', value => {
         if (isNaN(parseInt(value))) {
             throw new Error('Amount must be a number');
@@ -14,8 +15,7 @@ const CreateQuizQuerySchema = object({
             throw new Error('Amount must be between 1 and 50');
         }
         return true;
-    }
-    ),
+    }),
     category: optional(refine(string(), 'category', value => {
         if (isNaN(parseInt(value))) {
             throw new Error('Category must be a number');
@@ -28,181 +28,127 @@ const CreateQuizQuerySchema = object({
     difficulty: optional(enums(['easy', 'medium', 'hard']))
 });
 
-//Fonction pur créer un quiz
-// Recoit une CreateQuizQuerySchema en paramètre sous forme de Request et une Response
-// Retourne un objet JSON contenant l'id du quiz créé
-export async function create(req: Request, res: Response) {
+// Schéma pour une question
+const QuestionSchema = object({
+    text: string(),
+    correctAnswer: string(),
+    incorrectAnswers: array(string())
+});
 
+// Schéma pour la création d'un quiz
+const CreateQuizQuerySchema = object({
+    category: optional(refine(string(), 'category', value => {
+        if (isNaN(parseInt(value))) {
+            throw new Error('Category must be a number');
+        }
+        if (parseInt(value) < 9 || parseInt(value) > 32) {
+            throw new Error('Category must be between 9 and 32');
+        }
+        return true;
+    })),
+    difficulty: optional(enums(['easy', 'medium', 'hard'])),
+    title: string(),
+    public: optional(string()),
+});
+
+// Schéma pour le corps de la requête de création d'un quiz
+const CreateQuizBodySchema = object({
+    questions: array(QuestionSchema) 
+});
+
+// Fonction pour obtenir des questions de OpenTDB
+export async function getOpentTDBQuestions(req: Request, res: Response) {
     try{
-        assert(req.query, CreateQuizQuerySchema);
+        assert(req.query, OpenTDBQuerySchema);
 
         const amount = req.query.amount as string;
         const category = req.query.category as string | undefined;
         const difficulty = req.query.difficulty as string | undefined;
 
-        const questionData = await fetchQuestions(amount, category, difficulty);    
+        const data = await openTDB.fetchQuestions(amount, category, difficulty);         
+       
+        return res.status(200).json(data);
+    }
+    catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+}
+
+export async function create(req: Request, res: Response) {
+    try{
+        assert(req.query, CreateQuizQuerySchema);
+        assert(req.body, CreateQuizBodySchema);
         
-        const quizId = await getUniqueId();
+        const publicQuiz = req.query.public === "true";
 
-        await prisma.quiz.create({
-            data: {
-                id: quizId,
+        let quizData: any= {
+            title: req.query.title as string,
+            category: Number(req.query.category),
+            difficulty: req.query.difficulty as string,
+            public:  publicQuiz
+        }
+
+        const user = await userUtils.getUser(req);
+
+        if (user) {
+            quizData.user = {
+                connect: { id: user.id }
             }
+        }
+
+        const quiz = await prisma.quiz.create({
+            data: quizData
         });
-
-        for (let question of questionData.results) {
-
-            let trueFalse = true;
-
-            if (question.incorrect_answers.length == 3) {
-                trueFalse = false; 
-            }
+    
+        for (let question of req.body.questions) {
+            let trueFalse = question.incorrectAnswers.length === 1;
 
             await prisma.question.create({
                 data: {
-                    question: question.question,
+                    text: question.text,
                     trueFalse: trueFalse,
-                    correctAnswer: question.correct_answer,
-                    falseAnswer1: question.incorrect_answers[0],
-                    falseAnswer2: question.incorrect_answers[1],
-                    falseAnswer3: question.incorrect_answers[2],
+                    correctAnswer: question.correctAnswer,
+                    falseAnswer1: question.incorrectAnswers[0] || null,
+                    falseAnswer2: question.incorrectAnswers[1] || null,
+                    falseAnswer3: question.incorrectAnswers[2] || null,
                     quiz: {
-                        connect: { id: quizId }
+                        connect: { id: quiz.id }
                     }
                 }
             });
         }
 
-        return res.status(200).json({quizId: quizId});
+        res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
-        res.status(400).json({error: error.message});
+        res.status(500).json({error: error.message});
     }
 }
 
-//Fonction pour obtenir la question courante
-// Recoit un id de quiz en paramètre sous forme de Request et une Response
-// Retourne un objet JSON contenant la question et la reponse
-export async function getCurrentQuestion(req: Request, res: Response) {
-    try{
-        const quizId = req.params.id;
+// Fonction pour obtenir des quiz à partir de leurs titre
+export async function search(req: Request, res: Response) {
+    try {
+        const title = req.query.title as string;
+        assert(title, string());
 
-        assert(quizId, string());
-
-        const quiz = await prisma.quiz.findUnique({
+        const quizs = await prisma.quiz.findMany({
             where: {
-                id: quizId
-            },
-            include: {
-                questions: true
-            }
-        });
-
-        if (!quiz) {
-            res.status(404).json({erreur: "Quiz non trouvé"});
-            return;
-        }
-
-        let questionCursor = quiz.questionCursor;
-
-        const question = quiz.questions[questionCursor];
-
-        let answers = [];
-
-        if (question.trueFalse) {
-            answers = [question.correctAnswer, question.falseAnswer1];
-        }
-        else {
-            answers = [question.correctAnswer, question.falseAnswer1, question.falseAnswer2, question.falseAnswer3];
-        }
-
-        for (let i = answers.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [answers[i], answers[j]] = [answers[j], answers[i]];
-        }
-
-        res.status(200).json({
-            question: question.question,
-            answers: answers
-        });
-    }
-    catch (error: any) {
-        res.status(400).json({error: error.message});
-    }
-}
-
-
-
-//Fonction pour vérifier la réponse à la question courante
-// Recoit un id de quiz et une réponse en paramètre sous forme de Request et une Response
-// Retourne un objet JSON contenant si la réponse est correcte ou non
-export async function verifyAnswer(req: Request, res: Response) {
-
-    try{
-        const quizId = req.params.id;
-        const answer = req.body.answer;
-
-        assert(quizId, string());
-        assert(answer, string());
-
-        const quiz = await prisma.quiz.findUnique({
-            where: {
-                id: quizId
-            },
-            include: {
-                questions: true
-            }
-        });
-
-        if (!quiz) {
-            throw new Error("Quiz non trouvé");
-        }
-
-        let questionCursor = quiz.questionCursor;
-
-        const question = quiz.questions[questionCursor];
-
-        const correctAnswer = question.correctAnswer;
-
-        const wasCorrect = answer === correctAnswer;
-        
-        await prisma.question.update({
-            where: {
-                id: question.id
-            },
-            data: {
-                wasCorrect: wasCorrect
-            }
-        });
-
-        let nextQuestion = questionCursor + 1;
-
-        if (questionCursor === quiz.questions.length - 1) {
-            await resetProgress(quizId)
-        }
-        else {
-            await prisma.quiz.update({
-                where: {
-                    id: quizId
+                title: {
+                    contains: title
                 },
-                data: {
-                    questionCursor: nextQuestion
-                }
-            });
-        }
+                public: true
+            }
+        });
 
-        res.status(200).json({correct: wasCorrect});
+        res.status(200).json({quizs: quizs});
     }
     catch (error: any) {
         res.status(400).json({error: error.message});
     }
 }
 
-
-//Fonction pour obtenir les informations du quiz
-// Recoit un id de quiz en paramètre sous forme de Request et une Response
-// Retourne un objet JSON contenant les résultats, le curseur de question et le nombre de questionsYYYYY
-export async function getInfos(req: Request, res: Response) {
+// Fonction pour obtenir un quiz à partir de son id et le cloner
+export async function clone(req: Request, res: Response) {
     try{
         const quizId = req.params.id;
 
@@ -210,7 +156,8 @@ export async function getInfos(req: Request, res: Response) {
 
         const quiz = await prisma.quiz.findUnique({
             where: {
-                id: quizId
+                id: Number(quizId),
+                public: true
             },
             include: {
                 questions: true
@@ -221,15 +168,33 @@ export async function getInfos(req: Request, res: Response) {
             throw new Error("Quiz non trouvé");
         }
 
-        const numberOfQuestions = quiz.questions.length;
+        let questions = quiz.questions.map((question) => {
+            return {
+                question: question.text,
+                correctAnswer: question.correctAnswer,
+                incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
+            }
+        });
 
-        const questionCursor = quiz.questionCursor;
-
-        const results = quiz.questions.map(question => question.wasCorrect);
-
-        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
+        res.status(200).json({questions: questions});
     }
     catch (error: any) {
-        res.status(400).json({error: error.message});
-    }    
+        res.status(500).json({error: error.message});
+    }
+}
+
+// Fonction pour obtenir une liste de quiz
+export async function list(req: Request, res: Response) {
+    try {
+        const quizs = await prisma.quiz.findMany({
+            where: {
+                public: true
+            }
+        });
+
+        res.status(200).json({quizs: quizs});
+    }
+    catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
 }

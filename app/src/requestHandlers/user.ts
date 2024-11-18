@@ -1,6 +1,7 @@
+import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { assert, object, string } from "superstruct";
-import { prisma } from "../model/db";
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -14,7 +15,7 @@ const LoginSchema = object({
     password: string()
 });
 
-export async function createUser(req: Request, res: Response) {
+export async function create(req: Request, res: Response) {
     try {
         assert(req.body, CreateUserSchema);
 

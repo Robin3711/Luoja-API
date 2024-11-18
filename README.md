@@ -2,91 +2,235 @@
 
 ## Documentation API
 
-### **GET** /quiz : Permet de créer un nouveau quiz paramétré.
+### **POST** /quiz : Permet de créer un nouveau quiz paramétré.
 
 Example de requête : 
 ```
-http://localhost:3000/quiz?amount=5&category=9&difficulty=easy
+http://localhost:3000/quiz?category=9&difficulty=easy&title=Montitre&public=true
 ```
 
 Paramètres :
-- amount : Nombre de questions à récupérer
-- category : Catégorie de questions à récupérer
-- difficulty : Difficulté des questions à récupérer
+- category : Catégorie des questions du quiz (optionnel)
+- difficulty : Difficulté des questions (optionnel)
+- title : Titre du quiz
+- public : Visibilité du quiz (optionnel)
+
+Corps de la requête : Les questions du quiz.
+
+```json
+{
+    "questions": [
+        {
+            "text": "Chocolatine ?",
+            "correctAnswer": "Vrai",
+            "incorrectAnswers": ["False"]
+        }
+    ]
+}
+```
 
 Valeur de retour : L'identifiant du quiz créé.
 
 ```json
 {
-  "quizId": "large-laws-chew"
+  "quizId": 1
 }
 ```
 
-### **GET** /quiz/:id/question : Permet de récupérer la question courante du quiz.
+### **GET** /questions : Permet d'obtenir des question de l'API OpenTDB
 
-Example de requête : 
+Example de requête :
+
 ```
-http://localhost:3000/quiz/large-laws-chew/question
+http://localhost:3000/questions?amount=1&category=9&difficulty=easy
 ```
 
 Paramètres :
-- id : Identifiant du quiz
+- amount : nombre de questions à récupérer
+- category : Catégorie des questions à récupérer (optionnel)
+- difficulty : Difficulté des questions à récupérer (optionnel)
 
-Valeur de retour : La question courante du quiz.
+Valeur de retour : Un tableau de questions
+
+```json
+[
+    {
+        "type": "multiple",
+        "difficulty": "easy",
+        "category": "General Knowledge",
+        "question": "What machine element is located in the center of fidget spinners?",
+        "correct_answer": "Bearings",
+        "incorrect_answers": [
+            "Axles",
+            "Gears",
+            "Belts"
+        ]
+    }
+]
+```
+
+### **GET** /quiz/:id/play
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/play
+```
+
+Paramètres :
+- id : ID du quiz.
+
+
+Valeur de retour : L'identifiant de la partie.
 
 ```json
 {
-  "question": "Romanian belongs to the Romance language family, shared with French, Spanish, Portuguese and Italian. ",
-  "answers": [
-    "True",
-    "False"
+  "id": "lemon-ghosts-roll"
+}
+```
+
+### **GET** /game/:id/question
+
+Example de requête :
+
+```
+http://localhost:3000/game/samuel-love-potatoes/question
+```
+
+Paramètres :
+- id : ID de la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : La question courante de la partie.
+
+```json
+{
+    "question": "Chocolatine ?",
+    "answers": [
+        "Vrai",
+        "False"
+    ]
+}
+```
+
+### **POST** /game/:id/answer
+
+Example de requête :
+
+```
+http://localhost:3000/game/samuel-love-potatoes/answer
+```
+
+Paramètres :
+- id : ID de la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : La réponse de l'utilisateur.
+
+```json
+{
+  "answer": "Vrai"
+}
+```
+
+Valeur de retour : La réponse de l'utilisateur.
+
+```json
+{
+  "correctAnswer": "Vrai"
+}
+```
+
+### **GET** /game/:id/infos
+
+Example de requête :
+
+```
+http://localhost:3000/game/samuel-love-potatoes/infos
+```
+
+Paramètres :
+- id : ID de la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : Les informations de la partie.
+
+```json
+{
+  "results": [
+      false
+  ],
+  "questionCursor": 0,
+  "numberOfQuestions": 1
+}
+```
+
+### **GET** /quiz/search/:title : Permet de rechercher un quiz par son titre.
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/search/Montitre
+```
+
+Paramètres :
+  - title : Titre du quiz à rechercher.
+
+Valeur de retour : Les informations des quiz.
+
+```json
+{
+  "quizs": [
+      {
+          "id": 1,
+          "title": "Montitre",
+          "category": 9,
+          "difficulty": "easy",
+          "userId": null,
+          "public": true
+      },
+      {
+          "id": 2,
+          "title": "Montitre",
+          "category": 9,
+          "difficulty": "easy",
+          "userId": 1,
+          "public": true
+      }
   ]
 }
 ```
 
-### **POST** /quiz/:id/answer : Permet de répondre à la question courante du quiz.
+### **GET** /quiz/:id/clone : Permet de cloner un quiz.
 
-Example de requête : 
+Example de requête :
+
 ```
-http://localhost:3000/quiz/large-laws-chew/answer
-```
-
-Paramètres :
-- id : Identifiant du quiz
-
-Corps de la requête : La réponse à la question courante du quiz.
-
-```json
-{
-  "answer": "True"
-}
-```
-
-Valeur de retour : La réponse est-elle correcte ?
-
-```json
-{
-    "correct": false
-}
-```
-
-### **GET** /quiz/:id/infos : Permet de récupérer les informations du quiz.
-
-Example de requête : 
-```
-http://localhost:3000/quiz/large-laws-chew/infos
+http://localhost:3000/quiz/1/clone
 ```
 
 Paramètres :
-- id : Identifiant du quiz
+  - id : ID du quiz à cloner.
 
-Valeur de retour : Les résultats du quiz.
+Valeur de retour : Le clone du quiz.
 
 ```json
 {
-  "results": [false, false, false, false, false, false, false, false, false, false],
-  "questionCursor": 0,
-  "numberOfQuestions": 10
+  "questions": [
+      {
+          "question": "Chocolatine ?",
+          "correctAnswer": "Vrai",
+          "incorrectAnswers": [
+              "False"
+          ]
+      }
+  ]
 }
 ```
 
@@ -151,7 +295,12 @@ Headers :
 Valeur de retour : Les informations de l'utilisateur.
 
 ```json
-A déterminer 
+{
+    "user": {
+        "id": 1,
+        "email": "test@luoja.fr"
+    }
+}
 ```
 
 ## Commande de lancement de l'API en dev
