@@ -4,6 +4,36 @@ import { assert, object, string, refine, enums, optional, array } from "superstr
 
 import * as openTDB from "../model/opentdb";
 import * as userUtils from "../utils/userUtils";
+import * as gameUtils from "../utils/gameUtils";
+
+
+
+const CreateQuizFastQuerySchema = object({
+    amount: refine(string(), 'amount', value => {
+        if (isNaN(parseInt(value))) {
+            throw new Error('Amount must be a number');
+        }
+        if (parseInt(value) < 1 || parseInt(value) > 50) {
+            throw new Error('Amount must be between 1 and 50');
+        }
+        return true;
+    }
+    ),
+    category: optional(refine(string(), 'category', value => {
+        if (isNaN(parseInt(value))) {
+            throw new Error('Category must be a number');
+        }
+        if (parseInt(value) < 9 || parseInt(value) > 32) {
+            throw new Error('Category must be between 9 and 32');
+        }
+        return true;
+    })),
+    difficulty: optional(enums(['easy', 'medium', 'hard']))
+});
+
+
+
+
 
 // Schéma pour la requête de récupération de questions
 const OpenTDBQuerySchema = object({
@@ -139,6 +169,140 @@ export async function create(req: Request, res: Response) {
     }
 }
 
+// Fonction pour obtenir des quiz à partir de leurs titre
+export async function search(req: Request, res: Response) {
+    try {
+        const title = req.query.title as string;
+        assert(title, string());
+
+        const quizs = await prisma.quiz.findMany({
+            where: {
+                title: {
+                    contains: title
+                },
+                public: true
+            }
+        });
+
+        res.status(200).json({quizs: quizs});
+    }
+    catch (error: any) {
+        res.status(400).json({error: error.message});
+    }
+}
+
+
+export async function QuizzFastCreate(req: Request, res: Response) {
+    try{
+        assert(req.query, CreateQuizFastQuerySchema);
+        const amount = req.query.amount as string;
+        const category = req.query.category as string | undefined;
+        const difficulty = req.query.difficulty as string | undefined;
+
+        const questionData = await openTDB.fetchQuestions(amount, category, difficulty);    
+
+
+        let quizData: any= {
+            title: "Fast Quiz",
+            public:  true
+        }
+
+        const quiz = await prisma.quiz.create({
+            data: quizData
+        });
+    
+        for (let question of questionData) {    
+
+            let trueFalse = true;
+
+            if (question.incorrect_answers.length == 3) {
+                trueFalse = false; 
+            }
+
+            await prisma.question.create({
+                data: {
+                    text: question.question,
+                    trueFalse: trueFalse,
+                    correctAnswer: question.correct_answer,
+                    falseAnswer1: question.incorrect_answers[0],
+                    falseAnswer2: question.incorrect_answers[1],
+                    falseAnswer3: question.incorrect_answers[2],
+                    quiz: {
+                        connect: { id: quiz.id }
+                    }
+                }
+            });
+
+
+
+
+        }
+
+
+        if (!quiz) {
+            throw new Error("Quiz non trouvé");
+        }
+
+        if (!quiz.public) {
+            throw new Error("Quiz non publié");
+        }
+
+        const gameId = await gameUtils.getUniqueId();
+
+        const gameData: any = {
+            id: gameId,
+            questionCursor: 0,
+            quiz: {
+                connect: { id: quiz.id }
+            }
+        };
+
+        const user = await userUtils.getUser(req);
+
+        if (user) {
+            gameData.user = {
+                connect: { id: user.id }
+            };
+        }
+
+        await prisma.game.create({
+            data: gameData
+        });
+
+        const quizWithQuestions = await prisma.quiz.findUnique({
+            where: { id: quiz.id },
+            include: { questions: true }
+        });
+
+        if (!quizWithQuestions) {
+            throw new Error("Quiz not found");
+        }
+
+        for (let question of quizWithQuestions.questions) {
+            await prisma.answer.create({
+                data: {
+                    question: {
+                        connect: { id: question.id }
+                    },
+                    game: {
+                        connect: { id: gameId }
+                    },
+                    correct: false
+                }
+            });
+        }
+
+        res.status(200).json({id: gameId});
+    }    
+    catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+}
+
+
+ 
+
+
 // Fonction pour obtenir un quiz à partir de son id et le cloner
 export async function clone(req: Request, res: Response) {
     try{
@@ -214,4 +378,8 @@ export async function list(req: Request, res: Response) {
     catch (error: any) {
         res.status(500).json({error: error.message});
     }
+}
+
+function fetchQuestions(amount: string, category: string | undefined, difficulty: string | undefined) {
+    throw new Error("Function not implemented.");
 }
