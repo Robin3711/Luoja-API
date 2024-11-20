@@ -106,4 +106,4 @@ deploy:
     - ssh ubuntu@luoja.fr "sudo docker kill mimir || true"
     - ssh ubuntu@luoja.fr "sudo docker rm mimir || true"
     - ssh ubuntu@luoja.fr "sudo docker rmi docker.luoja.fr/mimir || true"
-    - ssh ubuntu@luoja.fr "sudo docker run -d --restart always --name mimir --network internal_network -e PROTOCOL=HTTPS -e DOMAIN=luoja.fr -v /etc/letsencrypt:/etc/letsencrypt:ro docker.luoja.fr/mimir"
+    - ssh ubuntu@luoja.fr "sudo docker run -d --restart always --name mimir --network internal_network -e PROTOCOL=HTTPS -e DOMAIN=luoja.fr -v /etc/letsencrypt:/etc/letsencrypt:ro -v /srv/mimir/mimir.db:/usr/src/app/prisma/mimir.db docker.luoja.fr/mimir"
