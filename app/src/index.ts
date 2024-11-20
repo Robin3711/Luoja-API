@@ -63,7 +63,7 @@ app.get('/quiz/:id/clone', async (req: Request, res: Response) => {
 });
 
 // Route get de l'API pour crée un quiz Rapid 
-app.post("/quizFast", async (req: Request, res: Response) => {
+app.get("/quizFast", async (req: Request, res: Response) => {
   quiz.QuizzFastCreate(req, res);
 });
 
