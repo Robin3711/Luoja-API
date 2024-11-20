@@ -2,7 +2,7 @@
 
 ## Documentation API
 
-### **POST** /quiz : Permet de créer un nouveau quiz paramétré.
+### **POST** /quiz : Permet de créer un quiz personnalisé.
 
 Example de requête : 
 ```
@@ -19,13 +19,13 @@ Corps de la requête : Les questions du quiz.
 
 ```json
 {
-    "questions": [
-        {
-            "text": "Chocolatine ?",
-            "correctAnswer": "Vrai",
-            "incorrectAnswers": ["False"]
-        }
-    ]
+  "questions": [
+    {
+      "text": "Chocolatine ?",
+      "correctAnswer": "Vrai",
+      "incorrectAnswers": ["False"]
+    }
+  ]
 }
 ```
 
@@ -34,6 +34,21 @@ Valeur de retour : L'identifiant du quiz créé.
 ```json
 {
   "quizId": 1
+}
+```
+
+### **GET** /quizFast
+Example de requête :
+
+```
+localhost:3000/quizFast?amount=23&category=15&difficulty="hard"
+```
+
+Valeur de retour : L'identifiant de la partie.
+```json
+
+{
+  "id": "dry-planets-cover"
 }
 ```
 
@@ -54,44 +69,25 @@ Valeur de retour : Un tableau de questions
 
 ```json
 [
-    {
-        "type": "multiple",
-        "difficulty": "easy",
-        "category": "General Knowledge",
-        "question": "What machine element is located in the center of fidget spinners?",
-        "correct_answer": "Bearings",
-        "incorrect_answers": [
-            "Axles",
-            "Gears",
-            "Belts"
-        ]
-    }
+  {
+    "type": "multiple",
+    "difficulty": "easy",
+    "category": "General Knowledge",
+    "question": "What machine element is located in the center of fidget spinners?",
+    "correct_answer": "Bearings",
+    "incorrect_answers": [
+      "Axles",
+      "Gears",
+      "Belts"
+    ]
+  }
 ]
 ```
-
-
-### **GET** /quizFast
-Example de requête :
-
-```
-localhost:3000/quizFast?amount=23&category=15&difficulty="hard"
-
-```
-Valeur de retour : L'identifiant de la partie.
-```json
-
-{
-    "id": "dry-planets-cover"
-}
-```
-
 
 ### **GET** /quiz/:id/play
 
 Example de requête :
 ```
-
-
 http://localhost:3000/quiz/1/play
 ```
 
@@ -101,7 +97,6 @@ Paramètres :
 
 Valeur de retour : L'identifiant de la partie.
 ```json
-
 {
   "id": "lemon-ghosts-roll"
 }
@@ -125,11 +120,11 @@ Valeur de retour : La question courante de la partie.
 
 ```json
 {
-    "question": "Chocolatine ?",
-    "answers": [
-        "Vrai",
-        "False"
-    ]
+  "question": "Chocolatine ?",
+  "answers": [
+    "Vrai",
+    "False"
+  ]
 }
 ```
 
