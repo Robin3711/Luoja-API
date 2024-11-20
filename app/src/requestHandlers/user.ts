@@ -1,17 +1,25 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-import { assert, object, string } from "superstruct";
+import { assert, object, string, refine } from "superstruct";
+import validator from 'validator';
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const Email = refine(string(), 'email', value => {
+    if (!validator.isEmail(value)) {
+        throw new Error('Email invalide');
+    }
+    return true;
+});
+  
 const CreateUserSchema = object({
-    email: string(),
+    email: Email,
     password: string()
 });
 
 const LoginSchema = object({
-    email: string(),
+    email: Email,
     password: string()
 });
 
