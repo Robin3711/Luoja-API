@@ -14,9 +14,11 @@
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/is-email": "^1.0.0",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.9.0",
+    "@types/validator": "^13.12.2",
     "jest": "^29.7.0",
     "jest-fetch-mock": "^3.0.3",
     "prisma": "^5.22.0",
@@ -35,6 +37,7 @@
     "human-id": "^4.1.1",
     "jsonwebtoken": "^9.0.2",
     "superstruct": "^2.0.2",
-    "uuid": "^11.0.2"
+    "uuid": "^11.0.2",
+    "validator": "^13.12.0"
   }
 }
