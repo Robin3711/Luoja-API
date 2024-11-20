@@ -1,9 +1,9 @@
 stages:
   - docker
+  - deploy
   - lint
   - pages
   - test
-  - deploy
 
 docker:
   stage: docker

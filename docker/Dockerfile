@@ -6,6 +6,8 @@ COPY ./app /usr/src/app
 
 RUN npm install -y
 
+RUN npx prisma db push --accept-data-loss
+
 RUN npx prisma migrate dev --name init
 
 EXPOSE 3000
