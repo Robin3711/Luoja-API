@@ -8,7 +8,7 @@ RUN npm install -y
 
 RUN npx prisma db push --accept-data-loss
 
-RUN npx prisma migrate dev --name init
+RUN RUN npx prisma migrate deploy
 
 EXPOSE 3000
 
