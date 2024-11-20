@@ -139,6 +139,10 @@ export async function create(req: Request, res: Response) {
                 connect: { id: user.id }
             }
         }
+        else
+        {
+            throw new Error("Utilisateur non trouvé");
+        }
 
         const quiz = await prisma.quiz.create({
             data: quizData
@@ -349,11 +353,13 @@ export async function clone(req: Request, res: Response) {
 // Fonction pour obtenir une liste de quiz
 export async function list(req: Request, res: Response) {
     try {
-
         assert(req.query, ListQuizQuerySchema);
 
         let where: any = {
-            public: true
+            public: true,
+            userId: {
+                not: null
+            }
         };
 
         const title = req.query.title as string;
@@ -361,7 +367,7 @@ export async function list(req: Request, res: Response) {
         if (title) {
             where.title = {
                 contains: title
-            }
+            };
         }
 
         const category = req.query.category as string;
@@ -380,10 +386,9 @@ export async function list(req: Request, res: Response) {
             where
         });
 
-        res.status(200).json({quizs: quizs});
-    }
-    catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(200).json({ quizs: quizs });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
     }
 }
 
