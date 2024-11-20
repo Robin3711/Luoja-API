@@ -74,7 +74,7 @@ Valeur de retour : Un tableau de questions
 Example de requête :
 
 ```
-
+localhost:3000/quizFast?amount=23&category=15&difficulty="hard"
 
 ```
 Valeur de retour : L'identifiant de la partie.
