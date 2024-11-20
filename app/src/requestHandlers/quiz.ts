@@ -211,6 +211,13 @@ export async function QuizzFastCreate(req: Request, res: Response) {
             data: quizData
         });
     
+        if(category){
+            quizData.category = Number(category);
+        }
+        if(difficulty){
+            quizData.difficulty = difficulty;
+        }
+
         for (let question of questionData) {    
 
             let trueFalse = true;
