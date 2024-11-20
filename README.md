@@ -69,11 +69,29 @@ Valeur de retour : Un tableau de questions
 ]
 ```
 
-### **GET** /quiz/:id/play
 
+### **GET** /quizFast
 Example de requête :
 
 ```
+
+
+```
+Valeur de retour : L'identifiant de la partie.
+```json
+
+{
+    "id": "dry-planets-cover"
+}
+```
+
+
+### **GET** /quiz/:id/play
+
+Example de requête :
+```
+
+
 http://localhost:3000/quiz/1/play
 ```
 
@@ -82,8 +100,8 @@ Paramètres :
 
 
 Valeur de retour : L'identifiant de la partie.
-
 ```json
+
 {
   "id": "lemon-ghosts-roll"
 }
