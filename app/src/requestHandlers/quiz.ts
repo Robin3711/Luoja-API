@@ -197,7 +197,7 @@ export async function QuizzFastCreate(req: Request, res: Response) {
             data: quizData
         });
     
-        for (let question of questionData.results) {    
+        for (let question of questionData) {    
 
             let trueFalse = true;
 
