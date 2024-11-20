@@ -13,5 +13,4 @@ ARG JWT_SECRET
 ENV JWT_SECRET=$JWT_SECRET
 
 CMD npx prisma db push --accept-data-loss && \
-    npx prisma migrate deploy && \
     npm start
