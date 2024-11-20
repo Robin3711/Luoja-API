@@ -56,6 +56,20 @@ const CreateQuizBodySchema = object({
     questions: array(QuestionSchema) 
 });
 
+const ListQuizQuerySchema = object({
+    title: optional(string()),
+    category: optional(refine(string(), 'category', value => {
+        if (isNaN(parseInt(value))) {
+            throw new Error('Category must be a number');
+        }
+        if (parseInt(value) < 9 || parseInt(value) > 32) {
+            throw new Error('Category must be between 9 and 32');
+        }
+        return true;
+    })),
+    difficulty: optional(enums(['easy', 'medium', 'hard']))
+});
+
 // Fonction pour obtenir des questions de OpenTDB
 export async function getOpentTDBQuestions(req: Request, res: Response) {
     try{
@@ -125,28 +139,6 @@ export async function create(req: Request, res: Response) {
     }
 }
 
-// Fonction pour obtenir des quiz à partir de leurs titre
-export async function search(req: Request, res: Response) {
-    try {
-        const title = req.query.title as string;
-        assert(title, string());
-
-        const quizs = await prisma.quiz.findMany({
-            where: {
-                title: {
-                    contains: title
-                },
-                public: true
-            }
-        });
-
-        res.status(200).json({quizs: quizs});
-    }
-    catch (error: any) {
-        res.status(400).json({error: error.message});
-    }
-}
-
 // Fonction pour obtenir un quiz à partir de son id et le cloner
 export async function clone(req: Request, res: Response) {
     try{
@@ -186,10 +178,35 @@ export async function clone(req: Request, res: Response) {
 // Fonction pour obtenir une liste de quiz
 export async function list(req: Request, res: Response) {
     try {
-        const quizs = await prisma.quiz.findMany({
-            where: {
-                public: true
+
+        assert(req.query, ListQuizQuerySchema);
+
+        let where: any = {
+            public: true
+        };
+
+        const title = req.query.title as string;
+
+        if (title) {
+            where.title = {
+                contains: title
             }
+        }
+
+        const category = req.query.category as string;
+
+        if (category) {
+            where.category = Number(category);
+        }
+
+        const difficulty = req.query.difficulty as string;
+
+        if (difficulty) {
+            where.difficulty = difficulty;
+        }
+
+        const quizs = await prisma.quiz.findMany({
+            where
         });
 
         res.status(200).json({quizs: quizs});

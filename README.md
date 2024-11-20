@@ -171,42 +171,6 @@ Valeur de retour : Les informations de la partie.
 }
 ```
 
-### **GET** /quiz/search/:title : Permet de rechercher un quiz par son titre.
-
-Example de requête :
-
-```
-http://localhost:3000/quiz/search/Montitre
-```
-
-Paramètres :
-  - title : Titre du quiz à rechercher.
-
-Valeur de retour : Les informations des quiz.
-
-```json
-{
-  "quizs": [
-      {
-          "id": 1,
-          "title": "Montitre",
-          "category": 9,
-          "difficulty": "easy",
-          "userId": null,
-          "public": true
-      },
-      {
-          "id": 2,
-          "title": "Montitre",
-          "category": 9,
-          "difficulty": "easy",
-          "userId": 1,
-          "public": true
-      }
-  ]
-}
-```
-
 ### **GET** /quiz/:id/clone : Permet de cloner un quiz.
 
 Example de requête :
@@ -232,6 +196,33 @@ Valeur de retour : Le clone du quiz.
       }
   ]
 }
+```
+
+### **GET** /quiz/list : Permet de rechercher un quiz par son titre.
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/list?title=Montitre&category=9&difficulty=easy
+```
+
+Paramètres :
+  - category : Catégorie des questions du quiz (optionnel)
+  - difficulty : Difficulté des questions (optionnel)
+  - title : Titre du quiz (optionnel)
+
+Valeur de retour : Les quiz correspondant à la recherche.
+  
+  ```json
+  [
+    {
+      "id": 1,
+      "title": "Montitre",
+      "category": 9,
+      "difficulty": "easy",
+      "public": true
+    }
+  ]
 ```
 
 ### **POST** /user/register : Permet d'enregistrer un nouvel utilisateur.
