@@ -325,7 +325,8 @@ sudo docker run -d --restart always --name mimir --network internal_network \
 -e PROTOCOL=HTTPS \
 -e DOMAIN=luoja.fr \
 -v /etc/letsencrypt:/etc/letsencrypt:ro \
-docker.luoja.fr/mimir    
+-v /srv/mimir/mimir.db:/usr/src/app/prisma/mimir.db \
+docker.luoja.fr/mimir
 ```
 
 ### CI/CD : Organisation du Pipeline : 
@@ -350,5 +351,3 @@ et d'avoir à tout moment une API fonctionnel
  
 3. pages :   
 		- affiche les résultats du linting et des tests.   
-
-
