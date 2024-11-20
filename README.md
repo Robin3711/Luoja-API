@@ -300,10 +300,10 @@ Valeur de retour : Les informations de l'utilisateur.
 
 ```json
 {
-    "user": {
-        "id": 1,
-        "email": "test@luoja.fr"
-    }
+  "user": {
+    "id": 1,
+    "email": "test@luoja.fr"
+  }
 }
 ```
 
@@ -323,6 +323,8 @@ sudo docker run -d --restart always --name mimir --network internal_network \
 -v /srv/mimir/mimir.db:/usr/src/app/prisma/mimir.db \
 docker.luoja.fr/mimir
 ```
+
+---
 
 ### CI/CD : Organisation du Pipeline : 
 
