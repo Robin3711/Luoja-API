@@ -2,6 +2,7 @@ import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { assert, object, string, refine } from "superstruct";
 import validator from 'validator';
+import * as userUtils from '../utils/userUtils';
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -110,6 +111,27 @@ export async function getInfos(req: Request, res: Response) {
         // Retourner les informations de l'utilisateur
         res.json({ user });
     } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+export async function listGamesUser( req: Request, res: Response) {
+    try {
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new Error("Utilisateur non trouvé");
+        }
+
+        const games = await prisma.game.findMany({
+            where: {
+                userId: user.id
+            }
+        });
+
+        res.json({ games });
+    }
+    catch (error: any) {
         res.status(500).json({ error: error.message });
     }
 }

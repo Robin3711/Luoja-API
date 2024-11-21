@@ -67,6 +67,11 @@ app.get("/quizFast", async (req: Request, res: Response) => {
   quiz.fastCreate(req, res);
 });
 
+// Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
+
+app.get("/quiz/user", async (req: Request, res: Response) => {
+  user.listGamesUser(req, res);
+});
 
 app.post('/user/register', (req: Request, res: Response) => {
   user.create(req, res);
