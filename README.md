@@ -157,6 +157,26 @@ Valeur de retour : La réponse de l'utilisateur.
   "correctAnswer": "Vrai"
 }
 ```
+### **GET** /game/:id/restart
+Exemple de requête
+
+```
+http://localhost:300/game/niker-samoul-miam/restart
+```
+
+Paramètres :
+- id : ID de la partie.
+
+
+Valeur de retour 
+```json
+
+{
+    "id": "gross-trompe-samoul"
+}
+```
+
+
 
 ### **GET** /game/:id/infos
 
