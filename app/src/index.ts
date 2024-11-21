@@ -32,6 +32,11 @@ app.get("/quiz/:id/play", async (req: Request, res: Response) => {
   game.create(req, res);
 });
 
+
+app.get("/game/:id/restart", async (req: Request, res: Response) => {
+  game.restart(req, res);
+});
+
 // Route get de l'API pour obtenir la question courante
 app.get("/game/:id/question", async (req: Request, res: Response) => {
   game.getCurrentQuestion(req, res);
