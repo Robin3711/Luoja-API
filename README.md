@@ -170,9 +170,8 @@ Paramètres :
 
 Valeur de retour 
 ```json
-
 {
-    "id": "gross-trompe-samoul"
+    "id": "theo-aime-les-patates"
 }
 ```
 
