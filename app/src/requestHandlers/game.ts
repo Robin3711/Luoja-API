@@ -155,7 +155,7 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
 
         const questionCursor = game.questionCursor;
 
-        if (questionCursor !== game.quiz.questions.length - 1) {
+        if (questionCursor !== game.quiz.questions.length) {
             
             const question = game.quiz.questions[questionCursor];
             const correctAnswer = question.correctAnswer;
