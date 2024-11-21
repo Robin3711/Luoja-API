@@ -22,7 +22,7 @@ app.post("/quiz", async (req: Request, res: Response) => {
   quiz.create(req, res);
 });
 
-app.get("/quiz/:id", async (req: Request, res: Response) => {
+app.get("/quiz/:id/retrieve", async (req: Request, res: Response) => {
   quiz.get(req, res);
 });
 
@@ -66,7 +66,7 @@ app.get("/game/:id/infos", async (req: Request, res: Response) => {
 
 // Route get de l'API pour obtenir une liste de quiz
 app.get("/quiz/list", async (req: Request, res: Response) => {
-  quiz.list(req, res);
+  quiz.list(req,res);
 });
 
 // Route pour cloner un quiz
@@ -84,7 +84,6 @@ app.get("/quizFast", async (req: Request, res: Response) => {
 app.get("/quiz/user/Game", async (req: Request, res: Response) => {
   user.listGamesUser(req, res);
 });
-
 
 //Route get de l'api pour recuperer les quiz crée de l'utilisateur
 app.get("/quiz/user/Create", async (req: Request, res: Response) => {

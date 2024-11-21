@@ -37,12 +37,12 @@ Valeur de retour : L'identifiant du quiz créé.
 }
 ```
 
-### **GET** /quiz/:id : Permet de récupérer un quiz.
+### **GET** /quiz/:id/retrieve : Permet de récupérer un quiz.
 
 Example de requête :
 
 ```
-http://localhost:3000/quiz/1
+http://localhost:3000/quiz/1/retrieve
 ```
 
 Paramètres :
