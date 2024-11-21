@@ -67,6 +67,11 @@ app.get("/quizFast", async (req: Request, res: Response) => {
   quiz.fastCreate(req, res);
 });
 
+//Route get de l'api pour recuperer les quiz crée de l'utilisateur
+
+app.get("/quiz/user", async (req: Request, res: Response) => {
+  user.getUserCreateQuiz(req, res);
+});
 
 app.post('/user/register', (req: Request, res: Response) => {
   user.create(req, res);
