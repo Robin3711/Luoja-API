@@ -22,6 +22,18 @@ app.post("/quiz", async (req: Request, res: Response) => {
   quiz.create(req, res);
 });
 
+app.get("/quiz/:id", async (req: Request, res: Response) => {
+  quiz.get(req, res);
+});
+
+app.post("/quiz/:id/edit", async (req: Request, res: Response) => {
+  quiz.edit(req, res);
+});
+
+app.get("/quiz/:id/publish", async (req: Request, res: Response) => {
+  quiz.publish(req, res);
+});
+
 // Route get de l'API pour récupérer des questions de l'API OpenTDB
 app.get("/questions", async (req: Request, res: Response) => {
   quiz.getOpentTDBQuestions(req, res);
@@ -69,8 +81,14 @@ app.get("/quizFast", async (req: Request, res: Response) => {
 
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
-app.get("/quiz/user", async (req: Request, res: Response) => {
+app.get("/quiz/user/Game", async (req: Request, res: Response) => {
   user.listGamesUser(req, res);
+});
+
+
+//Route get de l'api pour recuperer les quiz crée de l'utilisateur
+app.get("/quiz/user/Create", async (req: Request, res: Response) => {
+  user.getUserCreateQuiz(req, res);
 });
 
 app.post('/user/register', (req: Request, res: Response) => {

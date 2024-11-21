@@ -166,6 +166,155 @@ export async function create(req: Request, res: Response) {
     }
 }
 
+// Fonction pour obtenir un quiz à partir de son id
+export async function get(req: Request, res: Response) {
+    try{
+        const quizId = req.params.id;
+
+        assert(quizId, string());
+        
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new Error("Utilisateur non trouvé");
+        }
+
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: Number(quizId) },
+            include: { questions: true }
+        });
+
+        if (!quiz) {
+            throw new Error("Quiz non trouvé");
+        }
+
+        if (quiz.userId !== user.id) {
+            throw new Error("Ce quiz ne vous appartient pas");
+        }
+
+        res.status(200).json({quiz: quiz});
+    }
+    catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+}
+
+// Fonction pour éditer un quiz
+export async function edit(req: Request, res: Response) {
+    try{
+        const quizId = req.params.id;
+
+        assert(quizId, string());
+        assert(req.body, CreateQuizBodySchema);
+        assert(req.query, CreateQuizQuerySchema);
+
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: Number(quizId) },
+            include: { questions: true }
+        });
+
+        if (!quiz) {
+            throw new Error("Quiz non trouvé");
+        }
+
+        if (quiz.public) {
+            throw new Error("Vous ne pouvez pas modifier un quiz public");
+        }
+
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new Error("Utilisateur non trouvé");
+        }
+
+        if (quiz.userId !== user.id) {
+            throw new Error("Ce quiz ne vous appartient pas");
+        }
+
+        await prisma.quiz.update({
+            where: { id: quiz.id },
+            data: {
+                title: req.query.title as string,
+                category: Number(req.query.category),
+                difficulty: req.query.difficulty as string
+            }
+        });
+
+        await prisma.question.deleteMany({
+            where: {
+                quizId: quiz.id
+            }
+        });
+
+        for (let question of req.body.questions) {
+            let trueFalse = question.incorrectAnswers.length === 1;
+
+            await prisma.question.create({
+                data: {
+                    text: question.text,
+                    trueFalse: trueFalse,
+                    correctAnswer: question.correctAnswer,
+                    falseAnswer1: question.incorrectAnswers[0] || null,
+                    falseAnswer2: question.incorrectAnswers[1] || null,
+                    falseAnswer3: question.incorrectAnswers[2] || null,
+                    quiz: {
+                        connect: { id: quiz.id }
+                    }
+                }
+            });
+        }
+
+        res.status(200).json({quizId: quiz.id});
+    }
+    catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+}
+
+// Fonction pour publier un quiz
+export async function publish(req: Request, res: Response) {
+    try{
+        const quizId = req.params.id;
+
+        assert(quizId, string());
+
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: Number(quizId) },
+            include: { questions: true }
+        });
+
+        if (!quiz) {
+            throw new Error("Quiz non trouvé");
+        }
+
+        if (quiz.public) {
+            throw new Error("Ce quiz est déjà public");
+        }
+
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new Error("Utilisateur non trouvé");
+        }
+
+        if (quiz.userId !== user.id) {
+            throw new Error("Ce quiz ne vous appartient pas");
+        }
+
+        await prisma.quiz.update({
+            where: { id: quiz.id },
+            data: {
+                public: true
+            }
+        });
+
+        res.status(200).json({quizId: quiz.id});
+    }
+    catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+}
+
 // Fonction pour créer un quiz rapidement
 export async function fastCreate(req: Request, res: Response) {
     try{
