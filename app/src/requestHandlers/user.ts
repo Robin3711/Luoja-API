@@ -2,10 +2,11 @@ import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { assert, object, string, refine } from "superstruct";
 import validator from 'validator';
-import * as userUtils from '../utils/userUtils';
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
+import * as userUtils from '../utils/userUtils';
 
 const Email = refine(string(), 'email', value => {
     if (!validator.isEmail(value)) {
@@ -79,7 +80,7 @@ export async function login(req: Request, res: Response) {
     }
 }
 
-export async function getInfos(req: Request, res: Response) {
+export async function infos(req: Request, res: Response) {
     try {
         // Récupérer le token depuis les en-têtes de la requête
         const token = req.headers.token;
@@ -115,7 +116,7 @@ export async function getInfos(req: Request, res: Response) {
     }
 }
 
-export async function getUserCreateQuiz(req: Request, res: Response) {
+export async function createdQuizs(req: Request, res: Response) {
     try
     {
         const user = await userUtils.getUser(req);
@@ -137,9 +138,7 @@ export async function getUserCreateQuiz(req: Request, res: Response) {
     }
 }
 
-
-
-export async function listGamesUser( req: Request, res: Response) {
+export async function games( req: Request, res: Response) {
     try {
         const user = await userUtils.getUser(req);
 
@@ -154,7 +153,6 @@ export async function listGamesUser( req: Request, res: Response) {
         });
 
         res.json({ games });
-
     }
     catch (error: any) {
         res.status(500).json({ error: error.message });
