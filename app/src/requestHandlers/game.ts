@@ -189,8 +189,9 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         let nextQuestion = questionCursor + 1;
 
         if (questionCursor === game.quiz.questions.length - 1) {
-            await gameUtils.resetProgress(game.id)
+          
         }
+        
         else {
             await prisma.game.update({
                 where: {
