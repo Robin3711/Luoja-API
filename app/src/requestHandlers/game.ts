@@ -272,3 +272,70 @@ export async function getInfos(req: Request, res: Response) {
         res.status(500).json({error: error.message});
     }    
 }
+export async function restart ( req: Request , res : Response)
+{
+    try {
+        const gameIde = req.params.id;
+        assert(gameIde, string());
+        const game = await prisma.game.findUnique({
+            where: {
+                id: gameIde
+            },
+            include: {
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                }
+            }
+        })
+        if (!game) {
+            throw new Error("Partie non trouvée");
+        }
+
+      
+       
+        const gameId = await gameUtils.getUniqueId();
+
+        const gameData: any = {
+            id: gameId,
+            questionCursor: 0,
+            quiz: {
+                connect: { id: game.quiz.id }
+            }
+        };
+
+        const user = await userUtils.getUser(req);
+
+        if (user) {
+            gameData.user = {
+                connect: { id: user.id }
+            };
+        }
+
+        await prisma.game.create({
+            data: gameData
+        });
+
+        for (let question of game.quiz.questions) {
+            await prisma.answer.create({
+                data: {
+                    question: {
+                        connect: { id: question.id }
+                    },
+                    game: {
+                        connect: { id: gameId }
+                    },
+                    correct: false
+                }
+            });
+        }
+
+        res.status(200).json({id: gameId});
+    }
+    catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+        
+}
+
