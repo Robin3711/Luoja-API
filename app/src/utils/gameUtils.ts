@@ -24,26 +24,3 @@ export async function getUniqueId() {
 
     throw new Error("Impossible de générer un identifiant unique pour le quiz");
 }
-
-// Fonction qui permet de réinitialiser la progression d'un quiz
-export async function resetProgress(quizGameId: string) {
-    await prisma.game.update({
-        where: {
-            id: quizGameId
-        },
-        data: {
-            questionCursor: 0
-        }
-    });
-
-    await prisma.answer.updateMany({
-        where: {
-            game: {
-                id: quizGameId
-            }
-        },
-        data: {
-            correct: false
-        }
-    });
-}
