@@ -37,6 +37,99 @@ Valeur de retour : L'identifiant du quiz créé.
 }
 ```
 
+### **GET** /quiz/:id : Permet de récupérer un quiz.
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Valeur de retour : Les informations du quiz.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+```json
+{
+  "title": "Montitre",
+  "category": 9,
+  "difficulty": "easy",
+  "public": true,
+  "questions": [
+    {
+      "text": "Chocolatine ?",
+      "correctAnswer": "Vrai",
+      "incorrectAnswers": ["False"]
+    }
+  ]
+}
+```
+
+### **POST** /quiz/:id/edit : Permet de modifier un quiz.
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/edit
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : Les informations du quiz.
+
+```json
+{
+  "title": "Montitre",
+  "category": 9,
+  "difficulty": "easy",
+  "public": true,
+  "questions": [
+    {
+      "text": "Chocolatine ?",
+      "correctAnswer": "Vrai",
+      "incorrectAnswers": ["False"]
+    }
+  ]
+}
+```
+
+Valeur de retour : L'identifiant du quiz modifié.
+
+```json
+{
+  "quizId": 1
+}
+```
+
+### **GET** /quiz/:id/publish : Permet de publier un quiz.
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/publish
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : L'identifiant du quiz.
+
+```json
+{
+  "quizId": 1
+}
+
 ### **GET** /quizFast
 Example de requête :
 
@@ -46,7 +139,6 @@ localhost:3000/quizFast?amount=23&category=15&difficulty="hard"
 
 Valeur de retour : L'identifiant de la partie.
 ```json
-
 {
   "id": "dry-planets-cover"
 }
