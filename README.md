@@ -295,7 +295,9 @@ Valeur de retour : Les informations de la partie.
       false
   ],
   "questionCursor": 0,
-  "numberOfQuestions": 1
+  "numberOfQuestions": 1,
+  "Difficulty":"hard",
+  "Category": 9
 }
 ```
 
@@ -321,8 +323,6 @@ Valeur de retour : Le clone du quiz.
           "incorrectAnswers": [
               "False"
           ],
-          "Difficulty":"hard",
-          "Category": 9
       }
   ]
 }
