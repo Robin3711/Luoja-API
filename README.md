@@ -96,7 +96,7 @@ Corps de la requête : Les questions du quiz.
 }
 ```
 
-aleur de retour : L'identifiant du quiz créé.
+Valeur de retour : L'identifiant du quiz créé.
 
 ```json
 {
