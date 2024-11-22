@@ -265,7 +265,8 @@ Valeur de retour : Les informations de la partie.
   "questionCursor": 0,
   "numberOfQuestions": 1,
   "Difficulty":"hard",
-  "Category": 9
+  "Category": 9,
+  "Date":"2023-10-05T14:48:00.000Z"
 }
 ```
 
