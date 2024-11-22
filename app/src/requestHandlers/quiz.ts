@@ -6,29 +6,6 @@ import * as openTDB from "../model/opentdb";
 import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
 
-// Schéma pour la requête de récupération de questions
-const OpenTDBQuerySchema = object({
-    amount: refine(string(), 'amount', value => {
-        if (isNaN(parseInt(value))) {
-            throw new Error('Amount must be a number');
-        }
-        if (parseInt(value) < 1 || parseInt(value) > 50) {
-            throw new Error('Amount must be between 1 and 50');
-        }
-        return true;
-    }),
-    category: optional(refine(string(), 'category', value => {
-        if (isNaN(parseInt(value))) {
-            throw new Error('Category must be a number');
-        }
-        if (parseInt(value) < 9 || parseInt(value) > 32) {
-            throw new Error('Category must be between 9 and 32');
-        }
-        return true;
-    })),
-    difficulty: optional(enums(['easy', 'medium', 'hard']))
-});
-
 // Schéma pour une question
 const QuestionSchema = object({
     text: string(),
@@ -94,24 +71,6 @@ const ListQuizQuerySchema = object({
     })),
     difficulty: optional(enums(['easy', 'medium', 'hard']))
 });
-
-// Fonction pour obtenir des questions de OpenTDB
-export async function getOpentTDBQuestions(req: Request, res: Response) {
-    try{
-        assert(req.query, OpenTDBQuerySchema);
-
-        const amount = req.query.amount as string;
-        const category = req.query.category as string | undefined;
-        const difficulty = req.query.difficulty as string | undefined;
-
-        const data = await openTDB.fetchQuestions(amount, category, difficulty);         
-       
-        return res.status(200).json(data);
-    }
-    catch (error: any) {
-        res.status(500).json({error: error.message});
-    }
-}
 
 export async function create(req: Request, res: Response) {
     try{
