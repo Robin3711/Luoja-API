@@ -145,38 +145,6 @@ Valeur de retour : L'identifiant de la partie.
 }
 ```
 
-### **GET** /questions : Permet d'obtenir des question de l'API OpenTDB
-
-Example de requête :
-
-```
-http://localhost:3000/questions?amount=1&category=9&difficulty=easy
-```
-
-Paramètres :
-- amount : nombre de questions à récupérer
-- category : Catégorie des questions à récupérer (optionnel)
-- difficulty : Difficulté des questions à récupérer (optionnel)
-
-Valeur de retour : Un tableau de questions
-
-```json
-[
-  {
-    "type": "multiple",
-    "difficulty": "easy",
-    "category": "General Knowledge",
-    "question": "What machine element is located in the center of fidget spinners?",
-    "correct_answer": "Bearings",
-    "incorrect_answers": [
-      "Axles",
-      "Gears",
-      "Belts"
-    ]
-  }
-]
-```
-
 ### **GET** /quiz/:id/play
 
 Example de requête :
@@ -295,7 +263,9 @@ Valeur de retour : Les informations de la partie.
       false
   ],
   "questionCursor": 0,
-  "numberOfQuestions": 1
+  "numberOfQuestions": 1,
+  "Difficulty":"hard",
+  "Category": 9
 }
 ```
 
@@ -320,7 +290,7 @@ Valeur de retour : Le clone du quiz.
           "correctAnswer": "Vrai",
           "incorrectAnswers": [
               "False"
-          ]
+          ],
       }
   ]
 }
