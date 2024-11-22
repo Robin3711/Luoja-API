@@ -233,7 +233,8 @@ export async function edit(req: Request, res: Response) {
             data: {
                 title: req.query.title as string,
                 category: Number(req.query.category),
-                difficulty: req.query.difficulty as string
+                difficulty: req.query.difficulty as string,
+                UpdateDate : new Date(Date.now())
             }
         });
 

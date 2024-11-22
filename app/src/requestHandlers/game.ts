@@ -239,7 +239,7 @@ export async function infos(req: Request, res: Response) {
             results.push(answer.correct);
         });
       
-        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions , Difficulty :game.quiz.difficulty , Category : game.quiz.category});
+        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions , Difficulty :game.quiz.difficulty , Category : game.quiz.category, CreateDate : game.date});
     }
     catch (error: any) {
         res.status(500).json({error: error.message});

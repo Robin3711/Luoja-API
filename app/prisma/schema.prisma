@@ -12,14 +12,13 @@ model Quiz {
   title      String
   category   Int?       @default(0)
   difficulty String?    @default("any")
-  
-  questions  Question[]
-  games      Game[]
-
   userId     Int?
   public     Boolean    @default(false)
-
+  games      Game[]
+  questions  Question[]
   user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CreateDate       DateTime   @default(now()) 
+  UpdateDate       DateTime   @default(now())
 }
 
 model Question {
@@ -31,9 +30,7 @@ model Question {
   falseAnswer1  String?
   falseAnswer2  String?
   falseAnswer3  String?
-
   answers       Answer[]
-
   quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
@@ -42,29 +39,26 @@ model Game {
   userId         Int?
   quizId         Int
   questionCursor Int
-
   answers        Answer[]
-
-  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime @default(now())
 }
 
 model Answer {
   questionId Int
   gameId     String
   correct    Boolean
-
-  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@id([questionId, gameId])
 }
 
 model User {
-  id     Int      @id @default(autoincrement())
-  email  String   @unique
+  id       Int    @id @default(autoincrement())
+  email    String @unique
   password String
-
-  quizs   Quiz[]
-  games   Game[]
+  games    Game[]
+  quizs    Quiz[]
 }
