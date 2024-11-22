@@ -320,7 +320,9 @@ Valeur de retour : Le clone du quiz.
           "correctAnswer": "Vrai",
           "incorrectAnswers": [
               "False"
-          ]
+          ],
+          "Difficulty":"hard",
+          "Category": 9
       }
   ]
 }
