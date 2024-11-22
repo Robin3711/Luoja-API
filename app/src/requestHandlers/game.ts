@@ -267,7 +267,7 @@ export async function getInfos(req: Request, res: Response) {
             results.push(answer.correct);
         }
       
-        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions});
+        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions , Difficulty :game.quiz.difficulty , Category : game.quiz.category});
     }
     catch (error: any) {
         res.status(500).json({error: error.message});
