@@ -1,5 +1,4 @@
 import { prisma } from "../model/db";
-import { assert, string } from "superstruct";
 import { Request, Response } from "express";
 
 import * as gameUtils from "../utils/gameUtils";
@@ -8,8 +7,6 @@ import * as userUtils from "../utils/userUtils";
 export async function create(req: Request, res: Response) {
     try {
         const quizId = req.params.id;
-
-        assert(quizId, string());
 
         const quiz = await prisma.quiz.findUnique({
             where: {
@@ -28,6 +25,8 @@ export async function create(req: Request, res: Response) {
             throw new Error("Quiz non publié");
         }
 
+        const user = await userUtils.getUser(req);
+
         const gameId = await gameUtils.getUniqueId();
 
         const gameData: any = {
@@ -37,8 +36,6 @@ export async function create(req: Request, res: Response) {
                 connect: { id: quiz.id }
             }
         };
-
-        const user = await userUtils.getUser(req);
 
         if (user) {
             gameData.user = {
@@ -50,19 +47,15 @@ export async function create(req: Request, res: Response) {
             data: gameData
         });
 
-        for (let question of quiz.questions) {
-            await prisma.answer.create({
-                data: {
-                    question: {
-                        connect: { id: question.id }
-                    },
-                    game: {
-                        connect: { id: gameId }
-                    },
-                    correct: false
-                }
-            });
-        }
+        const answers = quiz.questions.map(question => ({
+            questionId: question.id,
+            gameId: gameId, 
+            correct: false
+        }));
+        
+        await prisma.answer.createMany({
+            data: answers
+        });
 
         res.status(200).json({id: gameId});
     }
@@ -72,11 +65,9 @@ export async function create(req: Request, res: Response) {
 }
 
 // Fonction pour obtenir la question courante de la partie
-export async function getCurrentQuestion(req: Request, res: Response) {
+export async function currentQuestion(req: Request, res: Response) {
     try{
         const gameId = req.params.id;
-
-        assert(gameId, string());
 
         const game = await prisma.game.findUnique({
             where: {
@@ -96,9 +87,9 @@ export async function getCurrentQuestion(req: Request, res: Response) {
         }
 
         if(game.userId !== null){
-            const requestUser = await userUtils.getUser(req);
+            const user = await userUtils.getUser(req);
 
-            if(requestUser?.id !== game.userId){
+            if(user?.id !== game.userId){
                 throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
         }
@@ -137,9 +128,6 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         const gameId = req.params.id;
         const answer = req.body.answer;
 
-        assert(gameId, string());
-        assert(answer, string());
-
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId
@@ -158,41 +146,36 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         }
 
         if(game.userId !== null){
-            const requestUser = await userUtils.getUser(req);
+            const user = await userUtils.getUser(req);
 
-            if(requestUser?.id !== game.userId){
+            if(user?.id !== game.userId){
                 throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
         }
 
-        let questionCursor = game.questionCursor;
+        const questionCursor = game.questionCursor;
 
-        const question = game.quiz.questions[questionCursor];
+        if (questionCursor !== game.quiz.questions.length) {
+            
+            const question = game.quiz.questions[questionCursor];
+            const correctAnswer = question.correctAnswer;
+            const wasCorrect = answer === correctAnswer;
+            
+            await prisma.answer.update({
+                where: {
+                    questionId_gameId: {
+                        questionId: question.id,
+                        gameId: game.id    
+                    }    
+                },
 
-        const correctAnswer = question.correctAnswer;
+                data: {
+                    correct: wasCorrect
+                }
+            });
 
-        const wasCorrect = answer === correctAnswer;
-        
-        await prisma.answer.update({
-            where: {
-                questionId_gameId: {
-                    questionId: question.id,
-                    gameId: game.id    
-                }    
-            },
+            const nextQuestion = questionCursor + 1;
 
-            data: {
-                correct: wasCorrect
-            }
-        });
-
-        let nextQuestion = questionCursor + 1;
-
-        if (questionCursor === game.quiz.questions.length - 1) {
-          
-        }
-        
-        else {
             await prisma.game.update({
                 where: {
                     id:  game.id
@@ -201,9 +184,12 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
                     questionCursor: nextQuestion
                 }
             });
-        }
 
-        res.status(200).json({correctAnswer: correctAnswer});
+            res.status(200).json({correctAnswer: correctAnswer});
+        }
+        else {
+            res.status(500).json({error: "Il n'y a plus de questions"});
+        }        
     }
     catch (error: any) {
         res.status(500).json({error: error.message});
@@ -211,11 +197,9 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
 }
 
 // Fonction pour obtenir les informations d'une partie
-export async function getInfos(req: Request, res: Response) {
+export async function infos(req: Request, res: Response) {
     try{
         const gameId = req.params.id;
-
-        assert(gameId, string());
 
         const game = await prisma.game.findUnique({
             where: {
@@ -226,7 +210,8 @@ export async function getInfos(req: Request, res: Response) {
                     include: {
                         questions: true
                     }
-                }
+                },
+                answers: true
             }
         });
 
@@ -235,9 +220,9 @@ export async function getInfos(req: Request, res: Response) {
         }
 
         if(game.userId !== null){
-            const requestUser = await userUtils.getUser(req);
+            const user = await userUtils.getUser(req);
 
-            if(requestUser?.id !== game.userId){
+            if(user?.id !== game.userId){
                 throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
         }
@@ -246,26 +231,13 @@ export async function getInfos(req: Request, res: Response) {
 
         const questionCursor = game.questionCursor;
 
-        let results = [];
+        let results: any = [];
 
-        let questionsIds = game.quiz.questions.map((question) => question.id);
+        game.answers.sort((a, b) => a.questionId - b.questionId);
 
-        for (let questionId of questionsIds) {
-            let answer = await prisma.answer.findUnique({
-                where: {
-                    questionId_gameId: {
-                        questionId: questionId,
-                        gameId: game.id
-                    }
-                }
-            });
-
-            if (!answer) {
-                throw new Error("Réponse non trouvée");
-            }
-
+        game.answers.map((answer) => {
             results.push(answer.correct);
-        }
+        });
       
         res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions , Difficulty :game.quiz.difficulty , Category : game.quiz.category});
     }
@@ -273,11 +245,10 @@ export async function getInfos(req: Request, res: Response) {
         res.status(500).json({error: error.message});
     }    
 }
-export async function restart ( req: Request , res : Response)
-{
+export async function restart( req: Request , res : Response){
     try {
         const gameIde = req.params.id;
-        assert(gameIde, string());
+
         const game = await prisma.game.findUnique({
             where: {
                 id: gameIde
@@ -290,53 +261,25 @@ export async function restart ( req: Request , res : Response)
                 }
             }
         })
+
         if (!game) {
             throw new Error("Partie non trouvée");
         }
 
-      
-       
-        const gameId = await gameUtils.getUniqueId();
+        if(game.userId !== null){
+            const user = await userUtils.getUser(req);
 
-        const gameData: any = {
-            id: gameId,
-            questionCursor: 0,
-            quiz: {
-                connect: { id: game.quiz.id }
+            if(user?.id !== game.userId){
+                throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
-        };
-
-        const user = await userUtils.getUser(req);
-
-        if (user) {
-            gameData.user = {
-                connect: { id: user.id }
-            };
         }
 
-        await prisma.game.create({
-            data: gameData
-        });
+        req.params.id = game.quiz.id.toString();
 
-        for (let question of game.quiz.questions) {
-            await prisma.answer.create({
-                data: {
-                    question: {
-                        connect: { id: question.id }
-                    },
-                    game: {
-                        connect: { id: gameId }
-                    },
-                    correct: false
-                }
-            });
-        }
-
-        res.status(200).json({id: gameId});
+        create(req, res);
     }
     catch (error: any) {
         res.status(500).json({error: error.message});
     }
         
 }
-

@@ -141,23 +141,23 @@ export async function create(req: Request, res: Response) {
             data: quizData
         });
     
-        for (let question of req.body.questions) {
+        const questionsData = req.body.questions.map(question => {
             let trueFalse = question.incorrectAnswers.length === 1;
-
-            await prisma.question.create({
-                data: {
-                    text: question.text,
-                    trueFalse: trueFalse,
-                    correctAnswer: question.correctAnswer,
-                    falseAnswer1: question.incorrectAnswers[0] || null,
-                    falseAnswer2: question.incorrectAnswers[1] || null,
-                    falseAnswer3: question.incorrectAnswers[2] || null,
-                    quiz: {
-                        connect: { id: quiz.id }
-                    }
-                }
-            });
-        }
+        
+            return {
+                text: question.text,
+                trueFalse: trueFalse,
+                correctAnswer: question.correctAnswer,
+                falseAnswer1: question.incorrectAnswers[0] || null,
+                falseAnswer2: question.incorrectAnswers[1] || null,
+                falseAnswer3: question.incorrectAnswers[2] || null,
+                quizId: quiz.id
+            };
+        });
+        
+        await prisma.question.createMany({
+            data: questionsData
+        });        
 
         res.status(200).json({quizId: quiz.id});
     }
@@ -167,11 +167,9 @@ export async function create(req: Request, res: Response) {
 }
 
 // Fonction pour obtenir un quiz à partir de son id
-export async function get(req: Request, res: Response) {
+export async function retrieve(req: Request, res: Response) {
     try{
         const quizId = req.params.id;
-
-        assert(quizId, string());
         
         const user = await userUtils.getUser(req);
 
@@ -204,7 +202,6 @@ export async function edit(req: Request, res: Response) {
     try{
         const quizId = req.params.id;
 
-        assert(quizId, string());
         assert(req.body, CreateQuizBodySchema);
         assert(req.query, CreateQuizQuerySchema);
 
@@ -246,23 +243,24 @@ export async function edit(req: Request, res: Response) {
             }
         });
 
-        for (let question of req.body.questions) {
+        const questionsData = req.body.questions.map(question => {
             let trueFalse = question.incorrectAnswers.length === 1;
-
-            await prisma.question.create({
-                data: {
-                    text: question.text,
-                    trueFalse: trueFalse,
-                    correctAnswer: question.correctAnswer,
-                    falseAnswer1: question.incorrectAnswers[0] || null,
-                    falseAnswer2: question.incorrectAnswers[1] || null,
-                    falseAnswer3: question.incorrectAnswers[2] || null,
-                    quiz: {
-                        connect: { id: quiz.id }
-                    }
-                }
-            });
-        }
+        
+            return {
+                text: question.text,
+                trueFalse: trueFalse,
+                correctAnswer: question.correctAnswer,
+                falseAnswer1: question.incorrectAnswers[0] || null,
+                falseAnswer2: question.incorrectAnswers[1] || null,
+                falseAnswer3: question.incorrectAnswers[2] || null,
+                quizId: quiz.id
+            };
+        });
+        
+        await prisma.question.createMany({
+            data: questionsData
+        });
+        
 
         res.status(200).json({quizId: quiz.id});
     }
@@ -275,8 +273,6 @@ export async function edit(req: Request, res: Response) {
 export async function publish(req: Request, res: Response) {
     try{
         const quizId = req.params.id;
-
-        assert(quizId, string());
 
         const quiz = await prisma.quiz.findUnique({
             where: { id: Number(quizId) },
@@ -342,29 +338,20 @@ export async function fastCreate(req: Request, res: Response) {
             data: quizData
         });
 
-        for (let question of questionData) {    
-
-            let trueFalse = true;
-
-            if (question.incorrect_answers.length == 3) {
-                trueFalse = false; 
-            }
-
-            await prisma.question.create({
-                data: {
-                    text: question.question,
-                    trueFalse: trueFalse,
-                    correctAnswer: question.correct_answer,
-                    falseAnswer1: question.incorrect_answers[0],
-                    falseAnswer2: question.incorrect_answers[1],
-                    falseAnswer3: question.incorrect_answers[2],
-                    quiz: {
-                        connect: { id: quiz.id }
-                    }
-                }
-            });
-        }
-
+        const questions = questionData.map((question: any) => ({
+            text: question.question,
+            trueFalse: question.incorrect_answers.length !== 3,
+            correctAnswer: question.correct_answer,
+            falseAnswer1: question.incorrect_answers[0] || null,
+            falseAnswer2: question.incorrect_answers[1] || null,
+            falseAnswer3: question.incorrect_answers[2] || null,
+            quizId: quiz.id
+        }));
+        
+        await prisma.question.createMany({
+            data: questions,
+        });
+        
         const gameId = await gameUtils.getUniqueId();
 
         const gameData: any = {
@@ -387,29 +374,22 @@ export async function fastCreate(req: Request, res: Response) {
             data: gameData
         });
 
-        const quizWithQuestions = await prisma.quiz.findUnique({
-            where: { id: quiz.id },
-            include: { questions: true }
+        const quizQuestions = await prisma.question.findMany({
+            where: {
+                quizId: quiz.id
+            }
         });
 
-        if (!quizWithQuestions) {
-            throw new Error("Quiz not found");
-        }
-
-        for (let question of quizWithQuestions.questions) {
-            await prisma.answer.create({
-                data: {
-                    question: {
-                        connect: { id: question.id }
-                    },
-                    game: {
-                        connect: { id: gameId }
-                    },
-                    correct: false
-                }
-            });
-        }
-
+        const answers = quizQuestions.map(question => ({
+            questionId: question.id,
+            gameId: gameId, 
+            correct: false
+        }));
+        
+        await prisma.answer.createMany({
+            data: answers,
+        });
+        
         res.status(200).json({id: gameId});
     }    
     catch (error: any) {

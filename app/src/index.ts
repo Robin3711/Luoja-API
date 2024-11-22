@@ -22,8 +22,8 @@ app.post("/quiz", async (req: Request, res: Response) => {
   quiz.create(req, res);
 });
 
-app.get("/quiz/:id", async (req: Request, res: Response) => {
-  quiz.get(req, res);
+app.get("/quiz/:id/retrieve", async (req: Request, res: Response) => {
+  quiz.retrieve(req, res);
 });
 
 app.post("/quiz/:id/edit", async (req: Request, res: Response) => {
@@ -51,7 +51,7 @@ app.get("/game/:id/restart", async (req: Request, res: Response) => {
 
 // Route get de l'API pour obtenir la question courante
 app.get("/game/:id/question", async (req: Request, res: Response) => {
-  game.getCurrentQuestion(req, res);
+  game.currentQuestion(req, res);
 });
 
 // Route post de l'API pour vérifier la réponse à la question courante
@@ -61,12 +61,12 @@ app.post("/game/:id/answer", async (req: Request, res: Response) => {
 
 // Route get de l'API pour obtenir les informations du quiz
 app.get("/game/:id/infos", async (req: Request, res: Response) => {
-  game.getInfos(req, res);
+  game.infos(req, res);
 });
 
 // Route get de l'API pour obtenir une liste de quiz
 app.get("/quiz/list", async (req: Request, res: Response) => {
-  quiz.list(req, res);
+  quiz.list(req,res);
 });
 
 // Route pour cloner un quiz
@@ -82,13 +82,12 @@ app.get("/quizFast", async (req: Request, res: Response) => {
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
 app.get("/quiz/user/Game", async (req: Request, res: Response) => {
-  user.listGamesUser(req, res);
+  user.games(req, res);
 });
-
 
 //Route get de l'api pour recuperer les quiz crée de l'utilisateur
 app.get("/quiz/user/Create", async (req: Request, res: Response) => {
-  user.getUserCreateQuiz(req, res);
+  user.createdQuizs(req, res);
 });
 
 app.post('/user/register', (req: Request, res: Response) => {
@@ -100,7 +99,7 @@ app.post('/user/login', (req: Request, res: Response) => {
 });
 
 app.get('/user/infos', (req: Request, res: Response) => {
-  user.getInfos(req, res);
+  user.infos(req, res);
 });
 
 if (PROTOCOL === 'HTTPS') {

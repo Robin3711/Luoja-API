@@ -37,12 +37,12 @@ Valeur de retour : L'identifiant du quiz créé.
 }
 ```
 
-### **GET** /quiz/:id : Permet de récupérer un quiz.
+### **GET** /quiz/:id/retrieve : Permet de récupérer un quiz dont on est l'auteur.
 
 Example de requête :
 
 ```
-http://localhost:3000/quiz/1
+http://localhost:3000/quiz/1/retrieve
 ```
 
 Paramètres :
@@ -129,12 +129,13 @@ Valeur de retour : L'identifiant du quiz.
 {
   "quizId": 1
 }
+```
 
 ### **GET** /quizFast
 Example de requête :
 
 ```
-localhost:3000/quizFast?amount=23&category=15&difficulty="hard"
+localhost:3000/quizFast?amount=23&category=15&difficulty=hard
 ```
 
 Valeur de retour : L'identifiant de la partie.
@@ -258,6 +259,9 @@ http://localhost:300/game/niker-samoul-miam/restart
 
 Paramètres :
 - id : ID de la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
 
 
 Valeur de retour 
