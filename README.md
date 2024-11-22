@@ -71,26 +71,21 @@ Headers :
 
 ### **POST** /quiz/:id/edit : Permet de modifier un quiz.
 
-Example de requête :
-
+Example de requête : 
 ```
-http://localhost:3000/quiz/1/edit
+http://localhost:3000/quiz/1/edit?category=9&difficulty=easy&title=Montitre&public=true
 ```
 
 Paramètres :
-- id : ID du quiz.
+- category : Catégorie des questions du quiz (optionnel)
+- difficulty : Difficulté des questions (optionnel)
+- title : Titre du quiz
+- public : Visibilité du quiz (optionnel)
 
-Headers :
-- token : Token d'authentification de l'utilisateur.
-
-Corps de la requête : Les informations du quiz.
+Corps de la requête : Les questions du quiz.
 
 ```json
 {
-  "title": "Montitre",
-  "category": 9,
-  "difficulty": "easy",
-  "public": true,
   "questions": [
     {
       "text": "Chocolatine ?",
@@ -101,7 +96,7 @@ Corps de la requête : Les informations du quiz.
 }
 ```
 
-Valeur de retour : L'identifiant du quiz modifié.
+aleur de retour : L'identifiant du quiz créé.
 
 ```json
 {
