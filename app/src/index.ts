@@ -34,11 +34,6 @@ app.get("/quiz/:id/publish", async (req: Request, res: Response) => {
   quiz.publish(req, res);
 });
 
-// Route get de l'API pour récupérer des questions de l'API OpenTDB
-app.get("/questions", async (req: Request, res: Response) => {
-  quiz.getOpentTDBQuestions(req, res);
-});
-
 //Route pour pouvoir jouer à un quiz
 app.get("/quiz/:id/play", async (req: Request, res: Response) => {
   game.create(req, res);
