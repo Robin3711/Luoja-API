@@ -158,6 +158,32 @@ Valeur de retour : L'identifiant de la partie.
 }
 ```
 
+
+
+### **GET** /game/:id/average
+Exemple de requête :
+
+```
+http://localhost:3000/game/admin-discord-pue/average
+```
+
+
+Paramètres :
+
+-id : ID de la partie.
+Headers :
+
+-token : Token d'authentification de l'utilisateur.
+Valeur de retour : La moyenne des scores pour le quiz spécifié.
+```json
+{
+  "averageScore": 75
+}
+```
+
+
+
+
 ### **GET** /game/:id/question
 
 Example de requête :
