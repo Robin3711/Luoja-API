@@ -21,7 +21,7 @@ async function getUserId(req: Request): Promise<number | null> {
 }
 
 // Fonction qui permet de récupérer l'utilisateur connecté à partir de la requête
-export async function getUser(req: Request): Promise<{ id: number, email: string } | null> {
+export async function getUser(req: Request): Promise<{ id: number, userName: string } | null> {
 
     const userId = await getUserId(req);
 
@@ -33,10 +33,10 @@ export async function getUser(req: Request): Promise<{ id: number, email: string
         where: { id: userId },
         select: {
             id: true,
-            email: true,
+            userName: true,
             password: false
         }
-    });
+    }); 
 
     return user;
 }

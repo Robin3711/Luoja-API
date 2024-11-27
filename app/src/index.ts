@@ -74,6 +74,11 @@ app.get("/quizFast", async (req: Request, res: Response) => {
   quiz.fastCreate(req, res);
 });
 
+//Route get pour obtenir la moyenne des scores d'un quiz
+app.get("/game/:id/average", async (req: Request, res: Response) => {
+  game.average(req, res);
+});
+
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
 app.get("/quiz/user/Game", async (req: Request, res: Response) => {
