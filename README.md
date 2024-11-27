@@ -192,6 +192,7 @@ Example de requête :
 http://localhost:3000/game/samuel-love-potatoes/question
 ```
 
+
 Paramètres :
 - id : ID de la partie.
 
@@ -344,6 +345,45 @@ Valeur de retour : Les quiz correspondant à la recherche.
     }
   ]
 ```
+
+### **Get**  /user/:id/createdQuizs
+
+Example de requête : 
+```
+http://localhost:3000/user/some-user-id/createdQuizs
+```
+
+Paramètres :
+
+id : ID de l'utilisateur.
+Headers :
+
+token : Token d'authentification de l'utilisateur.
+
+
+Valeur de retour : Le token d'authentification de l'utilisateur.
+
+```json
+ {
+    "id": 1,
+    "title": "Sample Quiz",
+    "category": 0,
+    "difficulty": "easy",
+    "public": true,
+    "createdAt": "2023-10-05T14:48:00.000Z",
+    "updatedAt": "2023-10-05T14:48:00.000Z"
+  },
+  {
+    "id": 2,
+    "title": "Another Quiz",
+    "category": 1,
+    "difficulty": "medium",
+    "public": false,
+    "createdAt": "2023-10-05T14:48:00.000Z",
+    "updatedAt": "2023-10-05T14:48:00.000Z"
+  }
+```
+
 
 ### **POST** /user/register : Permet d'enregistrer un nouvel utilisateur.
 
