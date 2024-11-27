@@ -14,11 +14,11 @@ model Quiz {
   difficulty String?    @default("any")
   userId     Int?
   public     Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
   games      Game[]
   questions  Question[]
   user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt 
 }
 
 model Question {
@@ -39,18 +39,18 @@ model Game {
   userId         Int?
   quizId         Int
   questionCursor Int
+  createdAt      DateTime @default(now())
   answers        Answer[]
-  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt  DateTime   @default(now())
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
 model Answer {
   questionId Int
   gameId     String
   correct    Boolean
-  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@id([questionId, gameId])
 }
@@ -58,7 +58,7 @@ model Answer {
 model User {
   id       Int    @id @default(autoincrement())
   password String
-  userName String @unique 
+  userName String @unique
   games    Game[]
   quizs    Quiz[]
 }
