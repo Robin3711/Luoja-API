@@ -467,7 +467,8 @@ export async function score(req : Request, res : Response){
     }
 
     score = score / quiz.games.length;
-    res.status(200).json({score: score});
+    
+    res.status(200).json({score: score , nombreDePartie : quiz.games.length});
     
   }      
   catch (error: any) {

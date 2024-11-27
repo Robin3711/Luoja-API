@@ -117,13 +117,42 @@ export async function createdQuizs(req: Request, res: Response) {
             throw new Error("Utilisateur non trouvé");
         }
 
-        const quizs = await prisma.quiz.findMany({
+        // Récupérer les quizs créés par l'utilisateur + le nombre de questions et pas les questions
+
+        
+        const quizzes = await prisma.quiz.findMany({
             where: {
                 userId: user.id
+            },
+            select: {
+                id: true,
+                title: true,
+                category: true,
+                difficulty: true,
+                public: true,
+                createdAt: true,
+                updatedAt: true,
+                _count: {
+                    select: {
+                        questions: true
+                    }
+                }
             }
         });
+        const result = quizzes.map(quiz => ({
+            id: quiz.id,
+            title: quiz.title,
+            category: quiz.category,
+            difficulty: quiz.difficulty,
+            public: quiz.public,
+            createdAt: quiz.createdAt,
+            updatedAt: quiz.updatedAt,
+            numberOfQuestions: quiz._count.questions
+        }));
 
-        res.json({ quizs });
+        res.status(200).json(result);
+   
+
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
