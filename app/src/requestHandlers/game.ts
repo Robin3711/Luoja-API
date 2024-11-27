@@ -1,6 +1,6 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-import { assert , integer, string } from "superstruct";
+import { assert, integer, string } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
 
@@ -13,7 +13,7 @@ export async function create(req: Request, res: Response) {
     try {
 
         const quizId = Number(req.params.id);
-        assert (quizId, integer());
+        assert(quizId, integer());
 
         const quiz = await prisma.quiz.findUnique({
             where: {
@@ -56,26 +56,26 @@ export async function create(req: Request, res: Response) {
 
         const answers = quiz.questions.map(question => ({
             questionId: question.id,
-            gameId: gameId, 
+            gameId: gameId,
             correct: false
         }));
-        
+
         await prisma.answer.createMany({
             data: answers
         });
 
-        res.status(200).json({id: gameId});
+        res.status(200).json({ id: gameId });
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 }
 
 // Fonction pour obtenir la question courante de la partie
 export async function currentQuestion(req: Request, res: Response) {
-    try{
+    try {
         const gameId = req.params.id;
-        assert (gameId, string());
+        assert(gameId, string());
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId
@@ -85,23 +85,27 @@ export async function currentQuestion(req: Request, res: Response) {
                     include: {
                         questions: true
                     }
-                },                
+                },
             }
         });
 
-        if(!game){
+        if (!game) {
             throw new Error("Partie non trouvée !")
         }
 
-        if(game.userId !== null){
+        if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
-            if(user?.id !== game.userId){
+            if (user?.id !== game.userId) {
                 throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
         }
 
         let questionCursor = game.questionCursor;
+
+        if (questionCursor >= game.quiz.questions.length) {
+            throw new Error("Aucune question restante dans ce quiz.")
+        }
 
         const question = game.quiz.questions[questionCursor];
 
@@ -125,18 +129,18 @@ export async function currentQuestion(req: Request, res: Response) {
         });
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 }
 
 // Fonction pour vérifier la réponse à une question
 export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
-    try{
+    try {
         const gameId = req.params.id;
         const answer = req.body.answer;
 
-        assert (gameId, string());
-        assert (answer, string());
+        assert(gameId, string());
+        assert(answer, string());
 
         const game = await prisma.game.findUnique({
             where: {
@@ -155,10 +159,10 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
             throw new Error("Partie non trouvée");
         }
 
-        if(game.userId !== null){
+        if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
-            if(user?.id !== game.userId){
+            if (user?.id !== game.userId) {
                 throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
         }
@@ -166,17 +170,17 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         const questionCursor = game.questionCursor;
 
         if (questionCursor !== game.quiz.questions.length) {
-            
+
             const question = game.quiz.questions[questionCursor];
             const correctAnswer = question.correctAnswer;
             const wasCorrect = answer === correctAnswer;
-            
+
             await prisma.answer.update({
                 where: {
                     questionId_gameId: {
                         questionId: question.id,
-                        gameId: game.id    
-                    }    
+                        gameId: game.id
+                    }
                 },
 
                 data: {
@@ -188,29 +192,29 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
 
             await prisma.game.update({
                 where: {
-                    id:  game.id
+                    id: game.id
                 },
                 data: {
                     questionCursor: nextQuestion
                 }
             });
 
-            res.status(200).json({correctAnswer: correctAnswer});
+            res.status(200).json({ correctAnswer: correctAnswer });
         }
         else {
-            res.status(500).json({error: "Il n'y a plus de questions"});
-        }        
+            res.status(500).json({ error: "Il n'y a plus de questions" });
+        }
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 }
 
 // Fonction pour obtenir les informations d'une partie
 export async function infos(req: Request, res: Response) {
-    try{
+    try {
         const gameId = req.params.id;
-        assert (gameId, string());
+        assert(gameId, string());
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId
@@ -229,10 +233,10 @@ export async function infos(req: Request, res: Response) {
             throw new Error("Partie non trouvée");
         }
 
-        if(game.userId !== null){
+        if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
-            if(user?.id !== game.userId){
+            if (user?.id !== game.userId) {
                 throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
         }
@@ -248,17 +252,17 @@ export async function infos(req: Request, res: Response) {
         game.answers.map((answer) => {
             results.push(answer.correct);
         });
-      
-        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions , Difficulty :game.quiz.difficulty , Category : game.quiz.category, CreateDate : game.createdAt});
+
+        res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt });
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
-    }    
+        res.status(500).json({ error: error.message });
+    }
 }
-export async function restart( req: Request , res : Response){
+export async function restart(req: Request, res: Response) {
     try {
         const gameIde = req.params.id;
-        assert (gameIde, string());
+        assert(gameIde, string());
         const game = await prisma.game.findUnique({
             where: {
                 id: gameIde
@@ -276,10 +280,10 @@ export async function restart( req: Request , res : Response){
             throw new Error("Partie non trouvée");
         }
 
-        if(game.userId !== null){
+        if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
-            if(user?.id !== game.userId){
+            if (user?.id !== game.userId) {
                 throw new Error("Cette partie ne peut pas être jouée avec ce compte")
             }
         }
@@ -289,9 +293,9 @@ export async function restart( req: Request , res : Response){
         create(req, res);
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
-        
+
 }
 
 
