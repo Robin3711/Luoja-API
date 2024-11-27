@@ -1,16 +1,23 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-
+import { assert , integer, string } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
 
+
+
+
+
+
 export async function create(req: Request, res: Response) {
     try {
-        const quizId = req.params.id;
+
+        const quizId = Number(req.params.id);
+        assert (quizId, integer());
 
         const quiz = await prisma.quiz.findUnique({
             where: {
-                id: Number(quizId)
+                id: quizId
             },
             include: {
                 questions: true
@@ -68,7 +75,7 @@ export async function create(req: Request, res: Response) {
 export async function currentQuestion(req: Request, res: Response) {
     try{
         const gameId = req.params.id;
-
+        assert (gameId, string());
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId
@@ -127,6 +134,9 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
     try{
         const gameId = req.params.id;
         const answer = req.body.answer;
+
+        assert (gameId, string());
+        assert (answer, string());
 
         const game = await prisma.game.findUnique({
             where: {
@@ -200,7 +210,7 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
 export async function infos(req: Request, res: Response) {
     try{
         const gameId = req.params.id;
-
+        assert (gameId, string());
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId
@@ -239,7 +249,7 @@ export async function infos(req: Request, res: Response) {
             results.push(answer.correct);
         });
       
-        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions , Difficulty :game.quiz.difficulty , Category : game.quiz.category, CreateDate : game.date});
+        res.status(200).json({results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions , Difficulty :game.quiz.difficulty , Category : game.quiz.category, CreateDate : game.createdAt});
     }
     catch (error: any) {
         res.status(500).json({error: error.message});
@@ -248,7 +258,7 @@ export async function infos(req: Request, res: Response) {
 export async function restart( req: Request , res : Response){
     try {
         const gameIde = req.params.id;
-
+        assert (gameIde, string());
         const game = await prisma.game.findUnique({
             where: {
                 id: gameIde
@@ -274,7 +284,7 @@ export async function restart( req: Request , res : Response){
             }
         }
 
-        req.params.id = game.quiz.id.toString();
+        req.params.id = game.quiz.id.toString()
 
         create(req, res);
     }
@@ -282,4 +292,42 @@ export async function restart( req: Request , res : Response){
         res.status(500).json({error: error.message});
     }
         
+}
+
+
+
+export async function average(req: Request, res: Response) {
+    try {
+        const gameId = req.params.id;
+        assert(gameId, string());
+
+        const game = await prisma.game.findUnique({
+            where: {
+                id: gameId
+            },
+            include: {
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                },
+                answers: true // Inclure les réponses dans la requête
+            }
+        });
+
+        if (!game) {
+            throw new Error("Partie non trouvée");
+        }
+
+        // Calculer la moyenne des scores
+        const totalQuestions = game.quiz.questions.length;
+        const correctAnswers = game.answers.filter(answer => answer.correct).length;
+        const averageScore = (correctAnswers / totalQuestions) * 100;
+
+        res.status(200).json({
+            averageScore: averageScore
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
 }

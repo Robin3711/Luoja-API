@@ -17,8 +17,8 @@ model Quiz {
   games      Game[]
   questions  Question[]
   user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  CreateDate       DateTime   @default(now()) 
-  UpdateDate       DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt 
 }
 
 model Question {
@@ -42,7 +42,7 @@ model Game {
   answers        Answer[]
   quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date           DateTime @default(now())
+  createdAt  DateTime   @default(now())
 }
 
 model Answer {
@@ -57,8 +57,8 @@ model Answer {
 
 model User {
   id       Int    @id @default(autoincrement())
-  email    String @unique
   password String
+  userName String @unique 
   games    Game[]
   quizs    Quiz[]
 }
