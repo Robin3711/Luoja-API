@@ -1,10 +1,11 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-import { assert, object, string, refine, enums, optional, array } from "superstruct";
+import { assert, object, string, refine, enums, optional, array, integer } from "superstruct";
 
 import * as openTDB from "../model/opentdb";
 import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
+import { getAverageScore } from "../utils/gameUtils";
 
 // Schéma pour une question
 const QuestionSchema = object({
@@ -433,4 +434,44 @@ export async function list(req: Request, res: Response) {
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
+}
+
+
+export async function score(req : Request, res : Response){
+  try{
+    const quizId = req.params.id;
+        
+    const user = await userUtils.getUser(req);
+
+    if (!user) {
+        throw new Error("Utilisateur non trouvé");
+    }
+
+    const quiz = await prisma.quiz.findUnique({
+        where: { id: Number(quizId) },
+        include: { games : true }
+    });
+
+    if (!quiz) {
+        throw new Error("Quiz non trouvé");
+    }
+
+    if (quiz.userId !== user.id) {
+        throw new Error("Ce quiz ne vous appartient pas");
+    }
+     
+    let score =0;
+    for ( let i=0 ; i<quiz.games.length ; i++){
+        score += await getAverageScore(quiz.games[i].id);
+        
+    }
+
+    score = score / quiz.games.length;
+    res.status(200).json({score: score});
+    
+  }      
+  catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+    
 }
