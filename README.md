@@ -1,8 +1,45 @@
 # Mimir - API
 
+## Table des matières
+
+1. [Mimir - API](#mimir---api)
+2. [Documentation API](#documentation-api)
+    - [Le quiz](#route-pour-le-quiz)
+      - [Créer un quiz](#post-quiz)
+      - [Publier un quiz](#get-quizidpublish)
+      - [Récupérer son quiz](#get-quizidretrieve)
+      - [Rechercher un quiz](#get-quizlist)
+      - [Modifier un quiz](#post-quizidedit)
+      - [Créer une partie rapide](#get-quizfast)
+      - [Jouer à un quiz](#get-quizidplay)
+      - [Cloner un quiz](#get-quizidclone)
+    - [La partie](#route-pour-la-partie)
+        - [Récupérer la question courante d'une partie](#get-gameidquestion)
+        - [Récupérer la réponse d'une question](#post-gameidanswer)
+      - [Récupérer les informations de la partie](#get-gameidinfos)
+      - [Moyenne score d'une partie](#get-gameidaverage)
+      - [Lancer une nouvelle partie](#get-gameidrestart)
+    - [L'utilisateur](#route-pour-lutilisateur)
+      - [Enregistrer un utilisateur](#post-userregister)
+      - [Se connecter](#post-userlogin)
+      - [Récupérer les informations de l'utilisateur](#get-userinfos)
+      - [Récupérer les quiz d'un utilisateur](#get-useridcreatedquizs)
+3. [Commande de lancement de l'API en dev](#commande-de-lancement-de-lapi-en-dev)
+4. [Commande de lancement de l'image WEB en production](#commande-de-lancement-de-limage-web-en-production)
+5. [CI/CD : Organisation du Pipeline](#cicd--organisation-du-pipeline)
+   - [Stages](#stages)
+     - [1. build](#1-build)
+     - [2. lint et tests](#2-lint-et-tests)
+     - [3. pages](#3-pages)
+
+
 ## Documentation API
 
-### **POST** /quiz : Permet de créer un quiz personnalisé.
+### Route pour le quiz
+
+#### **POST** /quiz
+
+*Permet de créer un quiz personnalisé.*
 
 Example de requête : 
 ```
@@ -37,7 +74,33 @@ Valeur de retour : L'identifiant du quiz créé.
 }
 ```
 
-### **GET** /quiz/:id/retrieve : Permet de récupérer un quiz dont on est l'auteur.
+#### **GET** /quiz/:id/publish
+
+*Permet de publier un quiz.*
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/publish
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : L'identifiant du quiz.
+
+```json
+{
+  "quizId": 1
+}
+```
+
+#### **GET** /quiz/:id/retrieve
+
+*Permet de récupérer un quiz dont on est l'auteur.*
 
 Example de requête :
 
@@ -69,7 +132,38 @@ Headers :
 }
 ```
 
-### **POST** /quiz/:id/edit : Permet de modifier un quiz.
+#### **GET** /quiz/list
+
+*Permet de rechercher un quiz par son titre.*
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/list?title=Montitre&category=9&difficulty=easy
+```
+
+Paramètres :
+  - category : Catégorie des questions du quiz (optionnel)
+  - difficulty : Difficulté des questions (optionnel)
+  - title : Titre du quiz (optionnel)
+
+Valeur de retour : Les quiz correspondant à la recherche.
+  
+  ```json
+  [
+    {
+      "id": 1,
+      "title": "Montitre",
+      "category": 9,
+      "difficulty": "easy",
+      "public": true
+    }
+  ]
+```
+
+#### **POST** /quiz/:id/edit
+
+*Permet de modifier un quiz.*
 
 Example de requête : 
 ```
@@ -104,33 +198,14 @@ Valeur de retour : L'identifiant du quiz créé.
 }
 ```
 
-### **GET** /quiz/:id/publish : Permet de publier un quiz.
+#### **GET** /quizFast
+
+*Permet de créer une partie rapide générer automatiquement*
 
 Example de requête :
 
 ```
-http://localhost:3000/quiz/1/publish
-```
-
-Paramètres :
-- id : ID du quiz.
-
-Headers :
-- token : Token d'authentification de l'utilisateur.
-
-Valeur de retour : L'identifiant du quiz.
-
-```json
-{
-  "quizId": 1
-}
-```
-
-### **GET** /quizFast
-Example de requête :
-
-```
-localhost:3000/quizFast?amount=23&category=15&difficulty=hard
+http://localhost:3000/quizFast?amount=23&category=15&difficulty=hard
 ```
 
 Valeur de retour : L'identifiant de la partie.
@@ -140,7 +215,9 @@ Valeur de retour : L'identifiant de la partie.
 }
 ```
 
-### **GET** /quiz/:id/play
+#### **GET** /quiz/:id/play
+
+*Permet de jouer à un partie*
 
 Example de requête :
 ```
@@ -158,40 +235,46 @@ Valeur de retour : L'identifiant de la partie.
 }
 ```
 
+#### **GET** /quiz/:id/clone
 
+*Permet de cloner un quiz*
 
-### **GET** /game/:id/average
-Exemple de requête :
+Example de requête :
 
 ```
-http://localhost:3000/game/admin-discord-pue/average
+http://localhost:3000/quiz/1/clone
 ```
-
 
 Paramètres :
+  - id : ID du quiz à cloner.
 
--id : ID de la partie.
-Headers :
+Valeur de retour : Le clone du quiz.
 
--token : Token d'authentification de l'utilisateur.
-Valeur de retour : La moyenne des scores pour le quiz spécifié.
 ```json
 {
-  "averageScore": 75
+  "questions": [
+      {
+          "question": "Chocolatine ?",
+          "correctAnswer": "Vrai",
+          "incorrectAnswers": [
+              "False"
+          ],
+      }
+  ]
 }
 ```
 
+### Route pour la partie
 
+#### **GET** /game/:id/question
 
-
-### **GET** /game/:id/question
+*Permet de récupérer le question courante d'une partie*
 
 Example de requête :
 
 ```
 http://localhost:3000/game/samuel-love-potatoes/question
 ```
-
 
 Paramètres :
 - id : ID de la partie.
@@ -211,7 +294,9 @@ Valeur de retour : La question courante de la partie.
 }
 ```
 
-### **POST** /game/:id/answer
+#### **POST** /game/:id/answer
+
+*Permet de vérifier la réponse d'une question*
 
 Example de requête :
 
@@ -240,30 +325,10 @@ Valeur de retour : La réponse de l'utilisateur.
   "correctAnswer": "Vrai"
 }
 ```
-### **GET** /game/:id/restart
-Exemple de requête
 
-```
-http://localhost:300/game/niker-samoul-miam/restart
-```
+#### **GET** /game/:id/infos
 
-Paramètres :
-- id : ID de la partie.
-
-Headers :
-- token : Token d'authentification de l'utilisateur.
-
-
-Valeur de retour 
-```json
-{
-    "id": "theo-aime-les-patates"
-}
-```
-
-
-
-### **GET** /game/:id/infos
+*Permet de connaitre les informations de la partie*
 
 Example de requête :
 
@@ -292,61 +357,134 @@ Valeur de retour : Les informations de la partie.
 }
 ```
 
-### **GET** /quiz/:id/clone : Permet de cloner un quiz.
+#### **GET** /game/:id/average
 
-Example de requête :
+*Permet de connaître son score sur un quiz*
+
+Exemple de requête :
 
 ```
-http://localhost:3000/quiz/1/clone
+http://localhost:3000/game/copilote-est-surcote/average
 ```
+
 
 Paramètres :
-  - id : ID du quiz à cloner.
 
-Valeur de retour : Le clone du quiz.
+-id : ID de la partie.
+Headers :
 
+-token : Token d'authentification de l'utilisateur.
+Valeur de retour : La moyenne des scores pour le quiz spécifié.
 ```json
 {
-  "questions": [
-      {
-          "question": "Chocolatine ?",
-          "correctAnswer": "Vrai",
-          "incorrectAnswers": [
-              "False"
-          ],
-      }
-  ]
+  "averageScore": 75
 }
 ```
 
-### **GET** /quiz/list : Permet de rechercher un quiz par son titre.
+#### **GET** /game/:id/restart
 
-Example de requête :
+*Permet de recommencer une partie*
+
+Exemple de requête
 
 ```
-http://localhost:3000/quiz/list?title=Montitre&category=9&difficulty=easy
+http://localhost:3000/game/veux-un-vingt/restart
 ```
 
 Paramètres :
-  - category : Catégorie des questions du quiz (optionnel)
-  - difficulty : Difficulté des questions (optionnel)
-  - title : Titre du quiz (optionnel)
+- id : ID de la partie.
 
-Valeur de retour : Les quiz correspondant à la recherche.
-  
-  ```json
-  [
-    {
-      "id": 1,
-      "title": "Montitre",
-      "category": 9,
-      "difficulty": "easy",
-      "public": true
-    }
-  ]
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+Valeur de retour 
+```json
+{
+    "id": "theo-aime-patates"
+}
 ```
 
-### **Get**  /user/:id/createdQuizs
+### Route pour l'utilisateur
+
+#### **POST** /user/register
+
+*Permet d'enregistrer un nouvel utilisateur.*
+
+Example de requête : 
+```
+http://localhost:3000/user/register
+```
+
+Corps de la requête : Les informations de l'utilisateur.
+
+```json
+{
+  "email" : "test@luoja.fr",
+  "password" : "mysupersecurepassword"
+}
+```
+
+Valeur de retour : Le token d'authentification de l'utilisateur.
+
+```json
+{
+  "token": "supersecuretoken"
+}
+```
+
+#### **POST** /user/login 
+
+*Permet de connecter un utilisateur.*
+
+Example de requête : 
+```
+http://localhost:3000/user/login
+```
+
+Corps de la requête : Les informations de l'utilisateur.
+
+```json
+{
+  "email" : "test@luoja.fr",
+  "password" : "mysupersecurepassword"
+}
+```
+
+Valeur de retour : Le token d'authentification de l'utilisateur
+
+```json
+{
+  "token": "supersecuretoken"
+}
+```
+
+#### **GET** /user/infos
+
+*Permet de récupérer les informations de l'utilisateur.*
+
+Example de requête : 
+```
+http://localhost:3000/user/infos
+```
+
+Headers :
+- token : Token d'authentification de l'utilisateur
+
+Valeur de retour : Les informations de l'utilisateur.
+
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "test@luoja.fr"
+  }
+}
+```
+
+#### **Get** /user/:id/createdQuizs
+
+*Permet de consulter les quiz créer d'un utilisateur.*
 
 Example de requête : 
 ```
@@ -382,76 +520,6 @@ Valeur de retour : Le token d'authentification de l'utilisateur.
     "createdAt": "2023-10-05T14:48:00.000Z",
     "updatedAt": "2023-10-05T14:48:00.000Z"
   }
-```
-
-
-### **POST** /user/register : Permet d'enregistrer un nouvel utilisateur.
-
-Example de requête : 
-```
-http://localhost:3000/user/register
-```
-
-Corps de la requête : Les informations de l'utilisateur.
-
-```json
-{
-  "email" : "test@luoja.fr",
-  "password" : "mysupersecurepassword"
-}
-```
-
-Valeur de retour : Le token d'authentification de l'utilisateur.
-
-```json
-{
-  "token": "supersecuretoken"
-}
-```
-
-### **POST** /user/login : Permet de connecter un utilisateur.
-
-Example de requête : 
-```
-http://localhost:3000/user/login
-```
-
-Corps de la requête : Les informations de l'utilisateur.
-
-```json
-{
-  "email" : "test@luoja.fr",
-  "password" : "mysupersecurepassword"
-}
-```
-
-Valeur de retour : Le token d'authentification de l'utilisateur
-
-```json
-{
-  "token": "supersecuretoken"
-}
-```
-
-### **GET** /user/infos : Permet de récupérer les informations de l'utilisateur.
-
-Example de requête : 
-```
-http://localhost:3000/user/infos
-```
-
-Headers :
-- token : Token d'authentification de l'utilisateur
-
-Valeur de retour : Les informations de l'utilisateur.
-
-```json
-{
-  "user": {
-    "id": 1,
-    "email": "test@luoja.fr"
-  }
-}
 ```
 
 ## Commande de lancement de l'API en dev
