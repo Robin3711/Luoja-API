@@ -159,23 +159,30 @@ Valeur de retour : L'identifiant de la partie.
 ```
 
 
-### **GET** /quiz/:id/score
+
+### **GET** /game/:id/average
+Exemple de requête :
+
 ```
-http://localhost:3000/quiz/some-quiz-id/score
+http://localhost:3000/game/admin-discord-pue/average
 ```
+
+
 Paramètres :
 
--id : ID du quiz.
+-id : ID de la partie.
 Headers :
 
 -token : Token d'authentification de l'utilisateur.
 Valeur de retour : La moyenne des scores pour le quiz spécifié.
-
-```json 
+```json
 {
   "averageScore": 75
 }
 ```
+
+
+
 
 ### **GET** /game/:id/question
 
