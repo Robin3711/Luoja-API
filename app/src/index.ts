@@ -88,12 +88,12 @@ app.get("/game/:id/average", async (req: Request, res: Response) => {
 
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
-app.get("/quiz/user/Game", async (req: Request, res: Response) => {
+app.get("/quiz/user/game", async (req: Request, res: Response) => {
   user.games(req, res);
 });
 
 //Route get de l'api pour recuperer les quiz crée de l'utilisateur
-app.get("/quiz/user/Create", async (req: Request, res: Response) => {
+app.get("/quiz/user/create", async (req: Request, res: Response) => {
   user.createdQuizs(req, res);
 });
 

@@ -1,7 +1,6 @@
 # Mimir - API
 
 ## Table des matières
-
 1. [Mimir - API](#mimir---api)
 2. [Documentation API](#documentation-api)
     - [Le quiz](#route-pour-le-quiz)
@@ -14,8 +13,8 @@
       - [Jouer à un quiz](#get-quizidplay)
       - [Cloner un quiz](#get-quizidclone)
     - [La partie](#route-pour-la-partie)
-        - [Récupérer la question courante d'une partie](#get-gameidquestion)
-        - [Récupérer la réponse d'une question](#post-gameidanswer)
+      - [Récupérer la question courante d'une partie](#get-gameidquestion)
+      - [Récupérer la réponse d'une question](#post-gameidanswer)
       - [Récupérer les informations de la partie](#get-gameidinfos)
       - [Moyenne score d'une partie](#get-gameidaverage)
       - [Lancer une nouvelle partie](#get-gameidrestart)
@@ -31,7 +30,6 @@
      - [1. build](#1-build)
      - [2. lint et tests](#2-lint-et-tests)
      - [3. pages](#3-pages)
-
 
 ## Documentation API
 
@@ -215,10 +213,26 @@ Valeur de retour : L'identifiant de la partie.
 }
 ```
 
+### **GET** /game/:id/score
+*Permet d'obtenir dun score*
+Example de requête :
+```
+http://localhost:3000/game/:id/score
+```
+
+Paramètres :
+- id : ID du quiz.
+
+
+Valeur de retour : Le score moyenne de la partie 
+```json
+{
+  "averageScore": "75"
+}
+```
 #### **GET** /quiz/:id/play
 
 *Permet de jouer à un partie*
-
 Example de requête :
 ```
 http://localhost:3000/quiz/1/play
@@ -232,8 +246,9 @@ Valeur de retour : L'identifiant de la partie.
 ```json
 {
   "id": "lemon-ghosts-roll"
-}
+  }
 ```
+
 
 #### **GET** /quiz/:id/clone
 
@@ -381,6 +396,81 @@ Valeur de retour : La moyenne des scores pour le quiz spécifié.
 }
 ```
 
+
+### ***GET** /quiz/user/game
+
+*Permet d'obtenir une liste de quiz jouer par un utilisateur
+*
+
+Exemple de requête
+
+```
+http://localhost:3000/quiz/user/game
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+Valeur de retour 
+```json
+{
+  "games" [
+      {
+          "id": "je_suis_game",
+          "userId": "43",
+          "quizId": "4",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      },
+       {
+          "id": "autre_game",
+          "userId": "44",
+          "quizId": "5",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      }
+  ]
+  
+}
+```
+
+### **GET** /quiz/user/create
+*recuperer les quiz crée de l'utilisateur*
+
+```
+http://localhost:3000/quiz/user/create
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour 
+```json
+{
+  "result" [
+      {
+          "id": "5",
+          "title": "Title",
+          "category": "4",
+          "difficulty": "4",
+          "public":"true",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"10"
+      },
+      {
+          "id": "6",
+          "title": "AutreTitre",
+          "category": "5",
+          "difficulty": "1",
+          "public":"false",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"234"
+      },
+  ]
+  
+}
+```
+
+
 #### **GET** /game/:id/restart
 
 *Permet de recommencer une partie*
@@ -482,45 +572,6 @@ Valeur de retour : Les informations de l'utilisateur.
 }
 ```
 
-#### **Get** /user/:id/createdQuizs
-
-*Permet de consulter les quiz créer d'un utilisateur.*
-
-Example de requête : 
-```
-http://localhost:3000/user/some-user-id/createdQuizs
-```
-
-Paramètres :
-
-id : ID de l'utilisateur.
-Headers :
-
-token : Token d'authentification de l'utilisateur.
-
-
-Valeur de retour : Le token d'authentification de l'utilisateur.
-
-```json
- {
-    "id": 1,
-    "title": "Sample Quiz",
-    "category": 0,
-    "difficulty": "easy",
-    "public": true,
-    "createdAt": "2023-10-05T14:48:00.000Z",
-    "updatedAt": "2023-10-05T14:48:00.000Z"
-  },
-  {
-    "id": 2,
-    "title": "Another Quiz",
-    "category": 1,
-    "difficulty": "medium",
-    "public": false,
-    "createdAt": "2023-10-05T14:48:00.000Z",
-    "updatedAt": "2023-10-05T14:48:00.000Z"
-  }
-```
 
 ## Commande de lancement de l'API en dev
 
