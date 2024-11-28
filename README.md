@@ -217,15 +217,6 @@ Valeur de retour : L'identifiant de la partie.
 *Permet d'obtenir dun score*
 Example de requête :
 ```
-http://localhost:3000/quiz/1/score
-```
-
-#### **GET** /quiz/:id/play
-
-*Permet de jouer à un partie*
-
-Example de requête :
-```
 http://localhost:3000/game/:id/score
 ```
 
@@ -239,6 +230,25 @@ Valeur de retour : Le score moyenne de la partie
   "averageScore": "75"
 }
 ```
+#### **GET** /quiz/:id/play
+
+*Permet de jouer à un partie*
+Example de requête :
+```
+http://localhost:3000/quiz/1/play
+```
+
+Paramètres :
+- id : ID du quiz.
+
+
+Valeur de retour : L'identifiant de la partie.
+```json
+{
+  "id": "lemon-ghosts-roll"
+  }
+```
+
 
 #### **GET** /quiz/:id/clone
 
