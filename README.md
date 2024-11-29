@@ -368,7 +368,8 @@ Valeur de retour : Les informations de la partie.
   "numberOfQuestions": 1,
   "Difficulty":"hard",
   "Category": 9,
-  "Date":"2023-10-05T14:48:00.000Z"
+  "Date":"2023-10-05T14:48:00.000Z",
+  "Title":"Salam les rhouia"
 }
 ```
 

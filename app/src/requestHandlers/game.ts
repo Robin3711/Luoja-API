@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { assert, integer, string } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
+import { title } from "process";
 
 
 
@@ -283,7 +284,7 @@ export async function infos(req: Request, res: Response) {
             results.push(answer.correct);
         });
 
-        res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt });
+        res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt , Title : game.quiz.title});
     }
     catch (error: any) {
         if (error.message === "Partie non trouvée") {
