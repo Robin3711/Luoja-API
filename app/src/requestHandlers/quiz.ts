@@ -166,6 +166,7 @@ export async function retrieve(req: Request, res: Response) {
             questions: quiz.questions.map((question) => {
                 return {
                     text: question.text,
+                    type: question.trueFalse,
                     correctAnswer: question.correctAnswer,
                     incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
                 }
