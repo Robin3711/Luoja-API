@@ -158,7 +158,21 @@ export async function retrieve(req: Request, res: Response) {
             throw new Error("Ce quiz ne vous appartient pas");
         }
 
-        res.status(200).json({quiz: quiz});
+        const results={
+            title: quiz.title,
+            category: quiz.category,
+            difficulty: quiz.difficulty,
+            public: quiz.public,
+            questions: quiz.questions.map((question) => {
+                return {
+                    text: question.text,
+                    correctAnswer: question.correctAnswer,
+                    incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
+                }
+            })
+        }
+
+        res.status(200).json({quiz: results});
     }
     catch (error: any) {
         if (error.message === 'Utilisateur non trouvé') {
