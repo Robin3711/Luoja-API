@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { assert, integer, string } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
+import { title } from "process";
 
 
 
@@ -64,11 +65,19 @@ export async function create(req: Request, res: Response) {
             data: answers
         });
 
-        res.status(200).json({ id: gameId });
+        res.status(201).json({ id: gameId });
     }
     catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
+        if (error.message === "Quiz non trouvé") {
+            res.status(404).json({ error: error.message });
+        }
+        if (error.message === "Quiz non publié") {
+            res.status(403).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: error.message });
+        }
+}
 }
 
 // Fonction pour obtenir la question courante de la partie
@@ -129,8 +138,19 @@ export async function currentQuestion(req: Request, res: Response) {
         });
     }
     catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
+        if (error.message === "Partie non trouvée !") {
+            res.status(404).json({ error: error.message });
+        }
+        if (error.message === "Cette partie ne peut pas être jouée avec ce compte") {
+            res.status(403).json({ error: error.message });
+        }
+        if (error.message === "Aucune question restante dans ce quiz.") {
+            res.status(500).json({ error: error.message });
+        }
+        else {
+            res.status(404).json({ error: error.message });
+        }
+        }
 }
 
 // Fonction pour vérifier la réponse à une question
@@ -202,12 +222,23 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
             res.status(200).json({ correctAnswer: correctAnswer });
         }
         else {
-            res.status(500).json({ error: "Il n'y a plus de questions" });
+            throw new Error("Aucune question restante dans ce quiz.");
         }
     }
     catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
+        if (error.message === "Partie non trouvée") {
+            res.status(404).json({ error: error.message });
+        }
+        if (error.message === "Cette partie ne peut pas être jouée avec ce compte") {
+            res.status(403).json({ error: error.message });
+        }
+        if (error.message === "Aucune question restante dans ce quiz.") {
+            res.status(500).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: error.message });
+        }
+        }
 }
 
 // Fonction pour obtenir les informations d'une partie
@@ -253,11 +284,22 @@ export async function infos(req: Request, res: Response) {
             results.push(answer.correct);
         });
 
-        res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt });
+        res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt , Title : game.quiz.title});
     }
     catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
+        if (error.message === "Partie non trouvée") {
+            res.status(404).json({ error: error.message });
+        }
+        if (error.message === "Cette partie ne peut pas être jouée avec ce compte") {
+            res.status(403).json({ error: error.message });
+        }
+        if (error.message === "Aucune question restante dans ce quiz.") {
+            res.status(500).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: error.message });
+        }
+        }
 }
 export async function restart(req: Request, res: Response) {
     try {
@@ -293,8 +335,16 @@ export async function restart(req: Request, res: Response) {
         create(req, res);
     }
     catch (error: any) {
-        res.status(500).json({ error: error.message });
-    }
+if (error.message === "Partie non trouvée") {
+            res.status(404).json({ error: error.message });
+        }   
+        if (error.message === "Cette partie ne peut pas être jouée avec ce compte") {
+            res.status(403).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: error.message });
+        }
+}
 
 }
 
@@ -332,6 +382,11 @@ export async function average(req: Request, res: Response) {
             averageScore: averageScore
         });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        if (error.message === "Partie non trouvée") {
+            res.status(404).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: error.message });
+        }
     }
 }

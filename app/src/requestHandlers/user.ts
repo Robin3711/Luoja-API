@@ -41,9 +41,9 @@ export async function create(req: Request, res: Response) {
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
 
-        res.json({ token });
+        res.status(201).json({ token });
     } catch (error: any) {
-        res.status(400).json({ error: error.message });
+        res.status(403).json({ error: error.message });
     }
 }
 
@@ -73,7 +73,7 @@ export async function login(req: Request, res: Response) {
 
         res.json({ token });
     } catch (error: any) {
-        res.status(400).json({ error: error.message });
+        res.status(401).json({ error: error.message });
     }
 }
 
@@ -105,7 +105,7 @@ export async function infos(req: Request, res: Response) {
 
         res.json({ user });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(401).json({ error: error.message });
     }
 }
 
@@ -154,7 +154,7 @@ export async function createdQuizs(req: Request, res: Response) {
    
 
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(401).json({ error: error.message });
     }
 }
 
@@ -174,6 +174,6 @@ export async function games(req: Request, res: Response) {
 
         res.json({ games });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(401).json({ error: error.message });
     }
 }
