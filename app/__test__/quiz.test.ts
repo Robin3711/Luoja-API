@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { create, currentQuestion, verifyCurrentQuestionAnswer, infos } from "../src/requestHandlers/game";
+import { create, currentQuestion, verifyCurrentQuestionAnswer, infos,average } from "../src/requestHandlers/game";
 import { prisma } from "../src/model/db";
 import * as gameUtils from "../src/utils/gameUtils";
 import * as userUtils from "../src/utils/userUtils";
@@ -217,6 +217,31 @@ describe("Game Controller", () => {
             Difficulty: "medium",
             Category: 1,
             CreateDate: mockGame.createdAt,
+        });
+    });
+
+    it("should get the average score of a user", async () => {
+        const mockGames = [
+            { id: "1", userId: 1, answers: [{ correct: true }, { correct: false }] },
+            { id: "2", userId: 1, answers: [{ correct: true }, { correct: true }] },
+        ];
+    
+        (prisma.game.findMany as jest.Mock).mockResolvedValue(mockGames);
+    
+        req = {
+            params: { userId: "1" },
+        };
+    
+        await average(req as Request, res as Response);
+    
+        expect(prisma.game.findMany).toHaveBeenCalledWith({
+            where: { userId: 1 },
+            include: { answers: true },
+        });
+    
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(jsonMock).toHaveBeenCalledWith({
+            averageScore: 0.75, // (3 correct answers out of 4 total answers)
         });
     });
 });
