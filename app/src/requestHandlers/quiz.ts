@@ -119,10 +119,18 @@ export async function create(req: Request, res: Response) {
             data: questionsData
         });        
 
-        res.status(200).json({quizId: quiz.id});
+        res.status(201).json({quizId: quiz.id});
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
+
+        if (error.message === 'Utisilateur non trouvé') {
+            res.status(401).json({error: error.message});
+        }
+        else {
+            res.status(400).json({error: error.message});
+        }
+
+
     }
 }
 
@@ -153,7 +161,18 @@ export async function retrieve(req: Request, res: Response) {
         res.status(200).json({quiz: quiz});
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
+        if (error.message === 'Utilisateur non trouvé') {
+            res.status(401).json({error: error.message});
+        }
+        if(error.message === 'Quiz non trouvé'){
+            res.status(404).json({error: error.message});
+        }
+        if(error.message === 'Ce quiz ne vous appartient pas'){
+            res.status(403).json({error: error.message});
+        }
+        else {
+            res.status(500).json({error: error.message});
+        }
     }
 }
 
@@ -226,10 +245,23 @@ export async function edit(req: Request, res: Response) {
         res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
-    }
+        if (error.message === 'Quiz non trouvé') {
+            res.status(404).json({error: error.message});
+        }
+        if (error.message === 'Vous ne pouvez pas modifier un quiz public') {
+            res.status(403).json({error: error.message});
+        }
+        if (error.message === 'Utilisateur non trouvé') {
+            res.status(401).json({error: error.message});
+        }
+        if (error.message === 'Ce quiz ne vous appartient pas') {
+            res.status(403).json({error: error.message});
+        }
+        else {
+            res.status(500).json({error: error.message});
+        }
 }
-
+}
 // Fonction pour publier un quiz
 export async function publish(req: Request, res: Response) {
     try{
@@ -268,9 +300,23 @@ export async function publish(req: Request, res: Response) {
         res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
+        if (error.message === 'Quiz non trouvé') {
+            res.status(404).json({error: error.message});
+        }
+        if (error.message === 'Ce quiz est déjà public') {
+            res.status(403).json({error: error.message});}
+        if (error.message === 'Utilisateur non trouvé') {
+            res.status(401).json({error: error.message});
+        }
+        if (error.message === 'Ce quiz ne vous appartient pas') {
+            res.status(403).json({error: error.message});
+        }
+        else {
+            res.status(500).json({error: error.message});
+        }
     }
 }
+
 
 // Fonction pour créer un quiz rapidement
 export async function fastCreate(req: Request, res: Response) {
@@ -354,8 +400,8 @@ export async function fastCreate(req: Request, res: Response) {
         res.status(200).json({id: gameId});
     }    
     catch (error: any) {
-        res.status(500).json({error: error.message});
-    }
+        res.status(404).json({error: error.message});
+        }
 }
 
 // Fonction pour obtenir un quiz à partir de son id et le cloner
@@ -387,11 +433,16 @@ export async function clone(req: Request, res: Response) {
             }
         });
 
-        res.status(200).json({questions: questions});
+        res.status(201).json({questions: questions});
     }
     catch (error: any) {
-        res.status(500).json({error: error.message});
-    }
+        if (error.message === 'Quiz non trouvé') {
+            res.status(404).json({error: error.message});
+        }
+        else {
+            res.status(400).json({error: error.message});
+        }
+        }
 }
 
 // Fonction pour obtenir une liste de quiz
@@ -432,7 +483,7 @@ export async function list(req: Request, res: Response) {
 
         res.status(200).json({ quizs: quizs });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(404).json({ error: error.message });
     }
 }
 
@@ -472,7 +523,18 @@ export async function score(req : Request, res : Response){
     
   }      
   catch (error: any) {
+    if (error.message === 'Utilisateur non trouvé') {
+        res.status(401).json({error: error.message});
+    }
+    if (error.message === 'Quiz non trouvé') {
+        res.status(404).json({error: error.message});
+    }
+    if (error.message === 'Ce quiz ne vous appartient pas') {
+        res.status(403).json({error: error.message});
+    }
+    else {
         res.status(500).json({error: error.message});
     }
+ }
     
 }
