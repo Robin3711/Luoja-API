@@ -587,7 +587,7 @@ sudo docker run -d --restart always --name mimir --network internal_network \
 -e PROTOCOL=HTTPS \
 -e DOMAIN=luoja.fr \
 -v /etc/letsencrypt:/etc/letsencrypt:ro \
--v /srv/mimir/mimir.db:/usr/src/app/prisma/mimir.db \
+-v /srv/mimir/:/usr/src/app/prisma/db/ \
 docker.luoja.fr/mimir
 ```
 
