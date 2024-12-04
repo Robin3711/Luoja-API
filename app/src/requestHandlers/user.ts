@@ -1,5 +1,5 @@
 import { prisma } from "../model/db";
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { assert, object, string, refine } from "superstruct";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -54,13 +54,16 @@ export async function create(req: Request, res: Response) {
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
 
-        res.status(201).json({ token });
+        return res.status(201).json({ token });
     }
-    catch (error: any) {
+    catch (error: any) 
+    {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
         }
-        return res.status(400).json({ error: error.message });
+        else {
+            return res.status(400).json({ error: error.message });
+        }
     }
 }
 
@@ -93,13 +96,15 @@ export async function login(req: Request, res: Response) {
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
 
-        res.json({ token });
+        return res.json({ token });
     }
     catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
         }
-        return res.status(400).json({ error: error.message });
+        else {
+            return res.status(400).json({ error: error.message });
+        }
     }
 }
 
@@ -129,7 +134,7 @@ export async function infos(req: Request, res: Response) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        res.json({ user });
+        return res.json({ user });
     }
     catch (error: any) {
         return res.status(400).json({ error: error.message });
@@ -176,11 +181,15 @@ export async function createdQuizs(req: Request, res: Response) {
             numberOfQuestions: quiz._count.questions
         }));
 
-         res.status(200).json(result);
-   
-
-    } catch (error: any) {
-        return res.status(401).json({ error: error.message });
+        return res.status(200).json(result);
+    } 
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        else {
+            return res.status(400).json({ error: error.message });
+        }
     }
 }
 
@@ -198,7 +207,7 @@ export async function games(req: Request, res: Response) {
             }
         });
 
-        res.json({ games });
+        return res.json({ games });
     } 
     catch (error: any) {
         return res.status(400).json({ error: error.message });

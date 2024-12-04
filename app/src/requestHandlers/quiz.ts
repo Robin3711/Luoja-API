@@ -128,13 +128,13 @@ export async function create(req: Request, res: Response) {
             data: questionsData
         });        
 
-        res.status(201).json({quizId: quiz.id});
+        return res.status(201).json({quizId: quiz.id});
     }
     catch (error: any) {
         if (error instanceof HttpError) {
-            res.status(error.status).json({error: error.message});
+            return res.status(error.status).json({error: error.message});
         } else {
-            res.status(500).json({error: error.message});
+            return res.status(500).json({error: error.message});
         }
     }
 }
@@ -178,13 +178,13 @@ export async function retrieve(req: Request, res: Response) {
             })
         }
 
-     res.status(200).json({quiz: results});
+        return res.status(200).json({quiz: results});
     }
     catch (error: any) {
         if (error instanceof HttpError) {
-            res.status(error.status).json({error: error.message});
+            return res.status(error.status).json({error: error.message});
         } else {
-            res.status(500).json({error: error.message});
+            return res.status(500).json({error: error.message});
         }
     }
 }
@@ -255,13 +255,13 @@ export async function edit(req: Request, res: Response) {
         });
         
 
-        res.status(200).json({quizId: quiz.id});
+        return res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
         if (error instanceof HttpError) {
-            res.status(error.status).json({error: error.message});
+            return res.status(error.status).json({error: error.message});
         } else {
-            res.status(500).json({error: error.message});
+            return res.status(500).json({error: error.message});
         }
     }
 }
@@ -300,13 +300,13 @@ export async function publish(req: Request, res: Response) {
             }
         });
 
-        res.status(200).json({quizId: quiz.id});
+        return res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
         if (error instanceof HttpError) {
-            res.status(error.status).json({error: error.message});
+            return res.status(error.status).json({error: error.message});
         } else {
-            res.status(500).json({error: error.message});
+            return res.status(500).json({error: error.message});
         }
     }
 }
@@ -391,10 +391,10 @@ export async function fastCreate(req: Request, res: Response) {
             data: answers,
         });
         
-     res.status(200).json({id: gameId});
+        return res.status(200).json({id: gameId});
     }    
     catch (error: any) {
-        res.status(500).json({error: error.message});
+        return res.status(500).json({error: error.message});
     }
 }
 
@@ -427,13 +427,13 @@ export async function clone(req: Request, res: Response) {
             }
         });
 
-        res.status(201).json({questions: questions});
+        return res.status(201).json({questions: questions});
     }
     catch (error: any) {
         if (error instanceof HttpError) {
-            res.status(error.status).json({error: error.message});
+            return res.status(error.status).json({error: error.message});
         } else {
-            res.status(500).json({error: error.message});
+            return res.status(500).json({error: error.message});
         }
     }
 }
@@ -474,10 +474,10 @@ export async function list(req: Request, res: Response) {
             where
         });
 
-        res.status(200).json({ quizs: quizs });
+        return res.status(200).json({ quizs: quizs });
     }
     catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 }
 
@@ -513,14 +513,14 @@ export async function score(req : Request, res : Response){
 
     score = score / quiz.games.length;
     
-    res.status(200).json({score: score , nombreDePartie : quiz.games.length});
+    return res.status(200).json({score: score , nombreDePartie : quiz.games.length});
     
   }      
   catch (error: any) {
-      if (error instanceof HttpError) {
-          res.status(error.status).json({error: error.message});
-      } else {
-          res.status(500).json({error: error.message});
-      }
+    if (error instanceof HttpError) {
+        return res.status(error.status).json({error: error.message});
+    } else {
+        return res.status(500).json({error: error.message});
+    }
   }
 }
