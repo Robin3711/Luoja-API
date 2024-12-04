@@ -22,7 +22,7 @@ export async function fetchQuestions(amount: string, category?: string, difficul
     const data = await response.json();
 
     if (data.response_code !== 0) {
-        throw new Error("Erreur lors de la récupération des questions");
+        throw new Error("pas de question disponible");
     }
 
     data.results.forEach((item: any) => {
