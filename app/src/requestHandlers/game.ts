@@ -3,17 +3,20 @@ import { Request, Response } from "express";
 import { assert, integer, string } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
-import { title } from "process";
 
+class HttpError extends Error {
+    status: number;
 
-
-
-
+    constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+    }
+}
 
 export async function create(req: Request, res: Response) {
     try {
-
         const quizId = Number(req.params.id);
+
         assert(quizId, integer());
 
         const quiz = await prisma.quiz.findUnique({
@@ -26,11 +29,11 @@ export async function create(req: Request, res: Response) {
         });
 
         if (!quiz) {
-            throw new Error("Quiz non trouvé");
+            throw new HttpError("Quiz non trouvé", 404);
         }
 
         if (!quiz.public) {
-            throw new Error("Quiz non publié");
+            throw new HttpError("Quiz non publié", 403);
         }
 
         const user = await userUtils.getUser(req);
@@ -65,28 +68,25 @@ export async function create(req: Request, res: Response) {
             data: answers
         });
 
-        res.status(201).json({ id: gameId });
+        return res.status(201).json({ id: gameId });
     }
     catch (error: any) {
-             switch (error.message) {
-            case "Quiz non trouvé":
-                res.status(404).json({ error: error.message });
-                break;
-            case "Quiz non publié":
-                res.status(403).json({ error: error.message });
-                break;
-            default:
-                res.status(500).json({ error: error.message });
-                break;
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
         }
-}
+        else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 // Fonction pour obtenir la question courante de la partie
 export async function currentQuestion(req: Request, res: Response) {
     try {
         const gameId = req.params.id;
+
         assert(gameId, string());
+
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId
@@ -101,21 +101,21 @@ export async function currentQuestion(req: Request, res: Response) {
         });
 
         if (!game) {
-            throw new Error("Partie non trouvée !")
+            throw new HttpError("Partie non trouvée !", 404);
         }
 
         if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
             if (user?.id !== game.userId) {
-                throw new Error("Cette partie ne peut pas être jouée avec ce compte")
+                throw new HttpError("Cette partie ne peut pas être jouée avec ce compte", 403);
             }
         }
 
         let questionCursor = game.questionCursor;
 
         if (questionCursor >= game.quiz.questions.length) {
-            throw new Error("Aucune question restante dans ce quiz.")
+            throw new HttpError("Aucune question restante dans ce quiz.", 500);
         }
 
         const question = game.quiz.questions[questionCursor];
@@ -134,27 +134,19 @@ export async function currentQuestion(req: Request, res: Response) {
             [answers[i], answers[j]] = [answers[j], answers[i]];
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             question: question.text,
             answers: answers
         });
     }
     catch (error: any) {
-               switch (error.message) {
-            case "Partie non trouvée !":
-                res.status(404).json({ error: error.message });
-                break;
-            case "Cette partie ne peut pas être jouée avec ce compte":
-                res.status(403).json({ error: error.message });
-                break;
-            case "Aucune question restante dans ce quiz.":
-                res.status(500).json({ error: error.message });
-                break;
-            default:
-                res.status(404).json({ error: error.message });
-                break;
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
         }
+        else {
+            return res.status(500).json({ error: error.message });
         }
+    }
 }
 
 // Fonction pour vérifier la réponse à une question
@@ -180,14 +172,14 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         });
 
         if (!game) {
-            throw new Error("Partie non trouvée");
+            throw new HttpError("Partie non trouvée", 404);
         }
 
         if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
             if (user?.id !== game.userId) {
-                throw new Error("Cette partie ne peut pas être jouée avec ce compte")
+                throw new HttpError("Cette partie ne peut pas être jouée avec ce compte", 403);
             }
         }
 
@@ -223,34 +215,27 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
                 }
             });
 
-            res.status(200).json({ correctAnswer: correctAnswer });
+            return res.status(200).json({ correctAnswer: correctAnswer });
         }
         else {
-            throw new Error("Aucune question restante dans ce quiz.");
+            throw new HttpError("Aucune question restante dans ce quiz.", 500);
         }
     }
     catch (error: any) {
-               switch (error.message) {
-            case "Partie non trouvée":
-                res.status(404).json({ error: error.message });
-                break;
-            case "Cette partie ne peut pas être jouée avec ce compte":
-                res.status(403).json({ error: error.message });
-                break;
-            case "Aucune question restante dans ce quiz.":
-                res.status(500).json({ error: error.message });
-                break;
-            default:
-                res.status(500).json({ error: error.message });
-                break;
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
         }
+        else {
+            return res.status(500).json({ error: error.message });
         }
+    }
 }
 
 // Fonction pour obtenir les informations d'une partie
 export async function infos(req: Request, res: Response) {
     try {
         const gameId = req.params.id;
+
         assert(gameId, string());
         const game = await prisma.game.findUnique({
             where: {
@@ -267,14 +252,14 @@ export async function infos(req: Request, res: Response) {
         });
 
         if (!game) {
-            throw new Error("Partie non trouvée");
+            throw new HttpError("Partie non trouvée", 404);
         }
 
         if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
             if (user?.id !== game.userId) {
-                throw new Error("Cette partie ne peut pas être jouée avec ce compte")
+                throw new HttpError("Cette partie ne peut pas être jouée avec ce compte", 403);
             }
         }
 
@@ -290,32 +275,26 @@ export async function infos(req: Request, res: Response) {
             results.push(answer.correct);
         });
 
-        res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt , Title : game.quiz.title});
+        return res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt , Title : game.quiz.title});
     }
     catch (error: any) {
-        switch (error.message) {
-            case "Partie non trouvée":
-                res.status(404).json({ error: error.message });
-                break;
-            case "Cette partie ne peut pas être jouée avec ce compte":
-                res.status(403).json({ error: error.message });
-                break;
-            case "Aucune question restante dans ce quiz.":
-                res.status(500).json({ error: error.message });
-                break;
-            default:
-                res.status(500).json({ error: error.message });
-                break;
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
         }
+        else {
+            return res.status(500).json({ error: error.message });
         }
+    }
 }
+
 export async function restart(req: Request, res: Response) {
     try {
-        const gameIde = req.params.id;
-        assert(gameIde, string());
+        const gameId = req.params.id;
+
+        assert(gameId, string());
         const game = await prisma.game.findUnique({
             where: {
-                id: gameIde
+                id: gameId
             },
             include: {
                 quiz: {
@@ -327,14 +306,14 @@ export async function restart(req: Request, res: Response) {
         })
 
         if (!game) {
-            throw new Error("Partie non trouvée");
+            throw new HttpError("Partie non trouvée", 404);
         }
 
         if (game.userId !== null) {
             const user = await userUtils.getUser(req);
 
             if (user?.id !== game.userId) {
-                throw new Error("Cette partie ne peut pas être jouée avec ce compte")
+                throw new HttpError("Cette partie ne peut pas être jouée avec ce compte", 403);
             }
         }
 
@@ -343,22 +322,14 @@ export async function restart(req: Request, res: Response) {
         create(req, res);
     }
     catch (error: any) {
-switch (error.message) {
-    case "Partie non trouvée":
-        res.status(404).json({ error: error.message });
-        break;
-    case "Cette partie ne peut pas être jouée avec ce compte":
-        res.status(403).json({ error: error.message });
-        break;
-    default:
-        res.status(500).json({ error: error.message });
-        break;
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
 }
-}
-
-}
-
-
 
 export async function average(req: Request, res: Response) {
     try {
@@ -380,7 +351,7 @@ export async function average(req: Request, res: Response) {
         });
 
         if (!game) {
-            throw new Error("Partie non trouvée");
+            throw new HttpError("Partie non trouvée", 404);
         }
 
         // Calculer la moyenne des scores
@@ -388,15 +359,16 @@ export async function average(req: Request, res: Response) {
         const correctAnswers = game.answers.filter(answer => answer.correct).length;
         const averageScore = (correctAnswers / totalQuestions) * 100;
 
-        res.status(200).json({
+        return res.status(200).json({
             averageScore: averageScore
         });
-    } catch (error: any) {
-        if (error.message === "Partie non trouvée") {
-            res.status(404).json({ error: error.message });
+    } 
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
         }
         else {
-            res.status(500).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
     }
 }
