@@ -28,11 +28,15 @@ export async function create(req: Request, res: Response) {
 
         const { name, password } = req.body;
 
+        if (password.length < 8) {
+            throw new Error("Le mot de passe doit contenir au moins 8 caractères");
+        }
+
         if (await prisma.user.findUnique({ where: { userName: name } })) {
             throw new Error("Ce nom est déjà utilisé");
         }
 
-        const user = await prisma.user.create({
+        const user = await prisma.user.create({ 
             data: {
                 userName: name,
                 password: await bcrypt.hash(password, 10)
@@ -43,6 +47,9 @@ export async function create(req: Request, res: Response) {
 
         res.status(201).json({ token });
     } catch (error: any) {
+        if (error.message==="Le mot de passe doit contenir au moins 8 caractères") {
+            res.status(400).json({ error: error.message });
+        }
         res.status(403).json({ error: error.message });
     }
 }
@@ -51,7 +58,14 @@ export async function login(req: Request, res: Response) {
     try {
         assert(req.body, LoginSchema);
 
+        
+
         const { name, password } = req.body;
+
+
+        if (password.length < 8) {
+            throw new Error("Le mot de passe doit contenir au moins 8 caractères");
+        }
 
         const user = await prisma.user.findUnique({
             where: {
@@ -73,6 +87,10 @@ export async function login(req: Request, res: Response) {
 
         res.json({ token });
     } catch (error: any) {
+        if (error.message==="Le mot de passe doit contenir au moins 8 caractères") {
+            res.status(400).json({ error: error.message });
+        }
+
         res.status(401).json({ error: error.message });
     }
 }
