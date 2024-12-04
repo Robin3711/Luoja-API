@@ -86,8 +86,7 @@ test:
  
 
 
-pages:
-  when: always
+pages:  
   stage: pages
   image: alpine:latest
   script:
