@@ -119,15 +119,15 @@ export async function create(req: Request, res: Response) {
             data: questionsData
         });        
 
-        res.status(201).json({quizId: quiz.id});
+  return res.status(201).json({quizId: quiz.id});
     }
     catch (error: any) {
 
         if (error.message === 'Utisilateur non trouvé') {
-            res.status(401).json({error: error.message});
+      return res.status(401).json({error: error.message});
         }
         else {
-            res.status(400).json({error: error.message});
+      return res.status(400).json({error: error.message});
         }
 
 
@@ -173,21 +173,21 @@ export async function retrieve(req: Request, res: Response) {
             })
         }
 
-        res.status(200).json({quiz: results});
+  return res.status(200).json({quiz: results});
     }
     catch (error: any) {
                switch (error.message) {
             case 'Utilisateur non trouvé':
-                res.status(401).json({ error: error.message });
+          return res.status(401).json({ error: error.message });
                 break;
             case 'Quiz non trouvé':
-                res.status(404).json({ error: error.message });
+          return res.status(404).json({ error: error.message });
                 break;
             case 'Ce quiz ne vous appartient pas':
-                res.status(403).json({ error: error.message });
+          return res.status(403).json({ error: error.message });
                 break;
             default:
-                res.status(500).json({ error: error.message });
+          return res.status(500).json({ error: error.message });
                 break;
         }
     }
@@ -259,24 +259,24 @@ export async function edit(req: Request, res: Response) {
         });
         
 
-        res.status(200).json({quizId: quiz.id});
+  return res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
                switch (error.message) {
             case 'Quiz non trouvé':
-                res.status(404).json({ error: error.message });
+          return res.status(404).json({ error: error.message });
                 break;
             case 'Vous ne pouvez pas modifier un quiz public':
-                res.status(403).json({ error: error.message });
+          return res.status(403).json({ error: error.message });
                 break;
             case 'Utilisateur non trouvé':
-                res.status(401).json({ error: error.message });
+          return res.status(401).json({ error: error.message });
                 break;
             case 'Ce quiz ne vous appartient pas':
-                res.status(403).json({ error: error.message });
+          return res.status(403).json({ error: error.message });
                 break;
             default:
-                res.status(500).json({ error: error.message });
+          return res.status(500).json({ error: error.message });
                 break;
         }
 }
@@ -316,24 +316,24 @@ export async function publish(req: Request, res: Response) {
             }
         });
 
-        res.status(200).json({quizId: quiz.id});
+  return res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
               switch (error.message) {
             case 'Quiz non trouvé':
-                res.status(404).json({ error: error.message });
+          return res.status(404).json({ error: error.message });
                 break;
             case 'Ce quiz est déjà public':
-                res.status(403).json({ error: error.message });
+          return res.status(403).json({ error: error.message });
                 break;
             case 'Utilisateur non trouvé':
-                res.status(401).json({ error: error.message });
+          return res.status(401).json({ error: error.message });
                 break;
             case 'Ce quiz ne vous appartient pas':
-                res.status(403).json({ error: error.message });
+          return res.status(403).json({ error: error.message });
                 break;
             default:
-                res.status(500).json({ error: error.message });
+          return res.status(500).json({ error: error.message });
                 break;
         }
     }
@@ -419,10 +419,10 @@ export async function fastCreate(req: Request, res: Response) {
             data: answers,
         });
         
-        res.status(200).json({id: gameId});
+  return res.status(200).json({id: gameId});
     }    
     catch (error: any) {
-        res.status(404).json({error: error.message});
+  return res.status(404).json({error: error.message});
         }
 }
 
@@ -455,14 +455,14 @@ export async function clone(req: Request, res: Response) {
             }
         });
 
-        res.status(201).json({questions: questions});
+  return res.status(201).json({questions: questions});
     }
     catch (error: any) {
         if (error.message === 'Quiz non trouvé') {
-            res.status(404).json({error: error.message});
+      return res.status(404).json({error: error.message});
         }
         else {
-            res.status(400).json({error: error.message});
+      return res.status(400).json({error: error.message});
         }
         }
 }
@@ -503,9 +503,9 @@ export async function list(req: Request, res: Response) {
             where
         });
 
-        res.status(200).json({ quizs: quizs });
+  return res.status(200).json({ quizs: quizs });
     } catch (error: any) {
-        res.status(404).json({ error: error.message });
+  return res.status(404).json({ error: error.message });
     }
 }
 
@@ -547,16 +547,16 @@ export async function score(req : Request, res : Response){
   catch (error: any) {
        switch (error.message) {
         case 'Utilisateur non trouvé':
-            res.status(401).json({ error: error.message });
+      return res.status(401).json({ error: error.message });
             break;
         case 'Quiz non trouvé':
-            res.status(404).json({ error: error.message });
+      return res.status(404).json({ error: error.message });
             break;
         case 'Ce quiz ne vous appartient pas':
-            res.status(403).json({ error: error.message });
+      return res.status(403).json({ error: error.message });
             break;
         default:
-            res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
             break;
     }
  }
