@@ -1,11 +1,20 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-import { assert, object, string, refine, enums, optional, array, integer } from "superstruct";
+import { assert, object, string, refine, enums, optional, array } from "superstruct";
 
 import * as openTDB from "../model/opentdb";
 import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
 import { getAverageScore } from "../utils/gameUtils";
+
+class HttpError extends Error {
+    status: number;
+
+    constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+    }
+}
 
 // Schéma pour une question
 const QuestionSchema = object({
@@ -18,10 +27,10 @@ const QuestionSchema = object({
 const CreateQuizQuerySchema = object({
     category: optional(refine(string(), 'category', value => {
         if (isNaN(parseInt(value))) {
-            throw new Error('Category must be a number');
+            throw new HttpError('Category must be a number', 400);
         }
         if (parseInt(value) < 9 || parseInt(value) > 32) {
-            throw new Error('Category must be between 9 and 32');
+            throw new HttpError('Category must be between 9 and 32', 400);
         }
         return true;
     })),
@@ -39,20 +48,20 @@ const CreateQuizBodySchema = object({
 const CreateQuizFastQuerySchema = object({
     amount: refine(string(), 'amount', value => {
         if (isNaN(parseInt(value))) {
-            throw new Error('Amount must be a number');
+            throw new HttpError('Amount must be a number', 400);
         }
         if (parseInt(value) < 1 || parseInt(value) > 50) {
-            throw new Error('Amount must be between 1 and 50');
+            throw new HttpError('Amount must be between 1 and 50', 400);
         }
         return true;
     }
     ),
     category: optional(refine(string(), 'category', value => {
         if (isNaN(parseInt(value))) {
-            throw new Error('Category must be a number');
+            throw new HttpError('Category must be a number', 400);
         }
         if (parseInt(value) < 9 || parseInt(value) > 32) {
-            throw new Error('Category must be between 9 and 32');
+            throw new HttpError('Category must be between 9 and 32', 400);
         }
         return true;
     })),
@@ -63,10 +72,10 @@ const ListQuizQuerySchema = object({
     title: optional(string()),
     category: optional(refine(string(), 'category', value => {
         if (isNaN(parseInt(value))) {
-            throw new Error('Category must be a number');
+            throw new HttpError('Category must be a number', 400);
         }
         if (parseInt(value) < 9 || parseInt(value) > 32) {
-            throw new Error('Category must be between 9 and 32');
+            throw new HttpError('Category must be between 9 and 32', 400);
         }
         return true;
     })),
@@ -90,7 +99,7 @@ export async function create(req: Request, res: Response) {
         const user = await userUtils.getUser(req);
 
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
+            throw new HttpError("Utilisateur non trouvé", 401);
         }
 
         quizData.user = {
@@ -119,18 +128,14 @@ export async function create(req: Request, res: Response) {
             data: questionsData
         });        
 
-  return res.status(201).json({quizId: quiz.id});
+        res.status(201).json({quizId: quiz.id});
     }
     catch (error: any) {
-
-        if (error.message === 'Utisilateur non trouvé') {
-      return res.status(401).json({error: error.message});
+        if (error instanceof HttpError) {
+            res.status(error.status).json({error: error.message});
+        } else {
+            res.status(500).json({error: error.message});
         }
-        else {
-      return res.status(400).json({error: error.message});
-        }
-
-
     }
 }
 
@@ -142,7 +147,7 @@ export async function retrieve(req: Request, res: Response) {
         const user = await userUtils.getUser(req);
 
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
+            throw new HttpError("Utilisateur non trouvé", 401);
         }
 
         const quiz = await prisma.quiz.findUnique({
@@ -151,11 +156,11 @@ export async function retrieve(req: Request, res: Response) {
         });
 
         if (!quiz) {
-            throw new Error("Quiz non trouvé");
+            throw new HttpError("Quiz non trouvé", 404);
         }
 
         if (quiz.userId !== user.id) {
-            throw new Error("Ce quiz ne vous appartient pas");
+            throw new HttpError("Ce quiz ne vous appartient pas", 403);
         }
 
         const results={
@@ -173,22 +178,13 @@ export async function retrieve(req: Request, res: Response) {
             })
         }
 
-  return res.status(200).json({quiz: results});
+     res.status(200).json({quiz: results});
     }
     catch (error: any) {
-               switch (error.message) {
-            case 'Utilisateur non trouvé':
-          return res.status(401).json({ error: error.message });
-                break;
-            case 'Quiz non trouvé':
-          return res.status(404).json({ error: error.message });
-                break;
-            case 'Ce quiz ne vous appartient pas':
-          return res.status(403).json({ error: error.message });
-                break;
-            default:
-          return res.status(500).json({ error: error.message });
-                break;
+        if (error instanceof HttpError) {
+            res.status(error.status).json({error: error.message});
+        } else {
+            res.status(500).json({error: error.message});
         }
     }
 }
@@ -207,21 +203,21 @@ export async function edit(req: Request, res: Response) {
         });
 
         if (!quiz) {
-            throw new Error("Quiz non trouvé");
+            throw new HttpError("Quiz non trouvé", 404);
         }
 
         if (quiz.public) {
-            throw new Error("Vous ne pouvez pas modifier un quiz public");
+            throw new HttpError("Vous ne pouvez pas modifier un quiz public", 403);
         }
 
         const user = await userUtils.getUser(req);
 
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
+            throw new HttpError("Utilisateur non trouvé", 401);
         }
 
         if (quiz.userId !== user.id) {
-            throw new Error("Ce quiz ne vous appartient pas");
+            throw new HttpError("Ce quiz ne vous appartient pas", 403);
         }
 
         await prisma.quiz.update({
@@ -259,27 +255,15 @@ export async function edit(req: Request, res: Response) {
         });
         
 
-  return res.status(200).json({quizId: quiz.id});
+        res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
-               switch (error.message) {
-            case 'Quiz non trouvé':
-          return res.status(404).json({ error: error.message });
-                break;
-            case 'Vous ne pouvez pas modifier un quiz public':
-          return res.status(403).json({ error: error.message });
-                break;
-            case 'Utilisateur non trouvé':
-          return res.status(401).json({ error: error.message });
-                break;
-            case 'Ce quiz ne vous appartient pas':
-          return res.status(403).json({ error: error.message });
-                break;
-            default:
-          return res.status(500).json({ error: error.message });
-                break;
+        if (error instanceof HttpError) {
+            res.status(error.status).json({error: error.message});
+        } else {
+            res.status(500).json({error: error.message});
         }
-}
+    }
 }
 // Fonction pour publier un quiz
 export async function publish(req: Request, res: Response) {
@@ -292,21 +276,21 @@ export async function publish(req: Request, res: Response) {
         });
 
         if (!quiz) {
-            throw new Error("Quiz non trouvé");
+            throw new HttpError("Quiz non trouvé", 404);
         }
 
         if (quiz.public) {
-            throw new Error("Ce quiz est déjà public");
+            throw new HttpError("Ce quiz est déjà public", 403);
         }
 
         const user = await userUtils.getUser(req);
 
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
+            throw new HttpError("Utilisateur non trouvé", 401);
         }
 
         if (quiz.userId !== user.id) {
-            throw new Error("Ce quiz ne vous appartient pas");
+            throw new HttpError("Ce quiz ne vous appartient pas", 403);
         }
 
         await prisma.quiz.update({
@@ -316,25 +300,13 @@ export async function publish(req: Request, res: Response) {
             }
         });
 
-  return res.status(200).json({quizId: quiz.id});
+        res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
-              switch (error.message) {
-            case 'Quiz non trouvé':
-          return res.status(404).json({ error: error.message });
-                break;
-            case 'Ce quiz est déjà public':
-          return res.status(403).json({ error: error.message });
-                break;
-            case 'Utilisateur non trouvé':
-          return res.status(401).json({ error: error.message });
-                break;
-            case 'Ce quiz ne vous appartient pas':
-          return res.status(403).json({ error: error.message });
-                break;
-            default:
-          return res.status(500).json({ error: error.message });
-                break;
+        if (error instanceof HttpError) {
+            res.status(error.status).json({error: error.message});
+        } else {
+            res.status(500).json({error: error.message});
         }
     }
 }
@@ -419,11 +391,11 @@ export async function fastCreate(req: Request, res: Response) {
             data: answers,
         });
         
-  return res.status(200).json({id: gameId});
+     res.status(200).json({id: gameId});
     }    
     catch (error: any) {
-  return res.status(404).json({error: error.message});
-        }
+        res.status(500).json({error: error.message});
+    }
 }
 
 // Fonction pour obtenir un quiz à partir de son id et le cloner
@@ -444,7 +416,7 @@ export async function clone(req: Request, res: Response) {
         });
 
         if (!quiz) {
-            throw new Error("Quiz non trouvé");
+            throw new HttpError("Quiz non trouvé", 404);
         }
 
         let questions = quiz.questions.map((question) => {
@@ -455,16 +427,15 @@ export async function clone(req: Request, res: Response) {
             }
         });
 
-  return res.status(201).json({questions: questions});
+        res.status(201).json({questions: questions});
     }
     catch (error: any) {
-        if (error.message === 'Quiz non trouvé') {
-      return res.status(404).json({error: error.message});
+        if (error instanceof HttpError) {
+            res.status(error.status).json({error: error.message});
+        } else {
+            res.status(500).json({error: error.message});
         }
-        else {
-      return res.status(400).json({error: error.message});
-        }
-        }
+    }
 }
 
 // Fonction pour obtenir une liste de quiz
@@ -503,9 +474,10 @@ export async function list(req: Request, res: Response) {
             where
         });
 
-  return res.status(200).json({ quizs: quizs });
-    } catch (error: any) {
-  return res.status(404).json({ error: error.message });
+        res.status(200).json({ quizs: quizs });
+    }
+    catch (error: any) {
+        res.status(500).json({ error: error.message });
     }
 }
 
@@ -517,7 +489,7 @@ export async function score(req : Request, res : Response){
     const user = await userUtils.getUser(req);
 
     if (!user) {
-        throw new Error("Utilisateur non trouvé");
+        throw new HttpError("Utilisateur non trouvé", 401);
     }
 
     const quiz = await prisma.quiz.findUnique({
@@ -526,11 +498,11 @@ export async function score(req : Request, res : Response){
     });
 
     if (!quiz) {
-        throw new Error("Quiz non trouvé");
+        throw new HttpError("Quiz non trouvé", 404);
     }
 
     if (quiz.userId !== user.id) {
-        throw new Error("Ce quiz ne vous appartient pas");
+        throw new HttpError("Ce quiz ne vous appartient pas", 403);
     }
      
     let score =0;
@@ -545,20 +517,10 @@ export async function score(req : Request, res : Response){
     
   }      
   catch (error: any) {
-       switch (error.message) {
-        case 'Utilisateur non trouvé':
-      return res.status(401).json({ error: error.message });
-            break;
-        case 'Quiz non trouvé':
-      return res.status(404).json({ error: error.message });
-            break;
-        case 'Ce quiz ne vous appartient pas':
-      return res.status(403).json({ error: error.message });
-            break;
-        default:
-      return res.status(500).json({ error: error.message });
-            break;
-    }
- }
-    
+      if (error instanceof HttpError) {
+          res.status(error.status).json({error: error.message});
+      } else {
+          res.status(500).json({error: error.message});
+      }
+  }
 }

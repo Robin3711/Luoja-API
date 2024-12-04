@@ -5,9 +5,18 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import * as userUtils from '../utils/userUtils';
 
+class HttpError extends Error {
+    status: number;
+
+    constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+    }
+}
+
 const Name = refine(string(), 'name', value => {
     if (value.length < 3) {
-        throw new Error('Nom invalide');
+        throw new HttpError('Nom invalide', 400);
     }
     return true;
 });
@@ -29,11 +38,11 @@ export async function create(req: Request, res: Response) {
         const { name, password } = req.body;
 
         if (password.length < 8) {
-            throw new Error("Le mot de passe doit contenir au moins 8 caractères");
+            throw new HttpError("Le mot de passe doit contenir au moins 8 caractères", 400);
         }
 
         if (await prisma.user.findUnique({ where: { userName: name } })) {
-            throw new Error("Ce nom est déjà utilisé");
+            throw new HttpError("Ce nom est déjà utilisé", 400);
         }
 
         const user = await prisma.user.create({ 
@@ -45,12 +54,13 @@ export async function create(req: Request, res: Response) {
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
 
-  return res.status(201).json({ token });
-    } catch (error: any) {
-        if (error.message==="Le mot de passe doit contenir au moins 8 caractères") {
-      return res.status(400).json({ error: error.message });
+        res.status(201).json({ token });
+    }
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
         }
-  return res.status(403).json({ error: error.message });
+        return res.status(400).json({ error: error.message });
     }
 }
 
@@ -58,13 +68,11 @@ export async function login(req: Request, res: Response) {
     try {
         assert(req.body, LoginSchema);
 
-        
-
         const { name, password } = req.body;
 
 
         if (password.length < 8) {
-            throw new Error("Le mot de passe doit contenir au moins 8 caractères");
+            throw new HttpError("Le mot de passe doit contenir au moins 8 caractères", 400);
         }
 
         const user = await prisma.user.findUnique({
@@ -74,24 +82,24 @@ export async function login(req: Request, res: Response) {
         });
 
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
+            throw new HttpError("Utilisateur non trouvé", 401);
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            throw new Error("Mot de passe incorrect");
+            throw new HttpError("Mot de passe incorrect", 401);
         }
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!);
 
         res.json({ token });
-    } catch (error: any) {
-        if (error.message==="Le mot de passe doit contenir au moins 8 caractères") {
-           return  res.status(400).json({ error: error.message });
+    }
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
         }
-
-  return res.status(401).json({ error: error.message });
+        return res.status(400).json({ error: error.message });
     }
 }
 
@@ -122,8 +130,9 @@ export async function infos(req: Request, res: Response) {
         }
 
         res.json({ user });
-    } catch (error: any) {
-  return res.status(401).json({ error: error.message });
+    }
+    catch (error: any) {
+        return res.status(400).json({ error: error.message });
     }
 }
 
@@ -132,11 +141,10 @@ export async function createdQuizs(req: Request, res: Response) {
         const user = await userUtils.getUser(req);
 
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
+            throw new HttpError("Utilisateur non trouvé", 401);
         }
 
         // Récupérer les quizs créés par l'utilisateur + le nombre de questions et pas les questions
-
         
         const quizzes = await prisma.quiz.findMany({
             where: {
@@ -168,11 +176,11 @@ export async function createdQuizs(req: Request, res: Response) {
             numberOfQuestions: quiz._count.questions
         }));
 
-  return res.status(200).json(result);
+         res.status(200).json(result);
    
 
     } catch (error: any) {
-  return res.status(401).json({ error: error.message });
+        return res.status(401).json({ error: error.message });
     }
 }
 
@@ -181,7 +189,7 @@ export async function games(req: Request, res: Response) {
         const user = await userUtils.getUser(req);
 
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
+            throw new HttpError("Utilisateur non trouvé", 401);
         }
 
         const games = await prisma.game.findMany({
@@ -191,7 +199,8 @@ export async function games(req: Request, res: Response) {
         });
 
         res.json({ games });
-    } catch (error: any) {
-  return res.status(401).json({ error: error.message });
+    } 
+    catch (error: any) {
+        return res.status(400).json({ error: error.message });
     }
 }
