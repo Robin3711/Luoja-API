@@ -1,9 +1,10 @@
 stages:
   - docker
-  - deploy
-  - lint
-  - pages
-  - test
+  - deploy  
+  - tests
+  - pages  
+
+
 
 docker:
   stage: docker
@@ -21,9 +22,31 @@ docker:
     - if: $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release"
 
 
+
+deploy:
+  stage: deploy
+  needs:
+    - docker
+  image: ubuntu:latest
+  variables:
+    SECURE_FILES_DOWNLOAD_PATH: ".ssh/"
+  script:
+    - cd /root
+    - apt update -y
+    - apt install -y curl openssh-client
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - chmod 600 /root/.ssh/id_rsa
+    - ssh-keyscan -H luoja.fr >> /root/.ssh/known_hosts
+    - ssh ubuntu@luoja.fr "sudo docker kill mimir || true"
+    - ssh ubuntu@luoja.fr "sudo docker rm mimir || true"
+    - ssh ubuntu@luoja.fr "sudo docker rmi docker.luoja.fr/mimir || true"
+    - ssh ubuntu@luoja.fr "sudo docker run -d --restart always --name mimir --network internal_network -e PROTOCOL=HTTPS -e DOMAIN=luoja.fr -v /etc/letsencrypt:/etc/letsencrypt:ro -v /srv/mimir/:/usr/src/app/prisma/db/ docker.luoja.fr/mimir"
+
+
+
 lint:
   when: always
-  stage: lint 
+  stage: tests
   image: node:latest
   allow_failure: true
   script:
@@ -40,9 +63,11 @@ lint:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
 
+
+
 test:
   when: always
-  stage: test
+  stage: tests
   image: node:latest
   script:
     - cd app
@@ -59,6 +84,8 @@ test:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
  
+
+
 pages:
   when: always
   stage: pages
@@ -89,21 +116,3 @@ pages:
   rules:
   - if: $CI_COMMIT_BRANCH == "dev"
 
-deploy:
-  stage: deploy
-  needs:
-    - docker
-  image: ubuntu:latest
-  variables:
-    SECURE_FILES_DOWNLOAD_PATH: ".ssh/"
-  script:
-    - cd /root
-    - apt update -y
-    - apt install -y curl openssh-client
-    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
-    - chmod 600 /root/.ssh/id_rsa
-    - ssh-keyscan -H luoja.fr >> /root/.ssh/known_hosts
-    - ssh ubuntu@luoja.fr "sudo docker kill mimir || true"
-    - ssh ubuntu@luoja.fr "sudo docker rm mimir || true"
-    - ssh ubuntu@luoja.fr "sudo docker rmi docker.luoja.fr/mimir || true"
-    - ssh ubuntu@luoja.fr "sudo docker run -d --restart always --name mimir --network internal_network -e PROTOCOL=HTTPS -e DOMAIN=luoja.fr -v /etc/letsencrypt:/etc/letsencrypt:ro -v /srv/mimir/:/usr/src/app/prisma/db/ docker.luoja.fr/mimir"
