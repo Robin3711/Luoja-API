@@ -176,17 +176,19 @@ export async function retrieve(req: Request, res: Response) {
         res.status(200).json({quiz: results});
     }
     catch (error: any) {
-        if (error.message === 'Utilisateur non trouvé') {
-            res.status(401).json({error: error.message});
-        }
-        if(error.message === 'Quiz non trouvé'){
-            res.status(404).json({error: error.message});
-        }
-        if(error.message === 'Ce quiz ne vous appartient pas'){
-            res.status(403).json({error: error.message});
-        }
-        else {
-            res.status(500).json({error: error.message});
+               switch (error.message) {
+            case 'Utilisateur non trouvé':
+                res.status(401).json({ error: error.message });
+                break;
+            case 'Quiz non trouvé':
+                res.status(404).json({ error: error.message });
+                break;
+            case 'Ce quiz ne vous appartient pas':
+                res.status(403).json({ error: error.message });
+                break;
+            default:
+                res.status(500).json({ error: error.message });
+                break;
         }
     }
 }
@@ -260,20 +262,22 @@ export async function edit(req: Request, res: Response) {
         res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
-        if (error.message === 'Quiz non trouvé') {
-            res.status(404).json({error: error.message});
-        }
-        if (error.message === 'Vous ne pouvez pas modifier un quiz public') {
-            res.status(403).json({error: error.message});
-        }
-        if (error.message === 'Utilisateur non trouvé') {
-            res.status(401).json({error: error.message});
-        }
-        if (error.message === 'Ce quiz ne vous appartient pas') {
-            res.status(403).json({error: error.message});
-        }
-        else {
-            res.status(500).json({error: error.message});
+               switch (error.message) {
+            case 'Quiz non trouvé':
+                res.status(404).json({ error: error.message });
+                break;
+            case 'Vous ne pouvez pas modifier un quiz public':
+                res.status(403).json({ error: error.message });
+                break;
+            case 'Utilisateur non trouvé':
+                res.status(401).json({ error: error.message });
+                break;
+            case 'Ce quiz ne vous appartient pas':
+                res.status(403).json({ error: error.message });
+                break;
+            default:
+                res.status(500).json({ error: error.message });
+                break;
         }
 }
 }
@@ -315,19 +319,22 @@ export async function publish(req: Request, res: Response) {
         res.status(200).json({quizId: quiz.id});
     }
     catch (error: any) {
-        if (error.message === 'Quiz non trouvé') {
-            res.status(404).json({error: error.message});
-        }
-        if (error.message === 'Ce quiz est déjà public') {
-            res.status(403).json({error: error.message});}
-        if (error.message === 'Utilisateur non trouvé') {
-            res.status(401).json({error: error.message});
-        }
-        if (error.message === 'Ce quiz ne vous appartient pas') {
-            res.status(403).json({error: error.message});
-        }
-        else {
-            res.status(500).json({error: error.message});
+              switch (error.message) {
+            case 'Quiz non trouvé':
+                res.status(404).json({ error: error.message });
+                break;
+            case 'Ce quiz est déjà public':
+                res.status(403).json({ error: error.message });
+                break;
+            case 'Utilisateur non trouvé':
+                res.status(401).json({ error: error.message });
+                break;
+            case 'Ce quiz ne vous appartient pas':
+                res.status(403).json({ error: error.message });
+                break;
+            default:
+                res.status(500).json({ error: error.message });
+                break;
         }
     }
 }
@@ -538,17 +545,19 @@ export async function score(req : Request, res : Response){
     
   }      
   catch (error: any) {
-    if (error.message === 'Utilisateur non trouvé') {
-        res.status(401).json({error: error.message});
-    }
-    if (error.message === 'Quiz non trouvé') {
-        res.status(404).json({error: error.message});
-    }
-    if (error.message === 'Ce quiz ne vous appartient pas') {
-        res.status(403).json({error: error.message});
-    }
-    else {
-        res.status(500).json({error: error.message});
+       switch (error.message) {
+        case 'Utilisateur non trouvé':
+            res.status(401).json({ error: error.message });
+            break;
+        case 'Quiz non trouvé':
+            res.status(404).json({ error: error.message });
+            break;
+        case 'Ce quiz ne vous appartient pas':
+            res.status(403).json({ error: error.message });
+            break;
+        default:
+            res.status(500).json({ error: error.message });
+            break;
     }
  }
     
