@@ -4,8 +4,6 @@ stages:
   - tests
   - pages  
 
-
-
 docker:
   stage: docker
   image: docker:latest
@@ -20,8 +18,6 @@ docker:
     - docker push docker.luoja.fr/mimir
   rules:
     - if: $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "release"
-
-
 
 deploy:
   stage: deploy
@@ -42,8 +38,6 @@ deploy:
     - ssh ubuntu@luoja.fr "sudo docker rmi docker.luoja.fr/mimir || true"
     - ssh ubuntu@luoja.fr "sudo docker run -d --restart always --name mimir --network internal_network -e PROTOCOL=HTTPS -e DOMAIN=luoja.fr -v /etc/letsencrypt:/etc/letsencrypt:ro -v /srv/mimir/:/usr/src/app/prisma/db/ docker.luoja.fr/mimir"
 
-
-
 lint:
   when: always
   stage: tests
@@ -63,8 +57,6 @@ lint:
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
 
-
-
 test:
   when: always
   stage: tests
@@ -76,15 +68,13 @@ test:
     - npm run test
   artifacts:
     reports:
-      junit: app/reports/junit.xml
+      junit: app/reports/junit.xml  
     paths:
-    - app/reports/junit.xml
+      - app/reports/junit.xml
     when: always
     expire_in: 30 days
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
- 
-
 
 pages:  
   stage: pages
@@ -100,8 +90,8 @@ pages:
         echo "<h2>Rapport de Linting non disponible</h2>" >> public/index.html
       fi
     - |
-      if [ -f app/test.xml ]; then
-        cp app/test.xml public/test.xml
+      if [ -f app/reports/junit.xml ]; then  # Utilisation du bon fichier de test
+        cp app/reports/junit.xml public/test.xml
         echo "<h2><a href='test.xml'>Voir le Rapport de Test</a></h2>" >> public/index.html
       else
         echo "<h2>Rapport de Test non disponible</h2>" >> public/index.html
@@ -114,4 +104,3 @@ pages:
     when: always
   rules:
   - if: $CI_COMMIT_BRANCH == "dev"
-
