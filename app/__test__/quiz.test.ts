@@ -97,31 +97,47 @@ describe("Quiz Controller", () => {
         const mockUser = { id: 1 };
         const mockQuiz = {
             id: 1,
+            title: "Sample Quiz",
+            category: 9,
+            difficulty: "easy",
+            public: true,
             userId: 1,
             questions: [
-                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+                { text: "Question 1", correctAnswer: "Answer 1", incorrectAnswers: [], type: undefined },
             ],
         };
-
+    
         (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
         (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
-
+    
         req = {
             params: { id: "1" },
         };
-
+    
         await retrieve(req as Request, res as Response);
-
+    
         expect(userUtils.getUser).toHaveBeenCalledWith(req);
-
+    
         expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
             where: { id: 1 },
             include: { questions: true },
         });
-
+    
         expect(res.status).toHaveBeenCalledWith(200);
-        expect(jsonMock).toHaveBeenCalledWith({ quiz: mockQuiz });
+        expect(jsonMock).toHaveBeenCalledWith({
+            quiz: {
+                ...mockQuiz,
+                id: undefined,
+                userId: undefined,
+                questions: mockQuiz.questions.map(q => ({
+                    ...q,
+                    incorrectAnswers: [],
+                    type: undefined,
+                })),
+            },
+        });
     });
+    
 
     it("should return 401 if user is not found", async () => {
         (userUtils.getUser as jest.Mock).mockResolvedValue(null);
