@@ -64,15 +64,13 @@ test:
   script:
     - cd app
     - npm install
-    - npm install --save-dev jest jest-junit
-    - npm run test
+    - npm install --save-dev jest jest-html-reporter  
+    - npx jest --reporters=default --reporters=jest-html-reporter  
   artifacts:
-    reports:
-      junit: app/reports/junit.xml  
     paths:
-      - app/reports/junit.xml
-    when: always
+      - app/test-report.html 
     expire_in: 30 days
+    when: always
   rules:
     - if: $CI_COMMIT_BRANCH == "dev"
 
@@ -90,9 +88,9 @@ pages:
         echo "<h2>Rapport de Linting non disponible</h2>" >> public/index.html
       fi
     - |
-      if [ -f app/reports/junit.xml ]; then  # Utilisation du bon fichier de test
-        cp app/reports/junit.xml public/test.xml
-        echo "<h2><a href='test.xml'>Voir le Rapport de Test</a></h2>" >> public/index.html
+      if [ -f app/test-report.html ]; then  # Utilisation du rapport HTML des tests
+        cp app/test-report.html public/test-report.html
+        echo "<h2><a href='test-report.html'>Voir le Rapport de Test</a></h2>" >> public/index.html
       else
         echo "<h2>Rapport de Test non disponible</h2>" >> public/index.html
       fi
