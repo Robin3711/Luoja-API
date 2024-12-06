@@ -1,13 +1,13 @@
-import { Request, Response } from "express";
-import { create, getCurrentQuestion, verifyAnswer, getInfos } from "../src/requestHandlers/quiz";
-import { resetProgress } from "../src/utils/quizUtils";
+import { create, retrieve, edit } from "../src/requestHandlers/quiz";
 import { prisma } from "../src/model/db";
-import { fetchQuestions } from "../src/model/opentdb";
-import { humanId } from "human-id";
+import * as gameUtils from "../src/utils/gameUtils";
+import * as userUtils from "../src/utils/userUtils";
+import { Request, Response } from "express";
+import { publish,fastCreate } from "../src/requestHandlers/quiz";
 
 jest.mock("../src/model/db");
-jest.mock("../src/model/opentdb");
-jest.mock("human-id");
+jest.mock("../src/utils/gameUtils");
+jest.mock("../src/utils/userUtils");
 
 jest.mock('../src/model/db', () => ({
     prisma: {
@@ -17,155 +17,577 @@ jest.mock('../src/model/db', () => ({
             update: jest.fn(),
         },
         question: {
-            create: jest.fn(),
-            update: jest.fn(),
-            updateMany: jest.fn(),
+            createMany: jest.fn(),
+            deleteMany: jest.fn(),
         },
     },
 }));
 
-describe("Contrôleur de Quiz", () => {
+describe("Quiz Controller", () => {
     let req: Partial<Request>;
     let res: Partial<Response>;
     let jsonMock: jest.Mock;
-    let statusMock: jest.Mock;
 
     beforeEach(() => {
+        req = {
+            query: {
+                title: "Sample Quiz",
+                category: "9",
+                difficulty: "easy",
+                public: "true",
+            },
+            body: {
+                questions: [
+                    {
+                        text: "Question 1",
+                        correctAnswer: "Answer 1",
+                        incorrectAnswers: ["Answer 2", "Answer 3", "Answer 4"],
+                    },
+                ],
+            },
+        };
         jsonMock = jest.fn();
-        statusMock = jest.fn().mockReturnValue({ json: jsonMock });
-        req = { query: {}, params: {}, body: {} };
-        res = { status: statusMock };
-        jest.clearAllMocks();
+        res = {
+            status: jest.fn(() => ({
+                json: jsonMock,
+            })),
+        } as unknown as Response;
     });
 
-    describe("createQuiz", () => {
-        it("devrait créer un quiz et retourner quizId", async () => {
-            req.query = { amount: "10", category: "9", difficulty: "hard" };
-            (fetchQuestions as jest.Mock).mockResolvedValue({ results: [{ question: "Q1", correct_answer: "A1", incorrect_answers: ["A2", "A3", "A4"] }] });
-            (humanId as jest.Mock).mockReturnValue("quiz-id");
-            (prisma.quiz.create as jest.Mock).mockResolvedValue({});
-            (prisma.question.create as jest.Mock).mockResolvedValue({});
+    it("should create a new quiz", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = { id: 1 };
 
-            await create(req as Request, res as Response);
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.create as jest.Mock).mockResolvedValue(mockQuiz);
 
-            expect(statusMock).toHaveBeenCalledWith(200);
-            expect(jsonMock).toHaveBeenCalledWith({ quizId: "quiz-id" });
+        await create(req as Request, res as Response);
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(prisma.quiz.create).toHaveBeenCalledWith({
+            data: {
+                title: "Sample Quiz",
+                category: 9,
+                difficulty: "easy",
+                public: true,
+                user: { connect: { id: 1 } },
+            },
         });
 
-        it("devrait retourner 400 si la validation échoue", async () => {
-            req.query = { amount: "invalid" };
-
-            await create(req as Request, res as Response);
-
-            expect(statusMock).toHaveBeenCalledWith(400);
-            expect(jsonMock).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(prisma.question.createMany).toHaveBeenCalledWith({
+            data: [
+                {
+                    text: "Question 1",
+                    trueFalse: false,
+                    correctAnswer: "Answer 1",
+                    falseAnswer1: "Answer 2",
+                    falseAnswer2: "Answer 3",
+                    falseAnswer3: "Answer 4",
+                    quizId: 1,
+                },
+            ],
         });
+
+        expect(res.status).toHaveBeenCalledWith(201);
+        expect(jsonMock).toHaveBeenCalledWith({ quizId: 1 });
     });
 
-    describe("getCurrentQuestion", () => {
-        it("devrait retourner la question actuelle et les réponses mélangées", async () => {
-            req.params = { id: "quiz-id" };
-            (prisma.quiz.findUnique as jest.Mock).mockResolvedValue({
-                questionCursor: 0,
-                questions: [{ question: "Q1", trueFalse: false, correctAnswer: "A1", falseAnswer1: "A2", falseAnswer2: "A3", falseAnswer3: "A4" }]
-            });
-
-            await getCurrentQuestion(req as Request, res as Response);
-
-            expect(statusMock).toHaveBeenCalledWith(200);
-            const response = jsonMock.mock.calls[0][0];
-            expect(response.answers).toContain("A1");
-            expect(response.answers.length).toBe(4);
+    it("should retrieve a quiz", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = {
+            id: 1,
+            title: "Sample Quiz",
+            category: 9,
+            difficulty: "easy",
+            public: true,
+            userId: 1,
+            questions: [
+                { text: "Question 1", correctAnswer: "Answer 1", incorrectAnswers: [], type: undefined },
+            ],
+        };
+    
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+    
+        req = {
+            params: { id: "1" },
+        };
+    
+        await retrieve(req as Request, res as Response);
+    
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+    
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
         });
-
-        it("devrait retourner 404 si le quiz n'est pas trouvé", async () => {
-            req.params = { id: "quiz-id" };
-            (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(null);
-
-            await getCurrentQuestion(req as Request, res as Response);
-
-            expect(statusMock).toHaveBeenCalledWith(404);
-            expect(jsonMock).toHaveBeenCalledWith({ erreur: "Quiz non trouvé" });
-        });
-    });
-
-    describe("verifyCurrentQuestionAnswer", () => {
-        it("devrait vérifier la réponse et mettre à jour la question", async () => {
-            req.params = { id: "quiz-id" };
-            req.body = { answer: "A1" };
-            (prisma.quiz.findUnique as jest.Mock).mockResolvedValue({
-                questionCursor: 0,
-                questions: [{ id: "question-id", correctAnswer: "A1" }]
-            });
-            (prisma.question.update as jest.Mock).mockResolvedValue({});
-            (prisma.quiz.update as jest.Mock).mockResolvedValue({});
-
-            await verifyAnswer(req as Request, res as Response);
-
-            expect(statusMock).toHaveBeenCalledWith(200);
-            expect(jsonMock).toHaveBeenCalledWith({ correct: true });
-        });
-
-        it("devrait retourner 400 si le quiz n'est pas trouvé", async () => {
-            req.params = { id: "quiz-id" };
-            req.body = { answer: "A1" };
-            (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(null);
-
-            await verifyAnswer(req as Request, res as Response);
-
-            expect(statusMock).toHaveBeenCalledWith(400);
-            expect(jsonMock).toHaveBeenCalledWith({ error: "Quiz non trouvé" });
+    
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(jsonMock).toHaveBeenCalledWith({
+            quiz: {
+                ...mockQuiz,
+                id: undefined,
+                userId: undefined,
+                questions: mockQuiz.questions.map(q => ({
+                    ...q,
+                    incorrectAnswers: [],
+                    type: undefined,
+                })),
+            },
         });
     });
+    
 
-    describe("getQuizInfos", () => {
-        it("devrait retourner les informations du quiz", async () => {
-            req.params = { id: "quiz-id" };
-            (prisma.quiz.findUnique as jest.Mock).mockResolvedValue({
-                questionCursor: 1,
-                questions: [{ wasCorrect: true }, { wasCorrect: false }]
-            });
+    it("should return 401 if user is not found", async () => {
+        (userUtils.getUser as jest.Mock).mockResolvedValue(null);
 
-            await getInfos(req as Request, res as Response);
+        req = {
+            params: { id: "1" },
+        };
 
-            expect(statusMock).toHaveBeenCalledWith(200);
-            expect(jsonMock).toHaveBeenCalledWith({
-                results: [true, false],
-                questionCursor: 1,
-                numberOfQuestions: 2
-            });
-        });
+        await retrieve(req as Request, res as Response);
 
-        it("devrait retourner 400 si le quiz n'est pas trouvé", async () => {
-            req.params = { id: "quiz-id" };
-            (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(null);
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
 
-            await getInfos(req as Request, res as Response);
-
-            expect(statusMock).toHaveBeenCalledWith(400);
-            expect(jsonMock).toHaveBeenCalledWith({ error: "Quiz non trouvé" });
-        });
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Utilisateur non trouvé" });
     });
 
-    describe("resetQuiz", () => {
-        it("devrait réinitialiser le quiz", async () => {
-            (prisma.quiz.findUnique as jest.Mock).mockResolvedValue({
-                id: "quiz-id",
-                questions: [{ id: "question-id" }]
-            });
-            (prisma.question.updateMany as jest.Mock).mockResolvedValue({});
-            (prisma.quiz.update as jest.Mock).mockResolvedValue({});
+    it("should return 404 if quiz is not found", async () => {
+        const mockUser = { id: 1 };
 
-            await resetProgress("quiz-id");
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(null);
 
-            expect(prisma.question.updateMany).toHaveBeenCalledWith({
-                where: { quizId: "quiz-id" },
-                data: { wasCorrect: false }
-            });
-            expect(prisma.quiz.update).toHaveBeenCalledWith({
-                where: { id: "quiz-id" },
-                data: { questionCursor: 0 }
-            });
+        req = {
+            params: { id: "1" },
+        };
+
+        await retrieve(req as Request, res as Response);
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
         });
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Quiz non trouvé" });
     });
+
+    it("should return 403 if quiz does not belong to user", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = {
+            id: 1,
+            userId: 2,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+
+        req = {
+            params: { id: "1" },
+        };
+
+        await retrieve(req as Request, res as Response);
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Ce quiz ne vous appartient pas" });
+    });
+
+    it("should edit a quiz", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = {
+            id: 1,
+            userId: 1,
+            public: false,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+        (prisma.quiz.update as jest.Mock).mockResolvedValue(mockQuiz);
+
+        req = {
+            params: { id: "1" },
+            query: {
+                title: "Updated Quiz",
+                category: "10",
+                difficulty: "medium",
+            },
+            body: {
+                questions: [
+                    {
+                        text: "Updated Question 1",
+                        correctAnswer: "Updated Answer 1",
+                        incorrectAnswers: ["Updated Answer 2", "Updated Answer 3", "Updated Answer 4"],
+                    },
+                ],
+            },
+        };
+
+        await edit(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(prisma.quiz.update).toHaveBeenCalledWith({
+            where: { id: 1 },
+            data: {
+                title: "Updated Quiz",
+                category: 10,
+                difficulty: "medium",
+                updatedAt: expect.any(Date),
+            },
+        });
+
+        expect(prisma.question.deleteMany).toHaveBeenCalledWith({
+            where: { quizId: 1 },
+        });
+
+        expect(prisma.question.createMany).toHaveBeenCalledWith({
+            data: [
+                {
+                    text: "Updated Question 1",
+                    trueFalse: false,
+                    correctAnswer: "Updated Answer 1",
+                    falseAnswer1: "Updated Answer 2",
+                    falseAnswer2: "Updated Answer 3",
+                    falseAnswer3: "Updated Answer 4",
+                    quizId: 1,
+                },
+            ],
+        });
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(jsonMock).toHaveBeenCalledWith({ quizId: 1 });
+    });
+
+    it("should return 404 if quiz to edit is not found", async () => {
+        const mockUser = { id: 1 };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(null);
+
+        req = {
+            params: { id: "1" },
+            query: {
+                title: "Updated Quiz",
+                category: "10",
+                difficulty: "medium",
+            },
+            body: {
+                questions: [
+                    {
+                        text: "Updated Question 1",
+                        correctAnswer: "Updated Answer 1",
+                        incorrectAnswers: ["Updated Answer 2", "Updated Answer 3", "Updated Answer 4"],
+                    },
+                ],
+            },
+        };
+
+        await edit(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Quiz non trouvé" });
+    });
+
+    it("should return 403 if quiz to edit is public", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = {
+            id: 1,
+            userId: 1,
+            public: true,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+
+        req = {
+            params: { id: "1" },
+            query: {
+                title: "Updated Quiz",
+                category: "10",
+                difficulty: "medium",
+            },
+            body: {
+                questions: [
+                    {
+                        text: "Updated Question 1",
+                        correctAnswer: "Updated Answer 1",
+                        incorrectAnswers: ["Updated Answer 2", "Updated Answer 3", "Updated Answer 4"],
+                    },
+                ],
+            },
+        };
+
+        await edit(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Vous ne pouvez pas modifier un quiz public" });
+    });
+
+    it("should return 401 if user is not found when editing a quiz", async () => {
+        const mockQuiz = {
+            id: 1,
+            userId: 1,
+            public: false,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(null);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+
+        req = {
+            params: { id: "1" },
+            query: {
+                title: "Updated Quiz",
+                category: "10",
+                difficulty: "medium",
+            },
+            body: {
+                questions: [
+                    {
+                        text: "Updated Question 1",
+                        correctAnswer: "Updated Answer 1",
+                        incorrectAnswers: ["Updated Answer 2", "Updated Answer 3", "Updated Answer 4"],
+                    },
+                ],
+            },
+        };
+
+        await edit(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Utilisateur non trouvé" });
+    });
+
+    it("should return 403 if quiz to edit does not belong to user", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = {
+            id: 1,
+            userId: 2,
+            public: false,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+
+        req = {
+            params: { id: "1" },
+            query: {
+                title: "Updated Quiz",
+                category: "10",
+                difficulty: "medium",
+            },
+            body: {
+                questions: [
+                    {
+                        text: "Updated Question 1",
+                        correctAnswer: "Updated Answer 1",
+                        incorrectAnswers: ["Updated Answer 2", "Updated Answer 3", "Updated Answer 4"],
+                    },
+                ],
+            },
+        };
+
+        await edit(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Ce quiz ne vous appartient pas" });
+    });
+    it("should publish a quiz", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = {
+            id: 1,
+            userId: 1,
+            public: false,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+        (prisma.quiz.update as jest.Mock).mockResolvedValue({ ...mockQuiz, public: true });
+
+        req = {
+            params: { id: "1" },
+        };
+
+        await publish(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(prisma.quiz.update).toHaveBeenCalledWith({
+            where: { id: 1 },
+            data: { public: true },
+        });
+
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(jsonMock).toHaveBeenCalledWith({ quizId: 1 });
+    });
+
+    it("should return 404 if quiz is not found", async () => {
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(null);
+
+        req = {
+            params: { id: "1" },
+        };
+
+        await publish(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Quiz non trouvé" });
+    });
+
+    it("should return 403 if quiz is already public", async () => {
+        const mockQuiz = {
+            id: 1,
+            userId: 1,
+            public: true,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+
+        req = {
+            params: { id: "1" },
+        };
+
+        await publish(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Ce quiz est déjà public" });
+    });
+
+    it("should return 401 if user is not found", async () => {
+        const mockQuiz = {
+            id: 1,
+            userId: 1,
+            public: false,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+        (userUtils.getUser as jest.Mock).mockResolvedValue(null);
+
+        req = {
+            params: { id: "1" },
+        };
+
+        await publish(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Utilisateur non trouvé" });
+    });
+
+    it("should return 403 if quiz does not belong to user", async () => {
+        const mockUser = { id: 1 };
+        const mockQuiz = {
+            id: 1,
+            userId: 2,
+            public: false,
+            questions: [
+                { id: 1, text: "Question 1", correctAnswer: "Answer 1", falseAnswer1: "Answer 2", falseAnswer2: "Answer 3", falseAnswer3: "Answer 4", trueFalse: false },
+            ],
+        };
+
+        (userUtils.getUser as jest.Mock).mockResolvedValue(mockUser);
+        (prisma.quiz.findUnique as jest.Mock).mockResolvedValue(mockQuiz);
+
+        req = {
+            params: { id: "1" },
+        };
+
+        await publish(req as Request, res as Response);
+
+        expect(prisma.quiz.findUnique).toHaveBeenCalledWith({
+            where: { id: 1 },
+            include: { questions: true },
+        });
+
+        expect(userUtils.getUser).toHaveBeenCalledWith(req);
+
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(jsonMock).toHaveBeenCalledWith({ error: "Ce quiz ne vous appartient pas" });
+    });
+   
 });

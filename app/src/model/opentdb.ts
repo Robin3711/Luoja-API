@@ -1,16 +1,12 @@
 import { decode } from 'html-entities';
 
+// Fonction qui permet de décoder une chaîne de caractères HTML
 function decodeHtml(html: string): string {
     return decode(html);
 }
 
-
 // Fonction qui permet de récupérer des questions depuis l'API OpenTDB
-// Recoit un nombre de questions à récupérer sous forme de string
-// Peut recevoir une catégorie et une difficulté sous forme de string
-// Retourne un objet JSON contenant les questions
 export async function fetchQuestions(amount: string, category?: string, difficulty?: string) {
-
     let url = `https://opentdb.com/api.php?amount=${amount}`;
 
     if (category) {
@@ -26,7 +22,7 @@ export async function fetchQuestions(amount: string, category?: string, difficul
     const data = await response.json();
 
     if (data.response_code !== 0) {
-        throw new Error("Erreur lors de la récupération des questions");
+        throw new Error("pas de question disponible");
     }
 
     data.results.forEach((item: any) => {
@@ -35,5 +31,5 @@ export async function fetchQuestions(amount: string, category?: string, difficul
         item.incorrect_answers = item.incorrect_answers.map((answer: string) => decodeHtml(answer));
     });
 
-    return data;
+    return data.results;
 }

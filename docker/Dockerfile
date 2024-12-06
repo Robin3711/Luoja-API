@@ -6,8 +6,11 @@ COPY ./app /usr/src/app
 
 RUN npm install -y
 
-RUN npx prisma db push --accept-data-loss
-
 EXPOSE 3000
 
-CMD ["npm", "start"]
+ARG JWT_SECRET
+
+ENV JWT_SECRET=$JWT_SECRET
+
+CMD npx prisma db push --accept-data-loss && \
+    npm start

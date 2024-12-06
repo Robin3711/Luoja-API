@@ -1,94 +1,578 @@
 # Mimir - API
 
+## Table des matières
+1. [Mimir - API](#mimir---api)
+2. [Documentation API](#documentation-api)
+    - [Le quiz](#route-pour-le-quiz)
+      - [Créer un quiz](#post-quiz)
+      - [Publier un quiz](#get-quizidpublish)
+      - [Récupérer son quiz](#get-quizidretrieve)
+      - [Rechercher un quiz](#get-quizlist)
+      - [Modifier un quiz](#post-quizidedit)
+      - [Créer une partie rapide](#get-quizfast)
+      - [Jouer à un quiz](#get-quizidplay)
+      - [Cloner un quiz](#get-quizidclone)
+    - [La partie](#route-pour-la-partie)
+      - [Récupérer la question courante d'une partie](#get-gameidquestion)
+      - [Récupérer la réponse d'une question](#post-gameidanswer)
+      - [Récupérer les informations de la partie](#get-gameidinfos)
+      - [Moyenne score d'une partie](#get-gameidaverage)
+      - [Lancer une nouvelle partie](#get-gameidrestart)
+    - [L'utilisateur](#route-pour-lutilisateur)
+      - [Enregistrer un utilisateur](#post-userregister)
+      - [Se connecter](#post-userlogin)
+      - [Récupérer les informations de l'utilisateur](#get-userinfos)
+      - [Récupérer les quiz d'un utilisateur](#get-useridcreatedquizs)
+3. [Commande de lancement de l'API en dev](#commande-de-lancement-de-lapi-en-dev)
+4. [Commande de lancement de l'image WEB en production](#commande-de-lancement-de-limage-web-en-production)
+5. [CI/CD : Organisation du Pipeline](#cicd--organisation-du-pipeline)
+   - [Stages](#stages)
+     - [1. build](#1-build)
+     - [2. lint et tests](#2-lint-et-tests)
+     - [3. pages](#3-pages)
+
 ## Documentation API
 
-### **GET** /quiz : Permet de créer un nouveau quiz paramétré.
+### Route pour le quiz
+
+#### **POST** /quiz
+
+*Permet de créer un quiz personnalisé.*
 
 Example de requête : 
 ```
-http://localhost:3000/quiz?amount=5&category=9&difficulty=easy
+http://localhost:3000/quiz?category=9&difficulty=easy&title=Montitre&public=true
 ```
 
 Paramètres :
-- amount : Nombre de questions à récupérer
-- category : Catégorie de questions à récupérer
-- difficulty : Difficulté des questions à récupérer
+- category : Catégorie des questions du quiz (optionnel)
+- difficulty : Difficulté des questions (optionnel)
+- title : Titre du quiz
+- public : Visibilité du quiz (optionnel)
+
+Corps de la requête : Les questions du quiz.
+
+```json
+{
+  "questions": [
+    {
+      "text": "Chocolatine ?",
+      "correctAnswer": "Vrai",
+      "incorrectAnswers": ["False"]
+    }
+  ]
+}
+```
 
 Valeur de retour : L'identifiant du quiz créé.
 
 ```json
 {
-  "quizId": "large-laws-chew"
+  "quizId": 1
 }
 ```
 
-### **GET** /quiz/:id/question : Permet de récupérer la question courante du quiz.
+#### **GET** /quiz/:id/publish
 
-Example de requête : 
+*Permet de publier un quiz.*
+
+Example de requête :
+
 ```
-http://localhost:3000/quiz/large-laws-chew/question
+http://localhost:3000/quiz/1/publish
 ```
 
 Paramètres :
-- id : Identifiant du quiz
+- id : ID du quiz.
 
-Valeur de retour : La question courante du quiz.
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : L'identifiant du quiz.
 
 ```json
 {
-  "question": "Romanian belongs to the Romance language family, shared with French, Spanish, Portuguese and Italian. ",
+  "quizId": 1
+}
+```
+
+#### **GET** /quiz/:id/retrieve
+
+*Permet de récupérer un quiz dont on est l'auteur.*
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/retrieve
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Valeur de retour : Les informations du quiz.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+```json
+{
+  "title": "Montitre",
+  "category": 9,
+  "difficulty": "easy",
+  "public": true,
+  "questions": [
+    {
+      "text": "Chocolatine ?",
+      "correctAnswer": "Vrai",
+      "incorrectAnswers": ["False"]
+    }
+  ]
+}
+```
+
+#### **GET** /quiz/list
+
+*Permet de rechercher un quiz par son titre.*
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/list?title=Montitre&category=9&difficulty=easy
+```
+
+Paramètres :
+  - category : Catégorie des questions du quiz (optionnel)
+  - difficulty : Difficulté des questions (optionnel)
+  - title : Titre du quiz (optionnel)
+
+Valeur de retour : Les quiz correspondant à la recherche.
+  
+  ```json
+  [
+    {
+      "id": 1,
+      "title": "Montitre",
+      "category": 9,
+      "difficulty": "easy",
+      "public": true
+    }
+  ]
+```
+
+#### **POST** /quiz/:id/edit
+
+*Permet de modifier un quiz.*
+
+Example de requête : 
+```
+http://localhost:3000/quiz/1/edit?category=9&difficulty=easy&title=Montitre&public=true
+```
+
+Paramètres :
+- category : Catégorie des questions du quiz (optionnel)
+- difficulty : Difficulté des questions (optionnel)
+- title : Titre du quiz
+- public : Visibilité du quiz (optionnel)
+
+Corps de la requête : Les questions du quiz.
+
+```json
+{
+  "questions": [
+    {
+      "text": "Chocolatine ?",
+      "correctAnswer": "Vrai",
+      "incorrectAnswers": ["False"]
+    }
+  ]
+}
+```
+
+Valeur de retour : L'identifiant du quiz créé.
+
+```json
+{
+  "quizId": 1
+}
+```
+
+#### **GET** /quizFast
+
+*Permet de créer une partie rapide générer automatiquement*
+
+Example de requête :
+
+```
+http://localhost:3000/quizFast?amount=23&category=15&difficulty=hard
+```
+
+Valeur de retour : L'identifiant de la partie.
+```json
+{
+  "id": "dry-planets-cover"
+}
+```
+
+### **GET** /game/:id/score
+*Permet d'obtenir dun score*
+Example de requête :
+```
+http://localhost:3000/game/:id/score
+```
+
+Paramètres :
+- id : ID du quiz.
+
+
+Valeur de retour : Le score moyenne de la partie 
+```json
+{
+  "averageScore": "75"
+}
+```
+#### **GET** /quiz/:id/play
+
+*Permet de jouer à un partie*
+Example de requête :
+```
+http://localhost:3000/quiz/1/play
+```
+
+Paramètres :
+- id : ID du quiz.
+
+
+Valeur de retour : L'identifiant de la partie.
+```json
+{
+  "id": "lemon-ghosts-roll"
+  }
+```
+
+
+#### **GET** /quiz/:id/clone
+
+*Permet de cloner un quiz*
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/clone
+```
+
+Paramètres :
+  - id : ID du quiz à cloner.
+
+Valeur de retour : Le clone du quiz.
+
+```json
+{
+  "questions": [
+      {
+          "question": "Chocolatine ?",
+          "correctAnswer": "Vrai",
+          "incorrectAnswers": [
+              "False"
+          ],
+      }
+  ]
+}
+```
+
+### Route pour la partie
+
+#### **GET** /game/:id/question
+
+*Permet de récupérer le question courante d'une partie*
+
+Example de requête :
+
+```
+http://localhost:3000/game/samuel-love-potatoes/question
+```
+
+Paramètres :
+- id : ID de la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : La question courante de la partie.
+
+```json
+{
+  "question": "Chocolatine ?",
   "answers": [
-    "True",
+    "Vrai",
     "False"
   ]
 }
 ```
 
-### **POST** /quiz/:id/answer : Permet de répondre à la question courante du quiz.
+#### **POST** /game/:id/answer
 
-Example de requête : 
+*Permet de vérifier la réponse d'une question*
+
+Example de requête :
+
 ```
-http://localhost:3000/quiz/large-laws-chew/answer
-```
-
-Paramètres :
-- id : Identifiant du quiz
-
-Corps de la requête : La réponse à la question courante du quiz.
-
-```json
-{
-  "answer": "True"
-}
-```
-
-Valeur de retour : La réponse est-elle correcte ?
-
-```json
-{
-    "correct": false
-}
-```
-
-### **GET** /quiz/:id/infos : Permet de récupérer les informations du quiz.
-
-Example de requête : 
-```
-http://localhost:3000/quiz/large-laws-chew/infos
+http://localhost:3000/game/samuel-love-potatoes/answer
 ```
 
 Paramètres :
-- id : Identifiant du quiz
+- id : ID de la partie.
 
-Valeur de retour : Les résultats du quiz.
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : La réponse de l'utilisateur.
 
 ```json
 {
-  "results": [false, false, false, false, false, false, false, false, false, false],
+  "answer": "Vrai"
+}
+```
+
+Valeur de retour : La réponse de l'utilisateur.
+
+```json
+{
+  "correctAnswer": "Vrai"
+}
+```
+
+#### **GET** /game/:id/infos
+
+*Permet de connaitre les informations de la partie*
+
+Example de requête :
+
+```
+http://localhost:3000/game/samuel-love-potatoes/infos
+```
+
+Paramètres :
+- id : ID de la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : Les informations de la partie.
+
+```json
+{
+  "results": [
+      false
+  ],
   "questionCursor": 0,
-  "numberOfQuestions": 10
+  "numberOfQuestions": 1,
+  "Difficulty":"hard",
+  "Category": 9,
+  "Date":"2023-10-05T14:48:00.000Z",
+  "Title":"Salam les rhouia"
 }
 ```
+
+#### **GET** /game/:id/average
+
+*Permet de connaître son score sur un quiz*
+
+Exemple de requête :
+
+```
+http://localhost:3000/game/copilote-est-surcote/average
+```
+
+
+Paramètres :
+
+-id : ID de la partie.
+Headers :
+
+-token : Token d'authentification de l'utilisateur.
+Valeur de retour : La moyenne des scores pour le quiz spécifié.
+```json
+{
+  "averageScore": 75
+}
+```
+
+
+### ***GET** /quiz/user/game
+
+*Permet d'obtenir une liste de quiz jouer par un utilisateur
+*
+
+Exemple de requête
+
+```
+http://localhost:3000/quiz/user/game
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+Valeur de retour 
+```json
+{
+  "games" [
+      {
+          "id": "je_suis_game",
+          "userId": "43",
+          "quizId": "4",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      },
+       {
+          "id": "autre_game",
+          "userId": "44",
+          "quizId": "5",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      }
+  ]
+  
+}
+```
+
+### **GET** /quiz/user/create
+*recuperer les quiz crée de l'utilisateur*
+
+```
+http://localhost:3000/quiz/user/create
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour 
+```json
+{
+  "result" [
+      {
+          "id": "5",
+          "title": "Title",
+          "category": "4",
+          "difficulty": "4",
+          "public":"true",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"10"
+      },
+      {
+          "id": "6",
+          "title": "AutreTitre",
+          "category": "5",
+          "difficulty": "1",
+          "public":"false",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"234"
+      },
+  ]
+  
+}
+```
+
+
+#### **GET** /game/:id/restart
+
+*Permet de recommencer une partie*
+
+Exemple de requête
+
+```
+http://localhost:3000/game/veux-un-vingt/restart
+```
+
+Paramètres :
+- id : ID de la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+Valeur de retour 
+```json
+{
+    "id": "theo-aime-patates"
+}
+```
+
+### Route pour l'utilisateur
+
+#### **POST** /user/register
+
+*Permet d'enregistrer un nouvel utilisateur.*
+
+Example de requête : 
+```
+http://localhost:3000/user/register
+```
+
+Corps de la requête : Les informations de l'utilisateur.
+
+```json
+{
+  "email" : "test@luoja.fr",
+  "password" : "mysupersecurepassword"
+}
+```
+
+Valeur de retour : Le token d'authentification de l'utilisateur.
+
+```json
+{
+  "token": "supersecuretoken"
+}
+```
+
+#### **POST** /user/login 
+
+*Permet de connecter un utilisateur.*
+
+Example de requête : 
+```
+http://localhost:3000/user/login
+```
+
+Corps de la requête : Les informations de l'utilisateur.
+
+```json
+{
+  "email" : "test@luoja.fr",
+  "password" : "mysupersecurepassword"
+}
+```
+
+Valeur de retour : Le token d'authentification de l'utilisateur
+
+```json
+{
+  "token": "supersecuretoken"
+}
+```
+
+#### **GET** /user/infos
+
+*Permet de récupérer les informations de l'utilisateur.*
+
+Example de requête : 
+```
+http://localhost:3000/user/infos
+```
+
+Headers :
+- token : Token d'authentification de l'utilisateur
+
+Valeur de retour : Les informations de l'utilisateur.
+
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "test@luoja.fr"
+  }
+}
+```
+
 
 ## Commande de lancement de l'API en dev
 
@@ -103,8 +587,11 @@ sudo docker run -d --restart always --name mimir --network internal_network \
 -e PROTOCOL=HTTPS \
 -e DOMAIN=luoja.fr \
 -v /etc/letsencrypt:/etc/letsencrypt:ro \
-docker.luoja.fr/mimir    
+-v /srv/mimir/:/usr/src/app/prisma/db/ \
+docker.luoja.fr/mimir
 ```
+
+---
 
 ### CI/CD : Organisation du Pipeline : 
 
@@ -128,5 +615,3 @@ et d'avoir à tout moment une API fonctionnel
  
 3. pages :   
 		- affiche les résultats du linting et des tests.   
-
-
