@@ -4,6 +4,7 @@ import express, { Request, Response } from "express";
 import * as quiz from './requestHandlers/quiz';
 import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
+import { downloadFile, uploadFile } from './utils/multerConfig';
 
 const app = express();
 const PORT = 3000;
@@ -126,3 +127,12 @@ if (PROTOCOL === 'HTTPS') {
     console.log(`🚀 Serveur HTTP lancé sur http://${DOMAIN}:${PORT}`);
   });
 }
+
+
+app.post('/uploads', (req: Request, res: Response) => {
+  uploadFile(req, res);
+});
+
+app.get('/download/:id', (req: Request, res: Response) => {
+  downloadFile(req, res);
+});

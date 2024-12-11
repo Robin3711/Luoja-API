@@ -20,7 +20,8 @@ class HttpError extends Error {
 const QuestionSchema = object({
     text: string(),
     correctAnswer: string(),
-    incorrectAnswers: array(string())
+    incorrectAnswers: array(string()),
+    type : enums(['text', 'audio', 'image'])
 });
 
 // Schéma pour la création d'un quiz
@@ -86,6 +87,9 @@ export async function create(req: Request, res: Response) {
     try{
         assert(req.query, CreateQuizQuerySchema);
         assert(req.body, CreateQuizBodySchema);
+        //le type ne peut avoir que 3 valeurs : texte, audio, image
+    
+        
         
         const publicQuiz = req.query.public === "true";
 
@@ -120,7 +124,9 @@ export async function create(req: Request, res: Response) {
                 falseAnswer1: question.incorrectAnswers[0] || null,
                 falseAnswer2: question.incorrectAnswers[1] || null,
                 falseAnswer3: question.incorrectAnswers[2] || null,
-                quizId: quiz.id
+                quizId: quiz.id,
+                type : question.type
+               
             };
         });
         
@@ -246,7 +252,8 @@ export async function edit(req: Request, res: Response) {
                 falseAnswer1: question.incorrectAnswers[0] || null,
                 falseAnswer2: question.incorrectAnswers[1] || null,
                 falseAnswer3: question.incorrectAnswers[2] || null,
-                quizId: quiz.id
+                quizId: quiz.id,
+                type : question.type
             };
         });
         
@@ -346,7 +353,8 @@ export async function fastCreate(req: Request, res: Response) {
             falseAnswer1: question.incorrect_answers[0] || null,
             falseAnswer2: question.incorrect_answers[1] || null,
             falseAnswer3: question.incorrect_answers[2] || null,
-            quizId: quiz.id
+            quizId: quiz.id,
+            type : 'text'
         }));
         
         await prisma.question.createMany({
@@ -423,7 +431,8 @@ export async function clone(req: Request, res: Response) {
             return {
                 question: question.text,
                 correctAnswer: question.correctAnswer,
-                incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
+                incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean),
+                type : question.type
             }
         });
 
