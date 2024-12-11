@@ -17,6 +17,7 @@
     "@types/is-email": "^1.0.0",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.9.0",
     "@types/validator": "^13.12.2",
     "jest": "^29.7.0",
@@ -36,6 +37,7 @@
     "html-entities": "^2.5.2",
     "human-id": "^4.1.1",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
     "superstruct": "^2.0.2",
     "uuid": "^11.0.2",
     "validator": "^13.12.0"
