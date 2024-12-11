@@ -1,48 +1,28 @@
+import { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
-import e, { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
+import * as fileUtils from "../utils/fileUtils";
 
 // Set storage engine for Multer
 const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => {
-    const id = req.body.id; // Assurez-vous que l'ID est fourni dans le corps de la requête
-    cb(null, `${id}-${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
-
-// Initialize Multer upload
-export const upload = multer({
-  storage: storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, 
-  fileFilter: (req, file, cb) => {
-    checkFileType(file, cb);
-  }
-})
-
-// Check file type
-function checkFileType(file: Express.Multer.File, cb: multer.FileFilterCallback) {
-  const filetypes = /jpeg|mp3|mpeg|jpg|png|wav/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  }
-}
-
-export function determineFileType(filePath: string | null): string {
-    if (!filePath) return "text";
-    const ext = path.extname(filePath).toLowerCase();
-    if (ext === ".jpeg" || ext === ".jpg" || ext === ".png") {
-        return "image";
-    } else if (ext === ".mp3" || ext === ".wav") {
-        return "audio";
-    } else {
-        return "text";
+    destination: './uploads/',
+    filename: (req, file, cb) => {
+      const id = req.body.id; // Assurez-vous que l'ID est fourni dans le corps de la requête
+      cb(null, `${id}-${Date.now()}${path.extname(file.originalname)}`);
     }
-}
+  });
+  
+  // Initialize Multer upload
+  export const upload = multer({
+    storage: storage,
+    limits: { fileSize: 2 * 1024 * 1024 }, 
+    fileFilter: (req, file, cb) => {
+      fileUtils.checkFileType(file, cb);
+    }
+  })
+  
+
 export function uploadFile(req: Request, res: Response) {
     upload.single('file')(req, res, function (err) {
         if (err instanceof multer.MulterError) {
