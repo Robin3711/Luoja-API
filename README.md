@@ -31,7 +31,8 @@ Corps de la requête : Les questions du quiz.
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -97,7 +98,8 @@ Headers :
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -155,7 +157,8 @@ Corps de la requête : Les questions du quiz.
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -247,6 +250,7 @@ Valeur de retour : Le clone du quiz.
           "incorrectAnswers": [
               "False"
           ],
+          "type": "text"
       }
   ]
 }
@@ -275,6 +279,7 @@ Valeur de retour : La question courante de la partie.
 ```json
 {
   "question": "Chocolatine ?",
+  "type": "text",
   "answers": [
     "Vrai",
     "False"
@@ -545,6 +550,61 @@ Valeur de retour : Les informations de l'utilisateur.
   }
 }
 ```
+
+
+#### **POST** /uploads
+
+
+*Permet de télécharger un fichier.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/uploads```
+
+Corps de la requête : Le fichier à télécharger et un ID spécifique.
+
+
+```json
+{
+  "file": <fichier>
+}
+```
+Valeur de retour : Le chemin du fichier téléchargé.
+
+
+
+```json
+{
+  "message": "fichier enregistré avec succès",
+  "filePath": "uploads/12345-1633036800000.jpg"
+}
+```
+#### **GET**  /download/:id
+
+
+*Permet de récupérer un fichier à partir d'un ID.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/download/12345.png
+```
+
+id : ID du fichier.
+
+
+```json
+{
+  "file": <fichier>
+}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+
 
 
 ## Commande de lancement de l'API en dev
