@@ -1,5 +1,10 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
+
+const MAX_DIR_SIZE = 2 * 1024 * 1024; // Taille maximale du répertoire en octets (par exemple, 50 Mo)
+
+  //regard taille du dossier de l'utilisateur
 
 // Check file type
 export function checkFileType(file: Express.Multer.File, cb: multer.FileFilterCallback) {
@@ -22,4 +27,28 @@ export function determineFileType(filePath: string | null): string {
     } else {
         return "text";
     }
+}
+
+
+export function FileDirMaxSize(dirPath: string): boolean {
+  let totalSize = 0;
+
+  function calculateDirectorySize(directory: string) {
+    const files = fs.readdirSync(directory);
+
+    for (const file of files) {
+      const filePath = path.join(directory, file);
+      const stats = fs.statSync(filePath);
+
+      if (stats.isDirectory()) {
+        calculateDirectorySize(filePath);
+      } else {
+        totalSize += stats.size;
+      }
+    }
+  }
+
+  calculateDirectorySize(dirPath);
+
+  return totalSize <= MAX_DIR_SIZE;
 }

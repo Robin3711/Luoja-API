@@ -136,3 +136,11 @@ app.post('/uploads', (req: Request, res: Response) => {
 app.get('/download/:id', (req: Request, res: Response) => {
   file.downloadFile(req, res);
 });
+
+app.get('/downloadall', (req: Request, res: Response) => {
+  file.downloadAllFiles(req, res);
+});
+
+app.get('/delete/:id', (req: Request, res: Response) => {
+  file.deleteFile(req, res);
+});
