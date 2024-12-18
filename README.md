@@ -489,7 +489,7 @@ Corps de la requête : Les informations de l'utilisateur.
 
 ```json
 {
-  "email" : "test@luoja.fr",
+  "name" : "test@luoja.fr",
   "password" : "mysupersecurepassword"
 }
 ```
@@ -515,7 +515,7 @@ Corps de la requête : Les informations de l'utilisateur.
 
 ```json
 {
-  "email" : "test@luoja.fr",
+  "name" : "test@luoja.fr",
   "password" : "mysupersecurepassword"
 }
 ```
@@ -546,7 +546,7 @@ Valeur de retour : Les informations de l'utilisateur.
 {
   "user": {
     "id": 1,
-    "email": "test@luoja.fr"
+    "name": "test@luoja.fr"
   }
 }
 ```
@@ -600,6 +600,38 @@ id : ID du fichier.
 {
   "file": <fichier>
 }
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+#### **GET**  /downloadall
+
+
+*Valeur de retour : Le fichier correspondant à l'ID fourni.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/downloadall
+```
+
+
+
+```json
+{
+{
+  "files": [
+    {
+      "fileName": "12345-1633036800000.jpg",
+      "url": "http://localhost:3000/download/12345-1633036800000.jpg"
+    },
+    {
+      "fileName": "12346-1633036800001.jpg",
+      "url": "http://localhost:3000/download/12346-1633036800001.jpg"
+    }
+  ]
+}}
 ```
 
 Valeur de retour : Le fichier correspondant à l'ID fourni.
