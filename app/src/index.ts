@@ -133,9 +133,16 @@ app.post('/uploads', (req: Request, res: Response) => {
   file.uploadFile(req, res);
 });
 
-app.get('/download/:id', (req: Request, res: Response) => {
-  file.downloadFile(req, res);
+app.post('/download/:id', (req: Request, res: Response) => {
+  file.downloadFileGame(req, res);
 });
+
+
+app.get('/download/:id', (req: Request, res: Response) => {
+  file.downloadFileU(req, res);
+});
+
+
 
 app.get('/downloadall', (req: Request, res: Response) => {
   file.downloadAllFiles(req, res);

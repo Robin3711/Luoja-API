@@ -76,7 +76,7 @@ export async function uploadFile(req: Request, res: Response) {
   });
 }
 
-export async function downloadFile(req: Request, res: Response) {
+export async function downloadFileGame(req: Request, res: Response) {
   const id = req.params.id;
   const gameId = req.params.id;
 
@@ -173,6 +173,67 @@ if (!fileFound) {
 
 }
 
+
+export async function downloadFile(req: Request, res: Response) {
+  const user = await userUtils.getUser(req);
+
+  if (!user) {
+    return res.status(401).json({ error: 'Utilisateur non authentifié' });
+  }
+
+  const fileName = req.params.fileName;
+  const userDir = `uploads/${user.userName}_${user.id}`;
+  const filePath = path.join(userDir, fileName);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Fichier non trouvé' });
+  }
+
+  res.sendFile(filePath);
+}
+
+
+
+
+export async function downloadFileU(req: Request, res: Response) {
+
+  const user = await userUtils.getUser(req);
+  if (!user) {
+    return cb(new Error('Utilisateur non authentifié'), '');
+  }
+
+  const userDir = `${user.userName}_${user.id}`;
+  
+  const id = req.params.id;
+  const baseDirectoryPath = path.join(__dirname, '../../uploads');
+
+
+  fs.readdir(baseDirectoryPath, (err, userDirs) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    let fileFound = false;
+
+    for (const userDir of userDirs) {
+      const directoryPath = path.join(baseDirectoryPath, userDir);
+      const files = fs.readdirSync(directoryPath);
+
+      const file = files.find(file => file.startsWith(id));
+      if (file) {
+        const filePath = path.join(directoryPath, file);
+        res.sendFile(filePath);
+        fileFound = true;
+        break;
+      }
+    }
+
+    if (!fileFound) {
+      return res.status(404).json({ error: 'Fichier non trouvé' });
+    }
+  });
+}
+
 export async function downloadAllFiles(req: Request, res: Response) {
   const user = await userUtils.getUser(req);
 
@@ -236,4 +297,8 @@ export async function deleteFile(req: Request, res: Response) {
 
     return res.status(200).json({ message: 'Fichier supprimé avec succès' });
   });
+}
+
+function cb(arg0: Error, arg1: string) {
+  throw new Error('Function not implemented.');
 }
