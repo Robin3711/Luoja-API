@@ -258,7 +258,6 @@ export async function downloadAllFiles(req: Request, res: Response) {
   const fileUrls = imageFiles.map(file => {
     return {
       fileName: file,
-      url: `${req.protocol}://${req.get('host')}/download/${file}`
     };
   });
 

@@ -624,11 +624,9 @@ http://localhost:3000/downloadall
   "files": [
     {
       "fileName": "12345-1633036800000.jpg",
-      "url": "http://localhost:3000/download/12345-1633036800000.jpg"
     },
     {
       "fileName": "12346-1633036800001.jpg",
-      "url": "http://localhost:3000/download/12346-1633036800001.jpg"
     }
   ]
 }}
