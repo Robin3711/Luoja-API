@@ -235,29 +235,13 @@ export async function downloadFileU(req: Request, res: Response) {
   });
 }
 
+
 export async function downloadAllFiles(req: Request, res: Response) {
   const user = await userUtils.getUser(req);
 
   if (!user) {
     return res.status(401).json({ error: 'Utilisateur non authentifié' });
   }
-
-  const gameId = req.params.id;
-  assert(gameId, string());
-
-        const game = await prisma.game.findUnique({
-            where: {
-                id: gameId
-            },
-            include: {
-                quiz: {
-                    include: {
-                        questions: true
-                    }
-                }
-            }
-        });
-
 
   const userDir = `uploads/${user.userName}_${user.id}`;
 
@@ -266,7 +250,12 @@ export async function downloadAllFiles(req: Request, res: Response) {
   }
 
   const files = fs.readdirSync(userDir);
-  const fileUrls = files.map(file => {
+  const imageFiles = files.filter(file => {
+    const ext = path.extname(file).toLowerCase();
+    return ext === '.jpeg' || ext === '.jpg' || ext === '.png';
+  });
+
+  const fileUrls = imageFiles.map(file => {
     return {
       fileName: file,
       url: `${req.protocol}://${req.get('host')}/download/${file}`
@@ -275,7 +264,6 @@ export async function downloadAllFiles(req: Request, res: Response) {
 
   return res.status(200).json({ files: fileUrls });
 }
-
 export async function deleteFile(req: Request, res: Response) {
   const user = await userUtils.getUser(req);
 
