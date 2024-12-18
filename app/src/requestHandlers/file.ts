@@ -1,9 +1,22 @@
-import { Request, Response } from 'express';
+import e, { Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import * as fileUtils from "../utils/fileUtils";
 import * as userUtils from "../utils/userUtils";
+import { prisma } from '../model/db';
+import { assert } from 'superstruct';
+import { string } from "superstruct";
+
+
+class HttpError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+  }
+}
 
 // Set storage engine for Multer
 const storage = multer.diskStorage({
@@ -63,34 +76,101 @@ export async function uploadFile(req: Request, res: Response) {
   });
 }
 
-export function downloadFile(req: Request, res: Response) {
+export async function downloadFile(req: Request, res: Response) {
   const id = req.params.id;
-  const baseDirectoryPath = path.join(__dirname, '../../uploads');
+  const gameId = req.params.id;
 
-  fs.readdir(baseDirectoryPath, (err, userDirs) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+
+  const answer = req.body.question;
+
+  assert(gameId, string());
+
+  const game = await prisma.game.findUnique({
+      where: {
+          id: gameId
+      },
+      include: {
+          quiz: {
+              include: {
+                  questions: true
+              }
+          },
+      }
+  });
+
+  if (!game) {
+      throw new HttpError("Partie non trouvée !", 404);
+  }
+
+  if (game.userId !== null) {
+      const user = await userUtils.getUser(req);
+
+      if (user?.id !== game.userId) {
+          throw new HttpError("Cette partie ne peut pas être jouée avec ce compte", 403);
+      }
+  }
+
+  const questionCursor = game.questionCursor;
+  if (questionCursor !== game.quiz.questions.length) {
+    const currentQuestion = game.quiz.questions[questionCursor];
+    const userId = game.quiz.userId;
+
+    if (userId === null) {
+      throw new HttpError("User ID is null", 400);
     }
 
-    let fileFound = false;
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    });
 
-    for (const userDir of userDirs) {
-      const directoryPath = path.join(baseDirectoryPath, userDir);
-      const files = fs.readdirSync(directoryPath);
+    if (!user) {
+      throw new HttpError("User not found", 404);
+    }
 
+
+    // verifie si le answer est bien dans les choix de la question
+
+    const choices = [currentQuestion.correctAnswer, currentQuestion.falseAnswer1, currentQuestion.falseAnswer2, currentQuestion.falseAnswer3].filter(Boolean);
+    if (!choices.includes(answer)) {
+      throw new HttpError("Réponse invalide", 400);
+    }
+
+
+
+    if (currentQuestion.type === 'image' || currentQuestion.type === 'audio') {
+
+      const userDir = `uploads/${user.userName}_${user.id}`;
+      const files = fs.readdirSync(userDir);
+
+      let fileFound = false;
       const file = files.find(file => file.startsWith(id));
+      const filePath = path.join(userDir, answer);
+
+
+
       if (file) {
-        const filePath = path.join(directoryPath, file);
         res.sendFile(filePath);
         fileFound = true;
-        break;
       }
-    }
 
-    if (!fileFound) {
+if (!fileFound) {
       return res.status(404).json({ error: 'Fichier non trouvé' });
     }
-  });
+
+
+  }
+  else {
+    throw new HttpError("La question courante n'est pas un fichier", 400);
+}
+  }
+  else 
+  {
+    throw new HttpError("La partie est terminée", 400);
+  }
+
+
 }
 
 export async function downloadAllFiles(req: Request, res: Response) {
@@ -99,6 +179,23 @@ export async function downloadAllFiles(req: Request, res: Response) {
   if (!user) {
     return res.status(401).json({ error: 'Utilisateur non authentifié' });
   }
+
+  const gameId = req.params.id;
+  assert(gameId, string());
+
+        const game = await prisma.game.findUnique({
+            where: {
+                id: gameId
+            },
+            include: {
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                }
+            }
+        });
+
 
   const userDir = `uploads/${user.userName}_${user.id}`;
 
