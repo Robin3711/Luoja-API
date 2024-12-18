@@ -36,7 +36,7 @@ const storage = multer.diskStorage({
     cb(null, userDir);
   },
   filename: (req, file, cb) => {
-    const filename = `s${Date.now()}${path.extname(file.originalname)}`;
+    const filename = `${Date.now()}${path.extname(file.originalname)}`;
     cb(null, filename);
   }
 });
@@ -64,6 +64,7 @@ export async function uploadFile(req: Request, res: Response) {
       return res.status(400).json({ error: err.message });
     }
 
+    
     // Si le fichier est téléchargé avec succès
     if (!req.file) {
       return res.status(400).json({ error: 'Fichier non uploadé' });
@@ -202,7 +203,7 @@ export async function downloadFileU(req: Request, res: Response) {
     return cb(new Error('Utilisateur non authentifié'), '');
   }
 
-  const userDir = `${user.userName}_${user.id}`;
+  const userDir = `uploads/${user.userName}_${user.id}`;
   
   const id = req.params.id;
   const baseDirectoryPath = path.join(__dirname, '../../uploads');
