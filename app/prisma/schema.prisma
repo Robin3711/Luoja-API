@@ -41,6 +41,7 @@ model Game {
   questionCursor Int
   createdAt      DateTime @default(now())
   answers        Answer[]
+  mode           String?
   user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
