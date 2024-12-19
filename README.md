@@ -235,20 +235,21 @@ Valeur de retour : Le score moyenne de la partie
 *Permet de jouer à un partie*
 Example de requête :
 ```
-http://localhost:3000/quiz/1/play
+http://localhost:3000/quiz/1/play?mode=timed
 ```
 
 Paramètres :
 - id : ID du quiz.
 
+Query :
+- mode : Mode de jeu (optionnel) ("standard", "timed")
 
 Valeur de retour : L'identifiant de la partie.
 ```json
 {
   "id": "lemon-ghosts-roll"
-  }
+}
 ```
-
 
 #### **GET** /quiz/:id/clone
 
@@ -572,6 +573,25 @@ Valeur de retour : Les informations de l'utilisateur.
   }
 }
 ```
+
+#### **GET** /listen/timer
+
+*Permet d'écouter le timer de la partie sur la question courante.*
+
+Example de requête : 
+```
+http://localhost:3000/listen/timer
+```
+
+Headers :
+- token : Token d'authentification de l'utilisateur
+
+Valeur de retour : SSE renvoyant le temps restant avant la fin de la partie.
+
+```json
+{
+  "time": 10
+}
 
 
 ## Commande de lancement de l'API en dev
