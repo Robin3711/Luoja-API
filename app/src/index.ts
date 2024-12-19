@@ -4,6 +4,7 @@ import express, { Request, Response } from "express";
 import * as quiz from './requestHandlers/quiz';
 import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
+import * as timer from './requestHandlers/timer';
 
 const app = express();
 const PORT = 3000;
@@ -107,6 +108,10 @@ app.post('/user/login', (req: Request, res: Response) => {
 
 app.get('/user/infos', (req: Request, res: Response) => {
   user.infos(req, res);
+});
+
+app.get('/listen/timer', (req: Request, res: Response) => {
+  timer.listen(req, res);
 });
 
 if (PROTOCOL === 'HTTPS') {
