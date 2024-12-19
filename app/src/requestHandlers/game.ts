@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { assert, integer, string } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
+import * as timerUtils from "../utils/timerUtils";
 
 class HttpError extends Error {
     status: number;
@@ -16,6 +17,7 @@ class HttpError extends Error {
 export async function create(req: Request, res: Response) {
     try {
         const quizId = Number(req.params.id);
+        const mode = req.query.mode as string;
 
         assert(quizId, integer());
 
@@ -54,6 +56,10 @@ export async function create(req: Request, res: Response) {
             };
         }
 
+        if(mode){
+            gameData.mode = mode;
+        }
+
         await prisma.game.create({
             data: gameData
         });
@@ -84,6 +90,7 @@ export async function create(req: Request, res: Response) {
 export async function currentQuestion(req: Request, res: Response) {
     try {
         const gameId = req.params.id;
+        const difficulty = req.query.difficulty as string;
 
         assert(gameId, string());
 
@@ -116,6 +123,27 @@ export async function currentQuestion(req: Request, res: Response) {
 
         if (questionCursor >= game.quiz.questions.length) {
             throw new HttpError("Aucune question restante dans ce quiz.", 500);
+        }
+
+        if (game.mode === "timed" && !timerUtils.hasActiveTimer(gameId)) {
+
+            let duration = 0;
+
+            switch (difficulty) {
+                case "easy":
+                    duration = 30;
+                    break;
+                case "medium":
+                    duration = 15;
+                    break;
+                case "hard":
+                    duration = 5;
+                    break;
+                default:
+                    duration = 15;
+                    break;
+            }
+            timerUtils.startTimer(gameId, duration);
         }
 
         const question = game.quiz.questions[questionCursor];
@@ -184,6 +212,15 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         }
 
         const questionCursor = game.questionCursor;
+
+        if (game.mode === "timed") {
+            if (timerUtils.hasActiveTimer(gameId)) {
+                timerUtils.interruptTimer(gameId);
+            }
+            else {
+                throw new HttpError("Le temps est écoulé", 500);
+            }
+        }
 
         if (questionCursor !== game.quiz.questions.length) {
 
