@@ -148,6 +148,6 @@ app.get('/downloadall', (req: Request, res: Response) => {
   file.downloadAllFiles(req, res);
 });
 
-app.get('/delete/:id', (req: Request, res: Response) => {
+app.delete('/delete/:fileName', (req: Request, res: Response) => {
   file.deleteFile(req, res);
 });

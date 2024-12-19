@@ -271,6 +271,10 @@ export async function deleteFile(req: Request, res: Response) {
   }
 
   const fileName = req.params.fileName;
+  if (!fileName) {
+    return res.status(400).json({ error: 'Nom du fichier non fourni' });
+  }
+
   const userDir = `uploads/${user.userName}_${user.id}`;
   const filePath = path.join(userDir, fileName);
 

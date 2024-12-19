@@ -1,6 +1,8 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { Request, Response } from 'express';
+import * as userUtils from "../utils/userUtils";
 
 const MAX_DIR_SIZE = 2 * 1024 * 1024; // Taille maximale du répertoire en octets (par exemple, 50 Mo)
 
@@ -8,7 +10,7 @@ const MAX_DIR_SIZE = 2 * 1024 * 1024; // Taille maximale du répertoire en octet
 
 // Check file type
 export function checkFileType(file: Express.Multer.File, cb: multer.FileFilterCallback) {
-  const filetypes = /jpeg|mp3|mpeg|jpg|png|wav/;
+  const filetypes = /jpeg|mp3|mpeg|jpg|png/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = filetypes.test(file.mimetype);
 

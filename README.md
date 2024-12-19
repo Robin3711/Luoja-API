@@ -636,6 +636,31 @@ Valeur de retour : Le fichier correspondant à l'ID fourni.
 
 
 
+#### **delete**  /delete/:fileName
+
+
+fileName : nom du fichier
+
+
+
+Example de requête :
+```
+http://localhost:3000/delete/1324353253245.png
+```
+
+
+
+```json
+
+{
+    "message": "Fichier supprimé avec succès"
+}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+
+
 
 ## Commande de lancement de l'API en dev
 
