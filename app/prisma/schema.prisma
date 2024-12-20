@@ -19,6 +19,8 @@ model Quiz {
   games      Game[]
   questions  Question[]
   user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  MultiplayerGame MultiplayerGame[]
 }
 
 model Question {
@@ -62,4 +64,29 @@ model User {
   userName String @unique
   games    Game[]
   quizs    Quiz[]
+
+  MultiplayerPlayer MultiplayerPlayer[]
 }
+
+model MultiplayerGame {
+  id             String   @id
+  quizId         Int
+  questionCursor Int
+  createdAt      DateTime @default(now())
+  players        MultiplayerPlayer[]
+  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model MultiplayerPlayer {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  gameId         String
+  score          Int      @default(0)
+  answered       Boolean  @default(false)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game           MultiplayerGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+}
+
+
