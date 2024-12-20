@@ -189,7 +189,7 @@ Valeur de retour : L'identifiant de la partie.
 }
 ```
 
-### **GET** /game/:id/score
+#### **GET** /game/:id/score
 *Permet d'obtenir dun score*
 Example de requête :
 ```
@@ -211,20 +211,21 @@ Valeur de retour : Le score moyenne de la partie
 *Permet de jouer à un partie*
 Example de requête :
 ```
-http://localhost:3000/quiz/1/play
+http://localhost:3000/quiz/1/play?gameMode=timed
 ```
 
 Paramètres :
 - id : ID du quiz.
 
+Query :
+- gameMode : Mode de jeu (optionnel) ("standard", "timed")
 
 Valeur de retour : L'identifiant de la partie.
 ```json
 {
   "id": "lemon-ghosts-roll"
-  }
+}
 ```
-
 
 #### **GET** /quiz/:id/clone
 
@@ -253,6 +254,79 @@ Valeur de retour : Le clone du quiz.
           "type": "text"
       }
   ]
+}
+```
+
+#### **GET** /quiz/user/game
+
+*Permet d'obtenir une liste de quiz jouer par un utilisateur
+*
+
+Exemple de requête
+
+```
+http://localhost:3000/quiz/user/game
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+Valeur de retour 
+```json
+{
+  "games" [
+      {
+          "id": "je_suis_game",
+          "userId": "43",
+          "quizId": "4",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      },
+       {
+          "id": "autre_game",
+          "userId": "44",
+          "quizId": "5",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      }
+  ]
+  
+}
+```
+
+#### **GET** /quiz/user/create
+*recuperer les quiz crée de l'utilisateur*
+
+```
+http://localhost:3000/quiz/user/create
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour 
+```json
+{
+  "result" [
+      {
+          "id": "5",
+          "title": "Title",
+          "category": "4",
+          "difficulty": "4",
+          "public":"true",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"10"
+      },
+      {
+          "id": "6",
+          "title": "AutreTitre",
+          "category": "5",
+          "difficulty": "1",
+          "public":"false",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"234"
+      },
+  ]
+  
 }
 ```
 
@@ -375,80 +449,22 @@ Valeur de retour : La moyenne des scores pour le quiz spécifié.
 }
 ```
 
+#### **GET** /game/:id/timer
 
-### ***GET** /quiz/user/game
+*Permet d'écouter le timer de la partie sur la question courante.*
 
-*Permet d'obtenir une liste de quiz jouer par un utilisateur
-*
-
-Exemple de requête
-
+Example de requête : 
 ```
-http://localhost:3000/quiz/user/game
+http://localhost:3000/game/:id/timer?token=supersecuretoken
 ```
-Headers :
-- token : Token d'authentification de l'utilisateur.
 
+Valeur de retour : SSE renvoyant le temps restant avant la fin de la partie.
 
-Valeur de retour 
 ```json
 {
-  "games" [
-      {
-          "id": "je_suis_game",
-          "userId": "43",
-          "quizId": "4",
-         "createdAt":"2023-10-05T14:48:00.000Z"
-      },
-       {
-          "id": "autre_game",
-          "userId": "44",
-          "quizId": "5",
-         "createdAt":"2023-10-05T14:48:00.000Z"
-      }
-  ]
-  
+  "time": 10
 }
 ```
-
-### **GET** /quiz/user/create
-*recuperer les quiz crée de l'utilisateur*
-
-```
-http://localhost:3000/quiz/user/create
-```
-Headers :
-- token : Token d'authentification de l'utilisateur.
-
-Valeur de retour 
-```json
-{
-  "result" [
-      {
-          "id": "5",
-          "title": "Title",
-          "category": "4",
-          "difficulty": "4",
-          "public":"true",
-          "createdAt":"2023-10-05T14:48:00.000Z",
-          "updatedAt":"2023-10-05T14:48:00.000Z",
-          "numberOfQuestions":"10"
-      },
-      {
-          "id": "6",
-          "title": "AutreTitre",
-          "category": "5",
-          "difficulty": "1",
-          "public":"false",
-          "createdAt":"2023-10-05T14:48:00.000Z",
-          "updatedAt":"2023-10-05T14:48:00.000Z",
-          "numberOfQuestions":"234"
-      },
-  ]
-  
-}
-```
-
 
 #### **GET** /game/:id/restart
 
