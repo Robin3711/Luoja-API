@@ -7,6 +7,7 @@ import * as userUtils from "../utils/userUtils";
 import { prisma } from '../model/db';
 import { assert } from 'superstruct';
 import { string } from "superstruct";
+import { User } from '@prisma/client';
 
 
 class HttpError extends Error {
@@ -293,4 +294,12 @@ export async function deleteFile(req: Request, res: Response) {
 
 function cb(arg0: Error, arg1: string) {
   throw new Error('Function not implemented.');
+}
+
+
+export function cloneFile(filePath: string, Usersrc : User, Userdest : User): void {
+  const srcPath = path.join(filePath, Usersrc.userName + "_" + Usersrc.id);
+  const destPath = path.join(filePath, Userdest.userName + "_" + Userdest.id);
+
+  fs.copyFileSync(srcPath, destPath);
 }

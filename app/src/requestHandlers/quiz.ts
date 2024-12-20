@@ -6,6 +6,8 @@ import * as openTDB from "../model/opentdb";
 import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
 import { getAverageScore } from "../utils/gameUtils";
+import { off } from "process";
+import { cloneFile } from "./file";
 
 class HttpError extends Error {
     status: number;
@@ -169,7 +171,7 @@ export async function retrieve(req: Request, res: Response) {
             throw new HttpError("Ce quiz ne vous appartient pas", 403);
         }
 
-        const results={
+        const result
             title: quiz.title,
             category: quiz.category,
             difficulty: quiz.difficulty,
@@ -177,7 +179,7 @@ export async function retrieve(req: Request, res: Response) {
             questions: quiz.questions.map((question) => {
                 return {
                     text: question.text,
-                    trueFale: question.trueFalse,
+                    trueFae: question.trueFalse,
                     correctAnswer: question.correctAnswer,
                     incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean),
                     type : question.type    
@@ -424,6 +426,39 @@ export async function clone(req: Request, res: Response) {
             }
         });
 
+
+        const user = await userUtils.getUser(req);
+
+
+
+        if (!user) {
+            throw new HttpError("Utilisateur non trouvé", 401);
+        }
+
+
+        const userActual = await prisma.user.findUnique({
+            where: {
+                id: user.id
+            },
+            select: {
+                id: true,
+                password: true,
+                userName: true
+            }
+        });
+
+        const userQuiz = await prisma.user.findUnique({
+            where: {
+                id: quiz!.userId ?? undefined
+            },
+            select: {
+                id: true,
+                password: true,
+                userName: true
+            }
+        });
+
+
         if (!quiz) {
             throw new HttpError("Quiz non trouvé", 404);
         }
@@ -436,6 +471,28 @@ export async function clone(req: Request, res: Response) {
                 type : question.type
             }
         });
+
+        for (let i = 0; i < questions.length; i++) {
+            if (questions[i].type !=  'text'){
+
+                if (userActual && userQuiz) {
+                    cloneFile(questions[i].correctAnswer, userActual, userQuiz);
+
+                    for (let j = 0; j < questions[i].incorrectAnswers.length; j++) {
+                        if (questions[i].incorrectAnswers[j] !== null) {
+                            cloneFile(questions[i].incorrectAnswers[j] as string, userActual, userQuiz);
+                        }
+                    }
+                    
+                }
+
+
+
+                
+                
+            }
+
+        }
 
         return res.status(201).json({questions: questions});
     }
