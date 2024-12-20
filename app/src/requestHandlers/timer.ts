@@ -1,9 +1,9 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
 import { assert, string } from "superstruct";
-import * as userUtils from "../utils/userUtils";
 
-import { timers } from "../utils/timerUtils";
+import * as userUtils from "../utils/userUtils";
+import * as timerUtils from "../utils/timerUtils";
 
 class HttpError extends Error {
     status: number;
@@ -15,10 +15,14 @@ class HttpError extends Error {
 }
 
 export async function listen(req: Request, res: Response) {
-        try{
-        const gameId = req.query.gameId as string;
+    try{
+        const gameId = req.params.id;
+        const token = req.query.token;
 
         assert(gameId, string());
+        assert(token, string());
+
+        req.headers.token = token;
 
         const game = await prisma.game.findUnique({
             where: {
@@ -45,7 +49,7 @@ export async function listen(req: Request, res: Response) {
             }
         }
 
-        if(!timers[gameId]) {
+        if(!timerUtils.timers[gameId].active) {
             throw new HttpError("Aucun timer actif pour cette partie", 404);
         }
 
@@ -55,11 +59,16 @@ export async function listen(req: Request, res: Response) {
         res.setHeader('Connection', 'keep-alive');
 
         let interval = setInterval(() => {
-            if (timers[gameId]){
-                res.write(`data: ${JSON.stringify({ time: timers[gameId].remainingTime })}\n\n`);        
+            if (timerUtils.timers[gameId].active){
+                res.write(`data: ${JSON.stringify({ time: timerUtils.timers[gameId].remainingTime })}\n\n`);
+                
+                if (timerUtils.timers[gameId].remainingTime === 0) {
+                    timerUtils.timers[gameId].active = false;
+                    res.end();
+                    clearInterval(interval);
+                }
             } 
             else {
-                res.write(`data: ${JSON.stringify({ time: 0 })}\n\n`);
                 res.end();
                 clearInterval(interval);
             }
