@@ -269,7 +269,7 @@ Valeur de retour : Le clone du quiz.
 {
   "questions": [
       {
-          "question": "Chocolatine ?",
+          "text": "Chocolatine ?",
           "correctAnswer": "Vrai",
           "incorrectAnswers": [
               "False"
