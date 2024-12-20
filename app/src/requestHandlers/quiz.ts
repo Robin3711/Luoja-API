@@ -8,6 +8,7 @@ import * as gameUtils from "../utils/gameUtils";
 import { getAverageScore } from "../utils/gameUtils";
 import { off } from "process";
 import { cloneFile } from "./file";
+import { dir } from "console";
 
 class HttpError extends Error {
     status: number;
@@ -436,16 +437,6 @@ export async function clone(req: Request, res: Response) {
         }
 
 
-        const userActual = await prisma.user.findUnique({
-            where: {
-                id: user.id
-            },
-            select: {
-                id: true,
-                password: true,
-                userName: true
-            }
-        });
 
         const userQuiz = await prisma.user.findUnique({
             where: {
@@ -453,7 +444,6 @@ export async function clone(req: Request, res: Response) {
             },
             select: {
                 id: true,
-                password: true,
                 userName: true
             }
         });
@@ -471,16 +461,17 @@ export async function clone(req: Request, res: Response) {
                 type : question.type
             }
         });
+const dirPath = 'uploads/'+user.userName+'_'+user.id;
+const  dirTargetPath = 'uploads/'+user.userName+'_'+user.id;
 
         for (let i = 0; i < questions.length; i++) {
             if (questions[i].type !=  'text'){
 
-                if (userActual && userQuiz) {
-                    cloneFile(questions[i].correctAnswer, userActual, userQuiz);
+                    cloneFile(questions[i].correctAnswer, dirPath , dirTargetPath);
 
                     for (let j = 0; j < questions[i].incorrectAnswers.length; j++) {
                         if (questions[i].incorrectAnswers[j] !== null) {
-                            cloneFile(questions[i].incorrectAnswers[j] as string, userActual, userQuiz);
+                            cloneFile(questions[i].incorrectAnswers[j] as string,dirPath , dirTargetPath);
                         }
                     }
                     

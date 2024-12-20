@@ -297,9 +297,9 @@ function cb(arg0: Error, arg1: string) {
 }
 
 
-export function cloneFile(filePath: string, Usersrc : User, Userdest : User): void {
-  const srcPath = path.join(filePath, Usersrc.userName + "_" + Usersrc.id);
-  const destPath = path.join(filePath, Userdest.userName + "_" + Userdest.id);
+export function cloneFile(filePath: string, dirsrc : string , dirtarget : string): void {
+  const srcPath = path.join(filePath, dirsrc);
+  const destPath = path.join(filePath, dirtarget);
 
   fs.copyFileSync(srcPath, destPath);
 }
