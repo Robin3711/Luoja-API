@@ -473,14 +473,7 @@ const  dirTargetPath = 'uploads/'+user.userName+'_'+user.id;
                         if (questions[i].incorrectAnswers[j] !== null) {
                             cloneFile(questions[i].incorrectAnswers[j] as string,dirPath , dirTargetPath);
                         }
-                    }
-                    
-                }
-
-
-
-                
-                
+                    }                   
             }
 
         }

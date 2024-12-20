@@ -251,14 +251,16 @@ export async function downloadAllFiles(req: Request, res: Response) {
   }
 
   const files = fs.readdirSync(userDir);
-  const imageFiles = files.filter(file => {
+  const acceptedExtensions = ['.jpeg', '.jpg', '.png', '.mp3', '.mpeg'];
+  const filteredFiles = files.filter(file => {
     const ext = path.extname(file).toLowerCase();
-    return ext === '.jpeg' || ext === '.jpg' || ext === '.png';
+    return acceptedExtensions.includes(ext);
   });
 
-  const fileUrls = imageFiles.map(file => {
+  const fileUrls = filteredFiles.map(file => {
     return {
       fileName: file,
+      url: `${req.protocol}://${req.get('host')}/download/${file}`
     };
   });
 
