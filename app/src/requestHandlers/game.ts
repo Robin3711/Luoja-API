@@ -1,8 +1,9 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-import { assert, integer, string } from "superstruct";
+import { assert, integer, string, optional } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
+import * as timerUtils from "../utils/timerUtils";
 
 class HttpError extends Error {
     status: number;
@@ -16,8 +17,12 @@ class HttpError extends Error {
 export async function create(req: Request, res: Response) {
     try {
         const quizId = Number(req.params.id);
+        const gameMode = req.query.gameMode as string;
+        const difficulty = req.query.difficulty as string;
 
         assert(quizId, integer());
+        assert(gameMode, optional(string()));
+        assert(difficulty, optional(string()));
 
         const quiz = await prisma.quiz.findUnique({
             where: {
@@ -52,6 +57,14 @@ export async function create(req: Request, res: Response) {
             gameData.user = {
                 connect: { id: user.id }
             };
+        }
+
+        if(gameMode){
+            gameData.mode = gameMode;
+        }
+
+        if(difficulty){
+            gameData.difficulty = difficulty;
         }
 
         await prisma.game.create({
@@ -116,6 +129,28 @@ export async function currentQuestion(req: Request, res: Response) {
 
         if (questionCursor >= game.quiz.questions.length) {
             throw new HttpError("Aucune question restante dans ce quiz.", 500);
+        }
+
+        if (game.mode === "timed" && !timerUtils.hasActiveTimer(gameId)) {
+
+            let duration = 0;
+
+            switch (game.difficulty) {
+                case "easy":
+                    duration = 30;
+                    break;
+                case "medium":
+                    duration = 15;
+                    break;
+                case "hard":
+                    duration = 5;
+                    break;
+                default:
+                    duration = 15;
+                    break;
+            }
+            
+            timerUtils.startTimer(gameId, duration);
         }
 
         const question = game.quiz.questions[questionCursor];
@@ -184,6 +219,15 @@ export async function verifyCurrentQuestionAnswer(req: Request, res: Response) {
         }
 
         const questionCursor = game.questionCursor;
+
+        if (game.mode === "timed") {
+            if (timerUtils.hasActiveTimer(gameId)) {
+                timerUtils.interruptTimer(gameId);
+            }
+            else {
+                throw new HttpError("Le temps est écoulé", 500);
+            }
+        }
 
         if (questionCursor !== game.quiz.questions.length) {
 
@@ -292,6 +336,7 @@ export async function restart(req: Request, res: Response) {
         const gameId = req.params.id;
 
         assert(gameId, string());
+
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId

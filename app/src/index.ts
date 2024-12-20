@@ -4,6 +4,7 @@ import express, { Request, Response } from "express";
 import * as quiz from './requestHandlers/quiz';
 import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
+import * as timer from './requestHandlers/timer';
 
 const app = express();
 const PORT = 3000;
@@ -85,6 +86,11 @@ app.get("/game/:id/score", async (req: Request, res: Response) => {
 app.get("/game/:id/average", async (req: Request, res: Response) => {
   game.average(req, res);
 });
+
+app.get('/game/:id/timer', (req: Request, res: Response) => {
+  timer.listen(req, res);
+});
+
 
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
