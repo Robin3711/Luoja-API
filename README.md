@@ -592,7 +592,7 @@ Valeur de retour : SSE renvoyant le temps restant avant la fin de la partie.
 {
   "time": 10
 }
-
+```
 
 ## Commande de lancement de l'API en dev
 
