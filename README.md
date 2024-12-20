@@ -440,10 +440,12 @@ Valeur de retour : Les informations de la partie.
   ],
   "questionCursor": 0,
   "numberOfQuestions": 1,
-  "Difficulty":"hard",
-  "Category": 9,
+  "quizDifficulty":"hard",
+  "quizCategory": 9,
+  "gameDifficulty":"hard",
+  "gameMode":"timed",
   "Date":"2023-10-05T14:48:00.000Z",
-  "Title":"Salam les rhouia"
+  "Title":"Montitre",
 }
 ```
 
