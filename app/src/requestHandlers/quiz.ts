@@ -179,7 +179,7 @@ export async function retrieve(req: Request, res: Response) {
                     text: question.text,
                     trueFale: question.trueFalse,
                     correctAnswer: question.correctAnswer,
-                    incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
+                    incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean),
                     type : question.type    
                 }
             })
