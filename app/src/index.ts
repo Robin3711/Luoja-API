@@ -87,6 +87,11 @@ app.get("/game/:id/average", async (req: Request, res: Response) => {
   game.average(req, res);
 });
 
+app.get('/game/:id/timer', (req: Request, res: Response) => {
+  timer.listen(req, res);
+});
+
+
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
 app.get("/quiz/user/game", async (req: Request, res: Response) => {
@@ -108,10 +113,6 @@ app.post('/user/login', (req: Request, res: Response) => {
 
 app.get('/user/infos', (req: Request, res: Response) => {
   user.infos(req, res);
-});
-
-app.get('/listen/timer', (req: Request, res: Response) => {
-  timer.listen(req, res);
 });
 
 if (PROTOCOL === 'HTTPS') {
