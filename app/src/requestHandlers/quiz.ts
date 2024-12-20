@@ -172,7 +172,7 @@ export async function retrieve(req: Request, res: Response) {
             throw new HttpError("Ce quiz ne vous appartient pas", 403);
         }
 
-        const result = {
+        const results = {
             title: quiz.title,
             category: quiz.category,
             difficulty: quiz.difficulty,
