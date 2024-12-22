@@ -66,15 +66,20 @@ model User {
   quizs    Quiz[]
 
   MultiplayerPlayer MultiplayerPlayer[]
+
+  MultiplayerGame MultiplayerGame[]
 }
 
 model MultiplayerGame {
   id             String   @id
   quizId         Int
+  creatorId      Int
+  launched       Boolean  @default(false)
   questionCursor Int
   createdAt      DateTime @default(now())
   players        MultiplayerPlayer[]
   quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  creator        User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 }
 
 model MultiplayerPlayer {

@@ -409,3 +409,4 @@ export async function average(req: Request, res: Response) {
         }
     }
 }
+

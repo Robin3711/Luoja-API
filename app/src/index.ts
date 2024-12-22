@@ -6,6 +6,8 @@ import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
 import * as timer from './requestHandlers/timer';
 
+import * as gameMulty from './requestHandlers/gameMultiplayer'; 
+
 const app = express();
 const PORT = 3000;
 const PROTOCOL = process.env.PROTOCOL || 'HTTP'; // 'http' par défaut
@@ -113,6 +115,34 @@ app.get('/user/infos', (req: Request, res: Response) => {
 app.get('/listen/timer', (req: Request, res: Response) => {
   timer.listen(req, res);
 });
+
+
+
+
+
+
+
+
+
+
+
+app.post("/multiplayer/:id/create", async (req: Request, res: Response) => {
+  gameMulty.createMultiplayerGame(req, res);
+});
+
+app.post("/multiplayer/:id/join", async (req: Request, res: Response) => {
+  gameMulty.joinMultiplayerGame(req, res);
+});
+
+app.post("/multiplayer/:id/start", async (req: Request, res: Response) => {
+  gameMulty.startMultiplayerGame(req, res);
+});
+
+app.post("/multiplayer/:id/answer", async (req: Request, res: Response) => {
+  gameMulty.verifyMultiplayerAnswer(req, res);
+});
+
+
 
 if (PROTOCOL === 'HTTPS') {
   // Configuration du serveur HTTPS
