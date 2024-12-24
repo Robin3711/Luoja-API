@@ -17,10 +17,9 @@ model Quiz {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   games      Game[]
+  rooms      Room[]
   questions  Question[]
   user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  MultiplayerGame MultiplayerGame[]
 }
 
 model Question {
@@ -59,39 +58,35 @@ model Answer {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  password String
-  userName String @unique
-  games    Game[]
-  quizs    Quiz[]
-
-  MultiplayerPlayer MultiplayerPlayer[]
-
-  MultiplayerGame MultiplayerGame[]
+  id          Int    @id @default(autoincrement())
+  password    String
+  userName    String @unique
+  games       Game[]
+  quizs       Quiz[]
+  rooms       Room[]
+  roomPlayers RoomPlayer[]
 }
 
-model MultiplayerGame {
-  id             String   @id
-  quizId         Int
-  creatorId      Int
-  launched       Boolean  @default(false)
-  questionCursor Int
-  createdAt      DateTime @default(now())
-  players        MultiplayerPlayer[]
-  quiz           Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  creator        User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+model Room {
+  id               String   @id
+  quizId           Int
+  creatorId        Int
+  launched         Boolean  @default(false)
+  questionCursor   Int
+  createdAt        DateTime @default(now())
+  roomPlayers      RoomPlayer[]
+  quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  creator          User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 }
 
-model MultiplayerPlayer {
+model RoomPlayer {
   id             Int      @id @default(autoincrement())
   userId         Int
-  gameId         String
+  roomId         String
   score          Int      @default(0)
   answered       Boolean  @default(false)
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game           MultiplayerGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  room           Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, gameId])
+  @@unique([userId, roomId])
 }
-
-
