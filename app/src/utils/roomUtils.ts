@@ -12,12 +12,12 @@ export function addClientToSSE(gameId: string, client: any): void {
     // Si l'intervalle n'existe pas encore, le créer
     if (!intervals[gameId]) {
         intervals[gameId] = setInterval(async () => {
-            const updatedGame = await prisma.multiplayerGame.findUnique({
+            const updatedGame = await prisma.room.findUnique({
                 where: {
                     id: gameId
                 },
                 include: {
-                    players: {
+                    roomPlayers: {
                         include: {
                             user: true
                         }
@@ -31,10 +31,8 @@ export function addClientToSSE(gameId: string, client: any): void {
                     // Si la partie est lancée, arrêter l'intervalle et supprimer les clients SSE
                     clearInterval(intervals[gameId]);
                     delete intervals[gameId];
-                   
-                    delete sseClients[gameId];
                 } else {
-                    const players = updatedGame.players.map(player => player.user.userName);
+                    const players = updatedGame.roomPlayers.map(player => player.user.userName);
                     sseClients[gameId].forEach(client => {
                         client.res.write(`data: ${JSON.stringify({ players })}\n\n`);
                     });
