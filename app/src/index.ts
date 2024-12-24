@@ -5,8 +5,7 @@ import * as quiz from './requestHandlers/quiz';
 import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
 import * as timer from './requestHandlers/timer';
-
-import * as gameMulty from './requestHandlers/gameMultiplayer'; 
+import * as room from './requestHandlers/room';
 
 const app = express();
 const PORT = 3000;
@@ -116,32 +115,21 @@ app.get('/listen/timer', (req: Request, res: Response) => {
   timer.listen(req, res);
 });
 
-
-
-
-
-
-
-
-
-
-
-app.post("/multiplayer/:id/create", async (req: Request, res: Response) => {
-  gameMulty.createMultiplayerGame(req, res);
+app.get("/room/:id/create", async (req: Request, res: Response) => {
+  room.create(req, res);
 });
 
-app.post("/multiplayer/:id/join", async (req: Request, res: Response) => {
-  gameMulty.joinMultiplayerGame(req, res);
+app.get("/room/:id/join", async (req: Request, res: Response) => {
+  room.join(req, res);
 });
 
-app.post("/multiplayer/:id/start", async (req: Request, res: Response) => {
-  gameMulty.startMultiplayerGame(req, res);
+app.get("/room/:id/start", async (req: Request, res: Response) => {
+  room.start(req, res);
 });
 
-app.post("/multiplayer/:id/answer", async (req: Request, res: Response) => {
-  gameMulty.verifyMultiplayerAnswer(req, res);
+app.post("/room/:id/answer", async (req: Request, res: Response) => {
+  room.verifyAnswer(req, res);
 });
-
 
 
 if (PROTOCOL === 'HTTPS') {
