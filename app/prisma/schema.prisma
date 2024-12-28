@@ -74,6 +74,7 @@ model Room {
   launched         Boolean  @default(false)
   questionCursor   Int
   createdAt        DateTime @default(now())
+  playerCount      Int      @default(0)
   roomPlayers      RoomPlayer[]
   quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   creator          User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
