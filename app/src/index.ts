@@ -88,6 +88,11 @@ app.get("/game/:id/average", async (req: Request, res: Response) => {
   game.average(req, res);
 });
 
+app.get('/game/:id/timer', (req: Request, res: Response) => {
+  timer.listen(req, res);
+});
+
+
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
 app.get("/quiz/user/game", async (req: Request, res: Response) => {

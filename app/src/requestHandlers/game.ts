@@ -1,6 +1,6 @@
 import { prisma } from "../model/db";
 import { Request, Response } from "express";
-import { assert, integer, string } from "superstruct";
+import { assert, integer, string, optional } from "superstruct";
 import * as gameUtils from "../utils/gameUtils";
 import * as userUtils from "../utils/userUtils";
 import * as timerUtils from "../utils/timerUtils";
@@ -17,9 +17,12 @@ class HttpError extends Error {
 export async function create(req: Request, res: Response) {
     try {
         const quizId = Number(req.params.id);
-        const mode = req.query.mode as string;
+        const gameMode = req.query.gameMode as string;
+        const difficulty = req.query.difficulty as string;
 
         assert(quizId, integer());
+        assert(gameMode, optional(string()));
+        assert(difficulty, optional(string()));
 
         const quiz = await prisma.quiz.findUnique({
             where: {
@@ -56,8 +59,12 @@ export async function create(req: Request, res: Response) {
             };
         }
 
-        if(mode){
-            gameData.mode = mode;
+        if(gameMode){
+            gameData.mode = gameMode;
+        }
+
+        if(difficulty){
+            gameData.difficulty = difficulty;
         }
 
         await prisma.game.create({
@@ -90,7 +97,6 @@ export async function create(req: Request, res: Response) {
 export async function currentQuestion(req: Request, res: Response) {
     try {
         const gameId = req.params.id;
-        const difficulty = req.query.difficulty as string;
 
         assert(gameId, string());
 
@@ -129,7 +135,7 @@ export async function currentQuestion(req: Request, res: Response) {
 
             let duration = 0;
 
-            switch (difficulty) {
+            switch (game.difficulty) {
                 case "easy":
                     duration = 30;
                     break;
@@ -143,6 +149,7 @@ export async function currentQuestion(req: Request, res: Response) {
                     duration = 15;
                     break;
             }
+            
             timerUtils.startTimer(gameId, duration);
         }
 
@@ -312,7 +319,7 @@ export async function infos(req: Request, res: Response) {
             results.push(answer.correct);
         });
 
-        return res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt , Title : game.quiz.title});
+        return res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, quizDifficulty: game.quiz.difficulty, quizCategory: game.quiz.category, gameDifficulty: game.difficulty, gameMode: game.mode, CreateDate: game.createdAt , Title : game.quiz.title});
     }
     catch (error: any) {
         if (error instanceof HttpError) {
@@ -329,6 +336,7 @@ export async function restart(req: Request, res: Response) {
         const gameId = req.params.id;
 
         assert(gameId, string());
+
         const game = await prisma.game.findUnique({
             where: {
                 id: gameId

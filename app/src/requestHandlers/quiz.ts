@@ -171,7 +171,7 @@ export async function retrieve(req: Request, res: Response) {
             questions: quiz.questions.map((question) => {
                 return {
                     text: question.text,
-                    trueFalse: question.trueFalse,
+                    trueFale: question.trueFalse,
                     correctAnswer: question.correctAnswer,
                     incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
                 }
@@ -421,7 +421,7 @@ export async function clone(req: Request, res: Response) {
 
         let questions = quiz.questions.map((question) => {
             return {
-                question: question.text,
+                text: question.text,
                 correctAnswer: question.correctAnswer,
                 incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
             }
