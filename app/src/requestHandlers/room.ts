@@ -207,6 +207,10 @@ export async function join(req: Request, res: Response) {
 
         // Envoyer un message initial pour garder la connexion ouverte
         res.write(`data: ${JSON.stringify({ message: "Connexion établie" })}\n\n`);
+
+        if ( room.playerCount === room.roomPlayers.length + 1 ) {
+            roomUtils.start(roomId);
+        }
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
@@ -219,6 +223,7 @@ export async function join(req: Request, res: Response) {
 export async function create(req: Request, res: Response) {
     try {
         const quizId = Number(req.params.id);
+        const playerCount = Number(req.query.playerCount);
         const user = await userUtils.getUser(req);
 
         if (!user) {
@@ -255,64 +260,12 @@ export async function create(req: Request, res: Response) {
                 creator: {
                     connect: { id: user.id }
                 },
+                playerCount: playerCount,
                 questionCursor: 0
             }
         });
 
         return res.status(201).json({ id: room.id });
-    } catch (error: any) {
-        if (error instanceof HttpError) {
-            return res.status(error.status).json({ error: error.message });
-        } else {
-            return res.status(500).json({ error: error.message });
-        }
-    }
-}
-
-export async function start(req: Request, res: Response) {
-    try {
-        const roomId = req.params.id;
-        const user = await userUtils.getUser(req);
-
-        if (!user) {
-            throw new HttpError("Utilisateur non trouvé", 401);
-        }
-
-        const room = await prisma.room.findUnique({
-            where: {
-                id: roomId
-            }
-        });
-
-        if (!room) {
-            throw new HttpError("Partie non trouvée", 404);
-        }
-
-        if (room.creatorId !== user.id) {
-            throw new HttpError("Seul le créateur de la partie peut la démarrer", 403);
-        }
-
-        if (room.launched) {
-            throw new HttpError("La partie est déjà lancée", 403);
-        }
-
-        await prisma.room.update({
-            where: {
-                id: room.id
-            },
-            data: {
-                launched: true
-            }
-        });
-
-        res.status(200).json({ message: "Partie démarrée avec succès" });
-
-        // Envoyer un événement SSE pour informer tous les joueurs de la première question
-        if (roomUtils.sseClients[roomId]) {
-            roomUtils.sseClients[roomId].forEach(client => {
-                client.res.write(`data: ${JSON.stringify({ nextQuestion: true })}\n\n`);
-            });
-        }
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
