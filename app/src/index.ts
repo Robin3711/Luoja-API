@@ -123,10 +123,6 @@ app.get("/room/:id/join", async (req: Request, res: Response) => {
   room.join(req, res);
 });
 
-app.get("/room/:id/start", async (req: Request, res: Response) => {
-  room.start(req, res);
-});
-
 app.post("/room/:id/answer", async (req: Request, res: Response) => {
   room.verifyAnswer(req, res);
 });
