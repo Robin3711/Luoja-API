@@ -149,6 +149,10 @@ export async function verifyAnswer(req: Request, res: Response) {
 export async function join(req: Request, res: Response) {
     try {
         const roomId = req.params.id;
+        const token = req.query.token;
+
+        req.headers.token = token;
+
         const user = await userUtils.getUser(req);
 
         if (!user) {

@@ -514,6 +514,102 @@ Valeur de retour
 }
 ```
 
+### Route pour les partis multijoueur
+
+#### **GET** /room/:id/create
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/create
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : L'identifiant de la room.
+
+```json
+{
+  "id": 1
+}
+```
+
+#### **GET** /room/:id/join
+
+*Permet de rejoindre la partie et d'écouter son flux SSE*
+
+Example de requête : 
+```
+http://localhost:3000/room/1/join?token=supersecuretoken
+```
+
+Valeur de retour : SSE envoyant les informations de la partie
+
+```json
+{
+  "message": "Connexion établie"
+}
+```
+
+OU
+
+```json
+{
+  "user": "Mua",
+  "answer": "True"
+}
+```
+
+OU
+
+```json
+{
+  "user": "Mua",
+  "correctAnswer": true,
+}
+```
+
+OU
+
+```json
+{
+  "question": 
+    {
+      "text": "Chocolatine ?",
+      "correctAnswer": "Vrai",
+      "incorrectAnswers": ["False"]
+    }
+}
+```
+
+#### **POST** /room/:id/answer
+
+*Permet de vérifier la réponse d'une question*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/answer
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : La réponse de l'utilisateur.
+
+```json
+{
+  "answer": "Vrai"
+}
+```
+
 ### Route pour l'utilisateur
 
 #### **POST** /user/register
