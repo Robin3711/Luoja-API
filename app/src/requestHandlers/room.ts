@@ -15,6 +15,67 @@ class HttpError extends Error {
     }
 }
 
+// Fonction pour obtenir la question courante de la partie
+export async function currentQuestion(req: Request, res: Response) {
+    try {
+        const roomId = req.params.id;
+
+        assert(roomId, string());
+
+        const room = await prisma.room.findUnique({
+            where: {
+                id: roomId
+            },
+            include: {
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                },
+            }
+        });
+
+        if (!room) {
+            throw new HttpError("Partie non trouvée !", 404);
+        }
+
+        let questionCursor = room.questionCursor;
+
+        if (questionCursor >= room.quiz.questions.length) {
+            throw new HttpError("Aucune question restante dans ce quiz.", 500);
+        }
+
+        const question = room.quiz.questions[questionCursor];
+
+        let answers = [];
+
+        if (question.trueFalse) {
+            answers = [question.correctAnswer, question.falseAnswer1];
+        }
+        else {
+            answers = [question.correctAnswer, question.falseAnswer1, question.falseAnswer2, question.falseAnswer3];
+        }
+
+        for (let i = answers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [answers[i], answers[j]] = [answers[j], answers[i]];
+        }
+
+        return res.status(200).json({
+            question: question.text,
+            answers: answers
+        });
+    }
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+}
+
 export async function verifyAnswer(req: Request, res: Response) {
     try {
         const roomId = req.params.id;
