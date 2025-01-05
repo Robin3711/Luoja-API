@@ -8,38 +8,6 @@ export function addClientToSSE(gameId: string, client: any): void {
         sseClients[gameId] = [];
     }
     sseClients[gameId].push(client);
-
-    // Si l'intervalle n'existe pas encore, le créer
-    if (!intervals[gameId]) {
-        intervals[gameId] = setInterval(async () => {
-            const updatedGame = await prisma.room.findUnique({
-                where: {
-                    id: gameId
-                },
-                include: {
-                    roomPlayers: {
-                        include: {
-                            user: true
-                        }
-                    }
-                }
-            });
-
-            if (updatedGame) {
-                const players = updatedGame.roomPlayers.map(player => player.user.userName);
-
-                sseClients[gameId].forEach(client => {
-                    client.res.write(`data: ${JSON.stringify({ players })}\n\n`);
-                });
-                
-                if (updatedGame.launched) {
-                    // Supprimer l'intervalle
-                    clearInterval(intervals[gameId]);
-                    delete intervals[gameId];
-                }
-            }
-        }, 1000);
-    }
 }
 
 export function removeClientFromSSE(gameId: string, client: any): void {
