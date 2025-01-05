@@ -5,6 +5,7 @@ import * as quiz from './requestHandlers/quiz';
 import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
 import * as timer from './requestHandlers/timer';
+import * as room from './requestHandlers/room';
 
 const app = express();
 const PORT = 3000;
@@ -114,6 +115,31 @@ app.post('/user/login', (req: Request, res: Response) => {
 app.get('/user/infos', (req: Request, res: Response) => {
   user.infos(req, res);
 });
+
+app.get('/listen/timer', (req: Request, res: Response) => {
+  timer.listen(req, res);
+});
+
+app.get("/room/:id/create", async (req: Request, res: Response) => {
+  room.create(req, res);
+});
+
+app.get("/room/:id/join", async (req: Request, res: Response) => {
+  room.join(req, res);
+});
+
+app.get("/room/:id/question", async (req: Request, res: Response) => {
+  room.currentQuestion(req, res);
+});
+
+app.post("/room/:id/answer", async (req: Request, res: Response) => {
+  room.verifyAnswer(req, res);
+});
+
+app.get("/room/:id/scores", async (req: Request, res: Response) => {
+  room.scores(req, res);
+});
+
 
 if (PROTOCOL === 'HTTPS') {
   // Configuration du serveur HTTPS
