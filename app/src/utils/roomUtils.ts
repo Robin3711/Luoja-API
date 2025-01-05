@@ -64,3 +64,65 @@ export async function start(roomId: string) {
         });
     }
 }
+
+export async function nextQuestion(roomId: string) {
+
+    const room = await prisma.room.findUnique({
+        where: {
+            id: roomId
+        },
+        include: {
+            quiz: {
+                include: {
+                    questions: true
+                }
+            }
+        }
+    });
+
+    if (!room) {
+        throw new Error("Partie non trouvée");
+    }
+
+    //Check if there are question left
+    if (room.quiz.questions.length === room.questionCursor + 1) {
+
+        // Send SSE event for game end after 3 seconds
+        setTimeout(async () => {
+            if (sseClients[roomId]) {
+                sseClients[roomId].forEach(client => {
+                    client.res.write(`data: ${JSON.stringify({ eventType: "gameEnd" })}\n\n`);
+                });
+            }
+        }, 3000);
+    }
+    else {
+        // Wait 3 seconds before moving to next question
+        setTimeout(async () => {
+            await prisma.room.update({
+                where: {
+                    id: room.id
+                },
+                data: {
+                    questionCursor: { increment: 1 }
+                }
+            });
+
+            await prisma.roomPlayer.updateMany({
+                where: {
+                    roomId: room.id
+                },
+                data: {
+                    answered: false
+                }
+            });
+
+            // Send SSE event for next question
+            if (sseClients[roomId]) {
+                sseClients[roomId].forEach(client => {
+                    client.res.write(`data: ${JSON.stringify({ eventType: "nextQuestion" })}\n\n`);
+                });
+            }
+        }, 3000);
+    }
+}
