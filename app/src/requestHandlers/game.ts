@@ -320,7 +320,7 @@ export async function infos(req: Request, res: Response) {
             results.push(answer.correct);
         });
 
-        return res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, Difficulty: game.quiz.difficulty, Category: game.quiz.category, CreateDate: game.createdAt , Title : game.quiz.title});
+        return res.status(200).json({ results: results, questionCursor: questionCursor, numberOfQuestions: numberOfQuestions, quizDifficulty: game.quiz.difficulty, quizCategory: game.quiz.category, gameDifficulty: game.difficulty, gameMode: game.mode, CreateDate: game.createdAt , Title : game.quiz.title});
     }
     catch (error: any) {
         if (error instanceof HttpError) {
@@ -418,3 +418,4 @@ export async function average(req: Request, res: Response) {
         }
     }
 }
+

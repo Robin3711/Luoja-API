@@ -418,10 +418,12 @@ Valeur de retour : Les informations de la partie.
   ],
   "questionCursor": 0,
   "numberOfQuestions": 1,
-  "Difficulty":"hard",
-  "Category": 9,
+  "quizDifficulty":"hard",
+  "quizCategory": 9,
+  "gameDifficulty":"hard",
+  "gameMode":"timed",
   "Date":"2023-10-05T14:48:00.000Z",
-  "Title":"Salam les rhouia"
+  "Title":"Montitre",
 }
 ```
 
@@ -487,6 +489,136 @@ Valeur de retour
 ```json
 {
     "id": "theo-aime-patates"
+}
+```
+
+### Route pour les partis multijoueur
+
+#### **GET** /room/:id/create
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/create?playerCount=2
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Query :
+- playerCount : Nombre de joueurs dans la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : L'identifiant de la room.
+
+```json
+{
+  "id": "tst-room"
+}
+```
+
+#### **GET** /room/:id/join
+
+*Permet de rejoindre la partie et d'écouter son flux SSE*
+
+Example de requête : 
+```
+http://localhost:3000/room/1/join?token=supersecuretoken
+```
+
+Valeur de retour : SSE envoyant les informations de la partie
+
+Types de message et exemples : 
+
+connectionEstablished : Confirme la connexion au flux SSE.
+
+```json
+{"eventType":"connectionEstablished"}	
+```
+
+playerJoined : Liste des joueurs présents dans la room.
+
+```json
+{"eventType":"playerJoined","players":["test"]}	
+```
+
+gameStart : Notification du début de la partie.
+
+```json
+{"eventType":"gameStart"}	
+```
+
+quizInfos :
+
+```json
+{"eventType":"quizInfos","totalQuestion":6}	
+```
+
+nextQuestion : Notification de la prochaine question.
+
+```json
+{"eventType":"nextQuestion"}	
+```
+
+correctAnswerFound : Un joueur a trouvé la bonne réponse.
+
+```json
+{"eventType":"correctAnswerFound","user":"test","correctAnswer":"Gorilla"}	
+```
+
+gameEnd : Notification de la fin de la partie.
+
+```json
+{"eventType":"gameEnd"}
+```
+
+#### **POST** /room/:id/answer
+
+*Permet de vérifier la réponse d'une question*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/answer
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : La réponse de l'utilisateur.
+
+```json
+{
+  "answer": "Vrai"
+}
+```
+
+#### **GET** /room/:id/scores
+
+*Permet de récupérer les scores des joueurs*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/scores
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : Les scores des joueurs.
+
+```json
+{
+  "scores": [{userName: "test", score: 3}]
 }
 ```
 
