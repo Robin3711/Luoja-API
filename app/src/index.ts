@@ -6,6 +6,7 @@ import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
 import * as timer from './requestHandlers/timer';
 import * as room from './requestHandlers/room';
+import * as roomTeam from './requestHandlers/team';
 
 const app = express();
 const PORT = 3000;
@@ -131,6 +132,29 @@ app.get("/room/:id/join", async (req: Request, res: Response) => {
 app.post("/room/:id/answer", async (req: Request, res: Response) => {
   room.verifyAnswer(req, res);
 });
+
+
+app.post("/teamroom/create", async (req: Request, res: Response) => {
+  roomTeam.createTeamRoom(req, res);
+});
+
+
+app.post("/teamroom/:id/start", async (req: Request, res: Response) => {
+  roomTeam.startTeamRoom(req, res);
+});
+
+app.get("/teamroom/:id/listen", async (req: Request, res: Response) => {
+  roomTeam.listenTeams(req, res);
+});
+
+app.post("/teamroom/:roomId/join/:teamId", async (req: Request, res: Response) => {
+  roomTeam.joinTeam(req, res);
+});
+
+app.post("/teamroom/:id/answer", async (req: Request, res: Response) => {
+  roomTeam.verifyTeamAnswer(req, res);
+});
+
 
 
 if (PROTOCOL === 'HTTPS') {
