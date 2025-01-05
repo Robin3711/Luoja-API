@@ -180,7 +180,7 @@ export async function verifyAnswer(req: Request, res: Response) {
 export async function join(req: Request, res: Response) {
     try {
         const roomId = req.params.id;
-        const token = req.query.token;
+        const token = req.query.token as string;
 
         req.headers.token = token;
 
@@ -204,7 +204,7 @@ export async function join(req: Request, res: Response) {
         }
 
         if (room.launched) {
-            if (!(room.roomPlayers.find(player => player.userId === user.id))) {
+            if (!room.roomPlayers.find(player => player.userId === user.id)) {
                 throw new HttpError("La partie est déjà lancée", 403);
             }
         }
@@ -230,6 +230,16 @@ export async function join(req: Request, res: Response) {
                     }
                 }
             });
+
+            // Update the roomPlayers count after adding the new player
+            const updatedRoomPlayersCount = await prisma.roomPlayer.count({
+                where: { roomId: room.id }
+            });
+
+            // Check if the game should start
+            if (room.playerCount === updatedRoomPlayersCount) {
+                roomUtils.start(roomId);
+            }
         }
 
         res.setHeader('Cache-Control', 'no-cache');
@@ -241,11 +251,25 @@ export async function join(req: Request, res: Response) {
         roomUtils.addClientToSSE(roomId, { res });
 
         // Envoyer un message initial pour garder la connexion ouverte
-        res.write(`data: ${JSON.stringify({ message: "Connexion établie" })}\n\n`);
+        res.write(`data: ${JSON.stringify({ eventType: "connectionEstablished" })}\n\n`);
 
-        if ( room.playerCount === room.roomPlayers.length + 1 ) {
-            roomUtils.start(roomId);
-        }
+        // Envoyer la liste des joueurs à tous les clients
+        const playersData = await prisma.roomPlayer.findMany({
+            where: {
+                roomId: room.id
+            },
+            include: {
+                user: true
+            }
+        });
+
+        const players = playersData.map(player => player.user.userName);
+
+        // Envoyer la liste des joueurs à tous les clients
+        roomUtils.sseClients[roomId].forEach(client => {
+            client.res.write(`data: ${JSON.stringify({ eventType: "playerJoined", players })}\n\n`);
+        });
+
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
@@ -254,6 +278,7 @@ export async function join(req: Request, res: Response) {
         }
     }
 }
+
 
 export async function create(req: Request, res: Response) {
     try {
