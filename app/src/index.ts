@@ -4,6 +4,7 @@ import express, { Request, Response } from "express";
 import * as quiz from './requestHandlers/quiz';
 import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
+import * as file from './requestHandlers/file';
 import * as timer from './requestHandlers/timer';
 import * as room from './requestHandlers/room';
 
@@ -158,3 +159,27 @@ if (PROTOCOL === 'HTTPS') {
     console.log(`🚀 Serveur HTTP lancé sur http://${DOMAIN}:${PORT}`);
   });
 }
+
+
+app.post('/uploads', (req: Request, res: Response) => {
+  file.uploadFile(req, res);
+});
+
+app.post('/download/:id', (req: Request, res: Response) => {
+  file.downloadFileGame(req, res);
+});
+
+
+app.get('/download/:id', (req: Request, res: Response) => {
+  file.downloadFileU(req, res);
+});
+
+
+
+app.get('/downloadall', (req: Request, res: Response) => {
+  file.downloadAllFiles(req, res);
+});
+
+app.delete('/delete/:fileName', (req: Request, res: Response) => {
+  file.deleteFile(req, res);
+});

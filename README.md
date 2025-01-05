@@ -1,35 +1,8 @@
 # Mimir - API
 
 ## Table des matières
-1. [Mimir - API](#mimir---api)
-2. [Documentation API](#documentation-api)
-    - [Le quiz](#route-pour-le-quiz)
-      - [Créer un quiz](#post-quiz)
-      - [Publier un quiz](#get-quizidpublish)
-      - [Récupérer son quiz](#get-quizidretrieve)
-      - [Rechercher un quiz](#get-quizlist)
-      - [Modifier un quiz](#post-quizidedit)
-      - [Créer une partie rapide](#get-quizfast)
-      - [Jouer à un quiz](#get-quizidplay)
-      - [Cloner un quiz](#get-quizidclone)
-    - [La partie](#route-pour-la-partie)
-      - [Récupérer la question courante d'une partie](#get-gameidquestion)
-      - [Récupérer la réponse d'une question](#post-gameidanswer)
-      - [Récupérer les informations de la partie](#get-gameidinfos)
-      - [Moyenne score d'une partie](#get-gameidaverage)
-      - [Lancer une nouvelle partie](#get-gameidrestart)
-    - [L'utilisateur](#route-pour-lutilisateur)
-      - [Enregistrer un utilisateur](#post-userregister)
-      - [Se connecter](#post-userlogin)
-      - [Récupérer les informations de l'utilisateur](#get-userinfos)
-      - [Récupérer les quiz d'un utilisateur](#get-useridcreatedquizs)
-3. [Commande de lancement de l'API en dev](#commande-de-lancement-de-lapi-en-dev)
-4. [Commande de lancement de l'image WEB en production](#commande-de-lancement-de-limage-web-en-production)
-5. [CI/CD : Organisation du Pipeline](#cicd--organisation-du-pipeline)
-   - [Stages](#stages)
-     - [1. build](#1-build)
-     - [2. lint et tests](#2-lint-et-tests)
-     - [3. pages](#3-pages)
+
+[[TOC]]
 
 ## Documentation API
 
@@ -58,7 +31,8 @@ Corps de la requête : Les questions du quiz.
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -124,7 +98,8 @@ Headers :
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -182,7 +157,8 @@ Corps de la requête : Les questions du quiz.
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -275,6 +251,7 @@ Valeur de retour : Le clone du quiz.
           "incorrectAnswers": [
               "False"
           ],
+          "type": "text"
       }
   ]
 }
@@ -376,6 +353,7 @@ Valeur de retour : La question courante de la partie.
 ```json
 {
   "question": "Chocolatine ?",
+  "type": "text",
   "answers": [
     "Vrai",
     "False"
@@ -659,7 +637,7 @@ Corps de la requête : Les informations de l'utilisateur.
 
 ```json
 {
-  "email" : "test@luoja.fr",
+  "name" : "test@luoja.fr",
   "password" : "mysupersecurepassword"
 }
 ```
@@ -685,7 +663,7 @@ Corps de la requête : Les informations de l'utilisateur.
 
 ```json
 {
-  "email" : "test@luoja.fr",
+  "name" : "test@luoja.fr",
   "password" : "mysupersecurepassword"
 }
 ```
@@ -716,10 +694,121 @@ Valeur de retour : Les informations de l'utilisateur.
 {
   "user": {
     "id": 1,
-    "email": "test@luoja.fr"
+    "name": "test@luoja.fr"
   }
 }
 ```
+
+
+#### **POST** /uploads
+
+
+*Permet de télécharger un fichier.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/uploads```
+
+Corps de la requête : Le fichier à télécharger et un ID spécifique.
+
+
+```json
+{
+  "file": <fichier>
+}
+```
+Valeur de retour : Le chemin du fichier téléchargé.
+
+
+
+```json
+{
+  "message": "fichier enregistré avec succès",
+  "filePath": "uploads/12345-1633036800000.jpg"
+}
+```
+#### **GET**  /download/:id
+
+
+*Permet de récupérer un fichier à partir d'un ID.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/download/12345.png
+```
+
+id : ID du fichier.
+
+
+```json
+{
+  "file": <fichier>
+}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+#### **GET**  /downloadall
+
+
+*Valeur de retour : Le fichier correspondant à l'ID fourni.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/downloadall
+```
+
+
+
+```json
+{
+{
+  "files": [
+    {
+      "fileName": "12345-1633036800000.jpg",
+    },
+    {
+      "fileName": "12346-1633036800001.jpg",
+    }
+  ]
+}}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+
+
+#### **delete**  /delete/:fileName
+
+
+fileName : nom du fichier
+
+
+
+Example de requête :
+```
+http://localhost:3000/delete/1324353253245.png
+```
+
+
+
+```json
+
+{
+    "message": "Fichier supprimé avec succès"
+}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+
+
 
 ## Commande de lancement de l'API en dev
 
