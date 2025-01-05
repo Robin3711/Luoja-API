@@ -26,6 +26,13 @@ export async function start(roomId: string) {
     const room = await prisma.room.findUnique({
         where: {
             id: roomId
+        },
+        include: {
+            quiz: {
+                include: {
+                    questions: true
+                }
+            }
         }
     });
 
@@ -48,7 +55,12 @@ export async function start(roomId: string) {
     // Envoyer un événement SSE pour informer tous les joueurs de la première question
     if (sseClients[roomId]) {
         sseClients[roomId].forEach(client => {
-            client.res.write(`data: ${JSON.stringify({ nextQuestion: true })}\n\n`);
+            client.res.write(`data: ${JSON.stringify({ eventType: "gameStart" })}\n\n`);
+        });
+
+        // Envoyer les informations du quiz
+        sseClients[roomId].forEach(client => {
+            client.res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length })}\n\n`);
         });
     }
 }
