@@ -99,7 +99,6 @@ export async function verifyAnswer(req: Request, res: Response) {
                         questions: true
                     }
                 },
-                roomPlayers: true
             }
         });
 
@@ -148,53 +147,24 @@ export async function verifyAnswer(req: Request, res: Response) {
             }
         });
 
-        // Vérifier si tous les joueurs ont répondu
-        const allPlayersAnswered = room.roomPlayers.every(player => player.answered);
-
-        if (wasCorrect || allPlayersAnswered) {
-            // Send SSE event for correct answer
-            if (roomUtils.sseClients[roomId]) {
-                roomUtils.sseClients[roomId].forEach(client => {
-                    client.res.write(`data: ${JSON.stringify({ user: user.userName, correctAnswer: correctAnswer })}\n\n`);
-                });
-            }
-
-            // Wait 3 seconds before moving to next question
-            setTimeout(async () => {
-                await prisma.room.update({
-                    where: {
-                        id: room.id
-                    },
-                    data: {
-                        questionCursor: { increment: 1 }
-                    }
-                });
-
-                const nextQuestion = room.quiz.questions[questionCursor + 1];
-
-                await prisma.roomPlayer.updateMany({
+        const roomPlayers = await prisma.roomPlayer.findMany({
                     where: {
                         roomId: room.id
-                    },
-                    data: {
-                        answered: false
                     }
                 });
 
-                // Send SSE event for next question
-                if (roomUtils.sseClients[roomId]) {
-                    roomUtils.sseClients[roomId].forEach(client => {
-                        client.res.write(`data: ${JSON.stringify({ question: nextQuestion })}\n\n`);
-                    });
-                }
-            }, 3000);
-        } else {
-            // Send SSE event for player answer
+        if (wasCorrect) {
+            
             if (roomUtils.sseClients[roomId]) {
                 roomUtils.sseClients[roomId].forEach(client => {
-                    client.res.write(`data: ${JSON.stringify({ user: user.userName, answer: answer })}\n\n`);
+                    client.res.write(`data: ${JSON.stringify({ eventType: "correctAnswerFound", user: user.userName, correctAnswer: correctAnswer })}\n\n`);
                 });
             }
+
+            roomUtils.nextQuestion(roomId);
+        }
+        else if(roomPlayers.filter(player => player.answered).length === roomPlayers.length) {
+            roomUtils.nextQuestion(roomId);
         }
 
         return res.status(200).json({ correctAnswer: correctAnswer });
