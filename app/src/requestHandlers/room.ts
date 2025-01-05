@@ -334,3 +334,43 @@ export async function create(req: Request, res: Response) {
         }
     }
 }
+
+export async function scores(req: Request, res: Response) {
+    try {
+        const roomId = req.params.id;
+
+        assert(roomId, string());
+
+        const room = await prisma.room.findUnique({
+            where: {
+                id: roomId
+            },
+            include: {
+                roomPlayers: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        });
+
+        if (!room) {
+            throw new HttpError("Partie non trouvée", 404);
+        }
+
+        const scores = room.roomPlayers.map(player => {
+            return {
+                userName: player.user.userName,
+                score: player.score
+            };
+        });
+
+        return res.status(200).json({ scores });
+    } catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        } else {
+            return res.status(500).json({ error: error.message });
+        }
+    }    
+}
