@@ -521,11 +521,14 @@ Valeur de retour
 Example de requête :
 
 ```
-http://localhost:3000/room/1/create
+http://localhost:3000/room/1/create?playerCount=2
 ```
 
 Paramètres :
 - id : ID du quiz.
+
+Query :
+- playerCount : Nombre de joueurs dans la partie.
 
 Headers :
 - token : Token d'authentification de l'utilisateur.
@@ -534,7 +537,7 @@ Valeur de retour : L'identifiant de la room.
 
 ```json
 {
-  "id": 1
+  "id": "tst-room"
 }
 ```
 
@@ -549,41 +552,48 @@ http://localhost:3000/room/1/join?token=supersecuretoken
 
 Valeur de retour : SSE envoyant les informations de la partie
 
+Types de message et exemples : 
+
+connectionEstablished : Confirme la connexion au flux SSE.
+
 ```json
-{
-  "message": "Connexion établie"
-}
+{"eventType":"connectionEstablished"}	
 ```
 
-OU
+playerJoined : Liste des joueurs présents dans la room.
 
 ```json
-{
-  "user": "Mua",
-  "answer": "True"
-}
+{"eventType":"playerJoined","players":["test"]}	
 ```
 
-OU
+gameStart : Notification du début de la partie.
 
 ```json
-{
-  "user": "Mua",
-  "correctAnswer": true,
-}
+{"eventType":"gameStart"}	
 ```
 
-OU
+quizInfos :
 
 ```json
-{
-  "question": 
-    {
-      "text": "Chocolatine ?",
-      "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
-    }
-}
+{"eventType":"quizInfos","totalQuestion":6}	
+```
+
+nextQuestion : Notification de la prochaine question.
+
+```json
+{"eventType":"nextQuestion"}	
+```
+
+correctAnswerFound : Un joueur a trouvé la bonne réponse.
+
+```json
+{"eventType":"correctAnswerFound","user":"test","correctAnswer":"Gorilla"}	
+```
+
+gameEnd : Notification de la fin de la partie.
+
+```json
+{"eventType":"gameEnd"}
 ```
 
 #### **POST** /room/:id/answer
@@ -607,6 +617,30 @@ Corps de la requête : La réponse de l'utilisateur.
 ```json
 {
   "answer": "Vrai"
+}
+```
+
+#### **GET** /room/:id/scores
+
+*Permet de récupérer les scores des joueurs*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/scores
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : Les scores des joueurs.
+
+```json
+{
+  "scores": [{userName: "test", score: 3}]
 }
 ```
 
@@ -686,7 +720,6 @@ Valeur de retour : Les informations de l'utilisateur.
   }
 }
 ```
-
 
 ## Commande de lancement de l'API en dev
 
