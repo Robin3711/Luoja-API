@@ -148,10 +148,10 @@ export async function verifyAnswer(req: Request, res: Response) {
         });
 
         const roomPlayers = await prisma.roomPlayer.findMany({
-                    where: {
-                        roomId: room.id
-                    }
-                });
+            where: {
+                roomId: room.id
+            }
+        });
 
         if (wasCorrect) {
             
