@@ -6,6 +6,9 @@ import * as openTDB from "../model/opentdb";
 import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
 import { getAverageScore } from "../utils/gameUtils";
+import { off } from "process";
+import { cloneFile } from "./file";
+import { dir } from "console";
 
 class HttpError extends Error {
     status: number;
@@ -20,7 +23,8 @@ class HttpError extends Error {
 const QuestionSchema = object({
     text: string(),
     correctAnswer: string(),
-    incorrectAnswers: array(string())
+    incorrectAnswers: array(string()),
+    type : enums(['text', 'audio', 'image'])
 });
 
 // Schéma pour la création d'un quiz
@@ -86,6 +90,9 @@ export async function create(req: Request, res: Response) {
     try{
         assert(req.query, CreateQuizQuerySchema);
         assert(req.body, CreateQuizBodySchema);
+        //le type ne peut avoir que 3 valeurs : texte, audio, image
+    
+        
         
         const publicQuiz = req.query.public === "true";
 
@@ -120,7 +127,9 @@ export async function create(req: Request, res: Response) {
                 falseAnswer1: question.incorrectAnswers[0] || null,
                 falseAnswer2: question.incorrectAnswers[1] || null,
                 falseAnswer3: question.incorrectAnswers[2] || null,
-                quizId: quiz.id
+                quizId: quiz.id,
+                type : question.type
+               
             };
         });
         
@@ -163,7 +172,7 @@ export async function retrieve(req: Request, res: Response) {
             throw new HttpError("Ce quiz ne vous appartient pas", 403);
         }
 
-        const results={
+        const results = {
             title: quiz.title,
             category: quiz.category,
             difficulty: quiz.difficulty,
@@ -171,9 +180,10 @@ export async function retrieve(req: Request, res: Response) {
             questions: quiz.questions.map((question) => {
                 return {
                     text: question.text,
-                    type: question.trueFalse,
+                    trueFae: question.trueFalse,
                     correctAnswer: question.correctAnswer,
-                    incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
+                    incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean),
+                    type : question.type    
                 }
             })
         }
@@ -246,7 +256,8 @@ export async function edit(req: Request, res: Response) {
                 falseAnswer1: question.incorrectAnswers[0] || null,
                 falseAnswer2: question.incorrectAnswers[1] || null,
                 falseAnswer3: question.incorrectAnswers[2] || null,
-                quizId: quiz.id
+                quizId: quiz.id,
+                type : question.type
             };
         });
         
@@ -346,7 +357,8 @@ export async function fastCreate(req: Request, res: Response) {
             falseAnswer1: question.incorrect_answers[0] || null,
             falseAnswer2: question.incorrect_answers[1] || null,
             falseAnswer3: question.incorrect_answers[2] || null,
-            quizId: quiz.id
+            quizId: quiz.id,
+            type : 'text'
         }));
         
         await prisma.question.createMany({
@@ -415,17 +427,56 @@ export async function clone(req: Request, res: Response) {
             }
         });
 
+
+        const user = await userUtils.getUser(req);
+
+
+
+        if (!user) {
+            throw new HttpError("Utilisateur non trouvé", 401);
+        }
+
+
+
+        const userQuiz = await prisma.user.findUnique({
+            where: {
+                id: quiz!.userId ?? undefined
+            },
+            select: {
+                id: true,
+                userName: true
+            }
+        });
+
+
         if (!quiz) {
             throw new HttpError("Quiz non trouvé", 404);
         }
 
         let questions = quiz.questions.map((question) => {
             return {
-                question: question.text,
+                text: question.text,
                 correctAnswer: question.correctAnswer,
-                incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean)
+                incorrectAnswers: [question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean),
+                type : question.type
             }
         });
+const dirPath = 'uploads/'+user.userName+'_'+user.id;
+const  dirTargetPath = 'uploads/'+user.userName+'_'+user.id;
+
+        for (let i = 0; i < questions.length; i++) {
+            if (questions[i].type !=  'text'){
+
+                    cloneFile(questions[i].correctAnswer, dirPath , dirTargetPath);
+
+                    for (let j = 0; j < questions[i].incorrectAnswers.length; j++) {
+                        if (questions[i].incorrectAnswers[j] !== null) {
+                            cloneFile(questions[i].incorrectAnswers[j] as string,dirPath , dirTargetPath);
+                        }
+                    }                   
+            }
+
+        }
 
         return res.status(201).json({questions: questions});
     }

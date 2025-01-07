@@ -1,35 +1,8 @@
 # Mimir - API
 
 ## Table des matières
-1. [Mimir - API](#mimir---api)
-2. [Documentation API](#documentation-api)
-    - [Le quiz](#route-pour-le-quiz)
-      - [Créer un quiz](#post-quiz)
-      - [Publier un quiz](#get-quizidpublish)
-      - [Récupérer son quiz](#get-quizidretrieve)
-      - [Rechercher un quiz](#get-quizlist)
-      - [Modifier un quiz](#post-quizidedit)
-      - [Créer une partie rapide](#get-quizfast)
-      - [Jouer à un quiz](#get-quizidplay)
-      - [Cloner un quiz](#get-quizidclone)
-    - [La partie](#route-pour-la-partie)
-      - [Récupérer la question courante d'une partie](#get-gameidquestion)
-      - [Récupérer la réponse d'une question](#post-gameidanswer)
-      - [Récupérer les informations de la partie](#get-gameidinfos)
-      - [Moyenne score d'une partie](#get-gameidaverage)
-      - [Lancer une nouvelle partie](#get-gameidrestart)
-    - [L'utilisateur](#route-pour-lutilisateur)
-      - [Enregistrer un utilisateur](#post-userregister)
-      - [Se connecter](#post-userlogin)
-      - [Récupérer les informations de l'utilisateur](#get-userinfos)
-      - [Récupérer les quiz d'un utilisateur](#get-useridcreatedquizs)
-3. [Commande de lancement de l'API en dev](#commande-de-lancement-de-lapi-en-dev)
-4. [Commande de lancement de l'image WEB en production](#commande-de-lancement-de-limage-web-en-production)
-5. [CI/CD : Organisation du Pipeline](#cicd--organisation-du-pipeline)
-   - [Stages](#stages)
-     - [1. build](#1-build)
-     - [2. lint et tests](#2-lint-et-tests)
-     - [3. pages](#3-pages)
+
+[[TOC]]
 
 ## Documentation API
 
@@ -58,7 +31,8 @@ Corps de la requête : Les questions du quiz.
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -124,7 +98,8 @@ Headers :
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -182,7 +157,8 @@ Corps de la requête : Les questions du quiz.
     {
       "text": "Chocolatine ?",
       "correctAnswer": "Vrai",
-      "incorrectAnswers": ["False"]
+      "incorrectAnswers": ["False"],
+      "type": "text"
     }
   ]
 }
@@ -213,7 +189,7 @@ Valeur de retour : L'identifiant de la partie.
 }
 ```
 
-### **GET** /game/:id/score
+#### **GET** /game/:id/score
 *Permet d'obtenir dun score*
 Example de requête :
 ```
@@ -235,20 +211,21 @@ Valeur de retour : Le score moyenne de la partie
 *Permet de jouer à un partie*
 Example de requête :
 ```
-http://localhost:3000/quiz/1/play
+http://localhost:3000/quiz/1/play?gameMode=timed
 ```
 
 Paramètres :
 - id : ID du quiz.
 
+Query :
+- gameMode : Mode de jeu (optionnel) ("standard", "timed")
 
 Valeur de retour : L'identifiant de la partie.
 ```json
 {
   "id": "lemon-ghosts-roll"
-  }
+}
 ```
-
 
 #### **GET** /quiz/:id/clone
 
@@ -269,13 +246,87 @@ Valeur de retour : Le clone du quiz.
 {
   "questions": [
       {
-          "question": "Chocolatine ?",
+          "text": "Chocolatine ?",
           "correctAnswer": "Vrai",
           "incorrectAnswers": [
               "False"
           ],
+          "type": "text"
       }
   ]
+}
+```
+
+#### **GET** /quiz/user/game
+
+*Permet d'obtenir une liste de quiz jouer par un utilisateur
+*
+
+Exemple de requête
+
+```
+http://localhost:3000/quiz/user/game
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+Valeur de retour 
+```json
+{
+  "games" [
+      {
+          "id": "je_suis_game",
+          "userId": "43",
+          "quizId": "4",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      },
+       {
+          "id": "autre_game",
+          "userId": "44",
+          "quizId": "5",
+         "createdAt":"2023-10-05T14:48:00.000Z"
+      }
+  ]
+  
+}
+```
+
+#### **GET** /quiz/user/create
+*recuperer les quiz crée de l'utilisateur*
+
+```
+http://localhost:3000/quiz/user/create
+```
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour 
+```json
+{
+  "result" [
+      {
+          "id": "5",
+          "title": "Title",
+          "category": "4",
+          "difficulty": "4",
+          "public":"true",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"10"
+      },
+      {
+          "id": "6",
+          "title": "AutreTitre",
+          "category": "5",
+          "difficulty": "1",
+          "public":"false",
+          "createdAt":"2023-10-05T14:48:00.000Z",
+          "updatedAt":"2023-10-05T14:48:00.000Z",
+          "numberOfQuestions":"234"
+      },
+  ]
+  
 }
 ```
 
@@ -302,6 +353,7 @@ Valeur de retour : La question courante de la partie.
 ```json
 {
   "question": "Chocolatine ?",
+  "type": "text",
   "answers": [
     "Vrai",
     "False"
@@ -366,10 +418,12 @@ Valeur de retour : Les informations de la partie.
   ],
   "questionCursor": 0,
   "numberOfQuestions": 1,
-  "Difficulty":"hard",
-  "Category": 9,
+  "quizDifficulty":"hard",
+  "quizCategory": 9,
+  "gameDifficulty":"hard",
+  "gameMode":"timed",
   "Date":"2023-10-05T14:48:00.000Z",
-  "Title":"Salam les rhouia"
+  "Title":"Montitre",
 }
 ```
 
@@ -397,80 +451,22 @@ Valeur de retour : La moyenne des scores pour le quiz spécifié.
 }
 ```
 
+#### **GET** /game/:id/timer
 
-### ***GET** /quiz/user/game
+*Permet d'écouter le timer de la partie sur la question courante.*
 
-*Permet d'obtenir une liste de quiz jouer par un utilisateur
-*
-
-Exemple de requête
-
+Example de requête : 
 ```
-http://localhost:3000/quiz/user/game
+http://localhost:3000/game/:id/timer?token=supersecuretoken
 ```
-Headers :
-- token : Token d'authentification de l'utilisateur.
 
+Valeur de retour : SSE renvoyant le temps restant avant la fin de la partie.
 
-Valeur de retour 
 ```json
 {
-  "games" [
-      {
-          "id": "je_suis_game",
-          "userId": "43",
-          "quizId": "4",
-         "createdAt":"2023-10-05T14:48:00.000Z"
-      },
-       {
-          "id": "autre_game",
-          "userId": "44",
-          "quizId": "5",
-         "createdAt":"2023-10-05T14:48:00.000Z"
-      }
-  ]
-  
+  "time": 10
 }
 ```
-
-### **GET** /quiz/user/create
-*recuperer les quiz crée de l'utilisateur*
-
-```
-http://localhost:3000/quiz/user/create
-```
-Headers :
-- token : Token d'authentification de l'utilisateur.
-
-Valeur de retour 
-```json
-{
-  "result" [
-      {
-          "id": "5",
-          "title": "Title",
-          "category": "4",
-          "difficulty": "4",
-          "public":"true",
-          "createdAt":"2023-10-05T14:48:00.000Z",
-          "updatedAt":"2023-10-05T14:48:00.000Z",
-          "numberOfQuestions":"10"
-      },
-      {
-          "id": "6",
-          "title": "AutreTitre",
-          "category": "5",
-          "difficulty": "1",
-          "public":"false",
-          "createdAt":"2023-10-05T14:48:00.000Z",
-          "updatedAt":"2023-10-05T14:48:00.000Z",
-          "numberOfQuestions":"234"
-      },
-  ]
-  
-}
-```
-
 
 #### **GET** /game/:id/restart
 
@@ -496,6 +492,136 @@ Valeur de retour
 }
 ```
 
+### Route pour les partis multijoueur
+
+#### **GET** /room/:id/create
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/create?playerCount=2
+```
+
+Paramètres :
+- id : ID du quiz.
+
+Query :
+- playerCount : Nombre de joueurs dans la partie.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : L'identifiant de la room.
+
+```json
+{
+  "id": "tst-room"
+}
+```
+
+#### **GET** /room/:id/join
+
+*Permet de rejoindre la partie et d'écouter son flux SSE*
+
+Example de requête : 
+```
+http://localhost:3000/room/1/join?token=supersecuretoken
+```
+
+Valeur de retour : SSE envoyant les informations de la partie
+
+Types de message et exemples : 
+
+connectionEstablished : Confirme la connexion au flux SSE.
+
+```json
+{"eventType":"connectionEstablished"}	
+```
+
+playerJoined : Liste des joueurs présents dans la room.
+
+```json
+{"eventType":"playerJoined","players":["test"]}	
+```
+
+gameStart : Notification du début de la partie.
+
+```json
+{"eventType":"gameStart"}	
+```
+
+quizInfos :
+
+```json
+{"eventType":"quizInfos","totalQuestion":6}	
+```
+
+nextQuestion : Notification de la prochaine question.
+
+```json
+{"eventType":"nextQuestion"}	
+```
+
+correctAnswerFound : Un joueur a trouvé la bonne réponse.
+
+```json
+{"eventType":"correctAnswerFound","user":"test","correctAnswer":"Gorilla"}	
+```
+
+gameEnd : Notification de la fin de la partie.
+
+```json
+{"eventType":"gameEnd"}
+```
+
+#### **POST** /room/:id/answer
+
+*Permet de vérifier la réponse d'une question*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/answer
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : La réponse de l'utilisateur.
+
+```json
+{
+  "answer": "Vrai"
+}
+```
+
+#### **GET** /room/:id/scores
+
+*Permet de récupérer les scores des joueurs*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/scores
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : Les scores des joueurs.
+
+```json
+{
+  "scores": [{userName: "test", score: 3}]
+}
+```
+
 ### Route pour l'utilisateur
 
 #### **POST** /user/register
@@ -511,7 +637,7 @@ Corps de la requête : Les informations de l'utilisateur.
 
 ```json
 {
-  "email" : "test@luoja.fr",
+  "name" : "test@luoja.fr",
   "password" : "mysupersecurepassword"
 }
 ```
@@ -537,7 +663,7 @@ Corps de la requête : Les informations de l'utilisateur.
 
 ```json
 {
-  "email" : "test@luoja.fr",
+  "name" : "test@luoja.fr",
   "password" : "mysupersecurepassword"
 }
 ```
@@ -568,10 +694,120 @@ Valeur de retour : Les informations de l'utilisateur.
 {
   "user": {
     "id": 1,
-    "email": "test@luoja.fr"
+    "name": "test@luoja.fr"
   }
 }
 ```
+
+
+#### **POST** /uploads
+
+
+*Permet de télécharger un fichier.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/uploads```
+
+Corps de la requête : Le fichier à télécharger et un ID spécifique.
+
+
+```json
+{
+  "file": <fichier>
+}
+```
+Valeur de retour : Le chemin du fichier téléchargé.
+
+
+
+```json
+{
+  "message": "fichier enregistré avec succès",
+  "filePath": "uploads/12345-1633036800000.jpg"
+}
+```
+#### **GET**  /download/:id
+
+
+*Permet de récupérer un fichier à partir d'un ID.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/download/12345.png
+```
+
+id : ID du fichier.
+
+
+```json
+{
+  "file": <fichier>
+}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+#### **GET**  /downloadall
+
+
+*Valeur de retour : Le fichier correspondant à l'ID fourni.*
+
+
+
+Example de requête :
+```
+http://localhost:3000/downloadall
+```
+
+
+
+```json
+{
+{
+  "files": [
+    {
+      "fileName": "12345-1633036800000.jpg",
+    },
+    {
+      "fileName": "12346-1633036800001.jpg",
+    }
+  ]
+}}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+
+
+#### **delete**  /delete/:fileName
+
+
+fileName : nom du fichier
+
+
+
+Example de requête :
+```
+http://localhost:3000/delete/1324353253245.png
+```
+
+
+
+```json
+
+{
+    "message": "Fichier supprimé avec succès"
+}
+```
+
+Valeur de retour : Le fichier correspondant à l'ID fourni.
+
+
 
 
 ## Commande de lancement de l'API en dev
