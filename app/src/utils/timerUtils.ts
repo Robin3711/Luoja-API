@@ -1,35 +1,81 @@
 import { prisma } from "../model/db";
 import { assert, number, string } from "superstruct";
+import * as teamUtils from "../utils/teamUtils";
 
 export let timers: Record<string, { remainingTime: number, active: boolean, timer: NodeJS.Timeout }> = {};
 
-export async function startTimer(gameId: string, duration: number): Promise<void> {
+export async function startTimer(roomId: string, duration: number): Promise<void> {
 
     // Validate the input
-    assert(gameId, string());
+    assert(roomId, string());
     assert(duration, number());
 
-    timers[gameId] = { remainingTime: duration, active: true, timer: 
+    timers[roomId] = { remainingTime: duration, active: true, timer: 
         setInterval(async () => {
-            timers[gameId].remainingTime --;
+            timers[roomId].remainingTime--;
 
-            if (timers[gameId].remainingTime === 0) {
+            if (timers[roomId].remainingTime === 0) {
+                timers[roomId].active = false;
+                clearInterval(timers[roomId].timer);
 
-                await prisma.game.update({
-                    where: { id: gameId },
-                    data: { questionCursor: { increment: 1 } }
+                const room = await prisma.roomTeam.findUnique({
+                    where: {
+                        id: roomId
+                    },
+                    include: {
+                        quiz: {
+                            include: {
+                                questions: true
+                            }
+                        }
+                    }
                 });
-                clearInterval(timers[gameId].timer);
+
+                if (room) {
+                    const questionCursor = room.questionCursor;
+
+                    if (questionCursor < room.quiz.questions.length) {
+                        await prisma.roomTeam.update({
+                            where: {
+                                id: room.id
+                            },
+                            data: {
+                                questionCursor: { increment: 1 }
+                            }
+                        });
+
+                        const nextQuestion = room.quiz.questions[questionCursor + 1];
+
+                        await prisma.teamPlayer.updateMany({
+                            where: {
+                                team: {
+                                    gameId: roomId
+                                }
+                            },
+                            data: {
+                                answered: false
+                            }
+                        });
+
+                        // Envoyer un événement SSE pour informer tous les joueurs de la nouvelle question
+                        teamUtils.sseClients[roomId].forEach(client => {
+                            client.res.write(`data: ${JSON.stringify({ question: nextQuestion })}\n\n`);
+                        });
+
+                        // Démarrer le timer pour la nouvelle question
+                        startTimer(roomId, room.timeLimit);
+                    }
+                }
             }
         }, 1000)
     };
 }
 
-export async function interruptTimer(gameId: string): Promise<void> {
-    timers[gameId].active = false;
-    clearTimeout(timers[gameId].timer);
+export async function interruptTimer(roomId: string): Promise<void> {
+    timers[roomId].active = false;
+    clearTimeout(timers[roomId].timer);
 }
 
-export function hasActiveTimer(gameId: string): boolean {
-    return timers[gameId] !== undefined && timers[gameId].active;
+export function hasActiveTimer(roomId: string): boolean {
+    return timers[roomId] !== undefined && timers[roomId].active;
 }

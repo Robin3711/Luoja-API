@@ -20,6 +20,8 @@ model Quiz {
   rooms      Room[]
   questions  Question[]
   user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  RoomTeam RoomTeam[]
 }
 
 model Question {
@@ -67,6 +69,10 @@ model User {
   quizs       Quiz[]
   rooms       Room[]
   roomPlayers RoomPlayer[]
+
+  TeamPlayer TeamPlayer[]
+
+  RoomTeam RoomTeam[]
 }
 
 model Room {
@@ -92,4 +98,38 @@ model RoomPlayer {
   room           Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roomId])
+}
+
+model RoomTeam {
+  id               String   @id
+  quizId           Int
+  creatorId        Int
+  launched         Boolean  @default(false)
+  questionCursor   Int
+  createdAt        DateTime @default(now())
+  playerCount      Int      @default(0)
+  timeLimit        Int      @default(30) // Limite de temps pour chaque question en secondes
+  teams            Team[]
+  quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  creator          User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+}
+
+model Team {
+  id        Int        @id @default(autoincrement())
+  name      String
+  gameId    String
+  players   TeamPlayer[]
+  roomTeam  RoomTeam     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model TeamPlayer {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  teamId   Int
+  score    Int      @default(0)
+  answered Boolean  @default(false)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
 }
