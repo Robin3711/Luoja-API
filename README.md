@@ -334,7 +334,7 @@ Valeur de retour
 
 #### **GET** /game/:id/question
 
-*Permet de récupérer le question courante d'une partie*
+*Permet de récupérer l question courante d'une partie*
 
 Example de requête :
 
@@ -573,6 +573,36 @@ gameEnd : Notification de la fin de la partie.
 ```json
 {"eventType":"gameEnd"}
 ```
+
+#### **POST** /room/:id/question
+
+*Permet de recevoir la question actuelle*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/question
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : La question courante de la partie.
+
+```json
+{
+  "question": "Chocolatine ?",
+  "type": "text",
+  "answers": [
+    "Vrai",
+    "False"
+  ]
+}
+```
+
 
 #### **POST** /room/:id/answer
 
