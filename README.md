@@ -496,6 +496,8 @@ Valeur de retour
 
 #### **GET** /room/:id/create
 
+*Permet de créer une room multijoueur*
+
 Example de requête :
 
 ```
@@ -649,6 +651,115 @@ Valeur de retour : Les scores des joueurs.
 ```json
 {
   "scores": [{userName: "test", score: 3}]
+}
+```
+
+#### **POST** /teamroom/create
+
+*Permet de créer une room de partie en équipe*
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/create
+```
+
+Query :
+
+- quizId : l'id du quizz
+- teams : la liste des équipes
+- timeLimit : la limite de temps en 
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : L'identifiant de la room.
+
+```json
+{
+  "id": "tst-room"
+}
+```
+
+#### **POST** /teamroom/:id/start
+
+
+*Permet de lancer une partie en équipe*
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/1/start
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+#### **GET** /teamroom/:id/listen
+
+
+*Permet d'écouter une partie en équipe*
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/1/listen
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+#### **POST** /teamroom/:roomId/join/:teamId
+
+*permet de rejoindre une équipe*
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/1/join/1
+```
+Paramètres :
+- roomId : ID de la room.
+- teamId : ID de l'équipe 
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+Corps de la requête : confirmation 
+
+```json
+{ "message": "Rejoint avec succès" }
+```
+
+#### **POST** /teamroom/:id/answer
+
+*Permet de vérifier la réponse d'une question*
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/:id/answer
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : La réponse de l'utilisateur.
+
+```json
+{
+  "answer": "Vrai"
 }
 ```
 
