@@ -5,7 +5,7 @@ import { assert, integer, string, array, object } from "superstruct";
 import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
 import * as teamUtils from "../utils/teamUtils";
-import * as timerUtils from "../utils/timerUtils";
+import * as timerUtils from "../utils/teamTimerUtils";
 
 class HttpError extends Error {
     status: number;
