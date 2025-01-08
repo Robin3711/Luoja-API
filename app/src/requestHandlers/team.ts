@@ -121,60 +121,13 @@ export async function listenTeams(req: Request, res: Response) {
             throw new HttpError("Partie non trouvée", 404);
         }
 
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Connection', 'keep-alive');
+        const teams = room.teams.map(team => ({
+            name: team.name,
+            id: team.id,
+            players: team.players.map(player => player.user.userName)
+        }));
 
-        // Ajouter le client SSE
-        teamUtils.addClientToSSE(roomId, { res });
-
-        // Envoyer un message initial pour garder la connexion ouverte
-        res.write(`data: ${JSON.stringify({ message: "Connexion établie" })}\n\n`);
-
-        const interval = setInterval(async () => {
-            const updatedRoom = await prisma.roomTeam.findUnique({
-                where: {
-                    id: roomId
-                },
-                include: {
-                    teams: {
-                        include: {
-                            players: {
-                                include: {
-                                    user: true
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (updatedRoom) {
-                const teams = updatedRoom.teams.map(team => ({
-                    name: team.name,
-                    id : team.id,
-                    players: team.players.map(player => player.user.userName)
-                }));
-
-                teamUtils.sseClients[roomId].forEach(client => {
-                    client.res.write(`data: ${JSON.stringify({ teams })}\n\n`);
-                });
-
-                if (updatedRoom.launched) {
-                    clearInterval(interval);
-                    teamUtils.sseClients[roomId].forEach(client => {
-                        client.res.end();
-                    });
-                    delete teamUtils.sseClients[roomId];
-                }
-            }
-        }, 1000);
-
-        req.on('close', () => {
-            clearInterval(interval);
-            teamUtils.removeClientFromSSE(roomId, { res });
-        });
+        return res.status(200).json({ teams });
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
@@ -183,6 +136,7 @@ export async function listenTeams(req: Request, res: Response) {
         }
     }
 }
+
 
 export async function joinTeam(req: Request, res: Response) {
     try {
@@ -221,19 +175,46 @@ export async function joinTeam(req: Request, res: Response) {
             }
         });
 
-        // Ajouter l'utilisateur à la nouvelle équipe
-        await prisma.teamPlayer.create({
-            data: {
-                user: {
-                    connect: { id: user.id }
-                },
-                team: {
-                    connect: { id: teamId }
+        // Vérifier si l'utilisateur est déjà membre de l'équipe
+        const existingTeamPlayer = await prisma.teamPlayer.findUnique({
+            where: {
+                userId_teamId: {
+                    userId: user.id,
+                    teamId: teamId
                 }
             }
         });
 
-        return res.status(200).json({ message: "Rejoint avec succès" });
+        if (!existingTeamPlayer) {
+            // Ajouter l'utilisateur à la nouvelle équipe
+            await prisma.teamPlayer.create({
+                data: {
+                    user: {
+                        connect: { id: user.id }
+                    },
+                    team: {
+                        connect: { id: teamId }
+                    }
+                }
+            });
+        }
+
+        
+        // Configurer la connexion SSE
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Connection', 'keep-alive');
+
+        // Ajouter le client SSE
+        teamUtils.addClientToSSE(roomId, { res });
+
+        // Envoyer un message initial pour garder la connexion ouverte
+        res.write(`data: ${JSON.stringify({ message: "Connexion établie" })}\n\n`);
+
+        req.on('close', () => {
+            teamUtils.removeClientFromSSE(roomId, { res });
+        });
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
@@ -293,13 +274,16 @@ export async function startTeamRoom(req: Request, res: Response) {
         });
 
         const firstQuestion = room.quiz.questions[0];
-           // Attendre 5 secondes avant de lancer la partie
-    await new Promise(resolve => setTimeout(resolve, 5000));
+        // Attendre 5 secondes avant de lancer la partie
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
         // Envoyer un événement SSE pour informer tous les joueurs de la première question
         teamUtils.sseClients[roomId].forEach(client => {
             client.res.write(`data: ${JSON.stringify({ question: firstQuestion })}\n\n`);
         });
+
+        // Démarrer le timer pour la première question
+        timerUtils.startTimer(roomId, room.timeLimit);
 
         return res.status(200).json({ message: "Partie démarrée avec succès" });
     } catch (error: any) {
@@ -398,35 +382,68 @@ export async function verifyTeamAnswer(req: Request, res: Response) {
 
             // Attendre 3 secondes avant de passer à la question suivante
             setTimeout(async () => {
-                await prisma.roomTeam.update({
-                    where: {
-                        id: room.id
-                    },
-                    data: {
-                        questionCursor: { increment: 1 }
-                    }
-                });
+                const nextQuestionCursor = questionCursor + 1;
 
-                const nextQuestion = room.quiz.questions[questionCursor + 1];
-
-                await prisma.teamPlayer.updateMany({
-                    where: {
-                        team: {
+                if (nextQuestionCursor >= room.quiz.questions.length) {
+                    // Calculer les scores finaux et envoyer les résultats
+                    const teams = await prisma.team.findMany({
+                        where: {
                             gameId: roomId
+                        },
+                        include: {
+                            players: true
                         }
-                    },
-                    data: {
-                        answered: false
-                    }
-                });
+                    });
 
-                // Envoyer un événement SSE pour informer tous les joueurs de la nouvelle question
-                teamUtils.sseClients[roomId].forEach(client => {
-                    client.res.write(`data: ${JSON.stringify({ question: nextQuestion })}\n\n`);
-                });
+                    const results = teams.map(team => {
+                        const totalScore = team.players.reduce((acc, player) => acc + player.score, 0);
+                        const averageScore = totalScore / team.players.length;
+                        return {
+                            teamName: team.name,
+                            averageScore: averageScore
+                        };
+                    });
 
-                // Démarrer le timer pour la nouvelle question
-                timerUtils.startTimer(roomId, room.timeLimit);
+                    // Envoyer les résultats finaux aux clients SSE
+                    teamUtils.sseClients[roomId].forEach(client => {
+                        client.res.write(`data: ${JSON.stringify({ event: "gameEnd", results })}\n\n`);
+                        client.res.end();
+                    });
+
+                    // Arrêter le timer
+                    timerUtils.interruptTimer(roomId);
+                    teamUtils.endGame(roomId);
+                } else {
+                    await prisma.roomTeam.update({
+                        where: {
+                            id: room.id
+                        },
+                        data: {
+                            questionCursor: nextQuestionCursor
+                        }
+                    });
+
+                    const nextQuestion = room.quiz.questions[nextQuestionCursor];
+
+                    await prisma.teamPlayer.updateMany({
+                        where: {
+                            team: {
+                                gameId: roomId
+                            }
+                        },
+                        data: {
+                            answered: false
+                        }
+                    });
+
+                    // Envoyer un événement SSE pour informer tous les joueurs de la nouvelle question
+                    teamUtils.sseClients[roomId].forEach(client => {
+                        client.res.write(`data: ${JSON.stringify({ question: nextQuestion })}\n\n`);
+                    });
+
+                    // Démarrer le timer pour la nouvelle question
+                    timerUtils.startTimer(roomId, room.timeLimit);
+                }
             }, 3000);
         } else {
             // Envoyer un événement SSE pour informer tous les joueurs de la réponse du joueur

@@ -1,5 +1,6 @@
 import { prisma } from "../model/db";
 
+
 export let sseClients: Record<string, any[]> = {};
 let intervals: Record<string, NodeJS.Timeout> = {};
 
@@ -9,43 +10,7 @@ export function addClientToSSE(roomId: string, client: any): void {
     }
     sseClients[roomId].push(client);
 
-    // Si l'intervalle n'existe pas encore, le créer
-    if (!intervals[roomId]) {
-        intervals[roomId] = setInterval(async () => {
-            const updatedRoom = await prisma.roomTeam.findUnique({
-                where: {
-                    id: roomId
-                },
-                include: {
-                    teams: {
-                        include: {
-                            players: {
-                                include: {
-                                    user: true
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (updatedRoom) {
-                const teams = updatedRoom.teams.map(team => ({
-                    name: team.name,
-                    players: team.players.map(player => player.user.userName)
-                }));
-
-                sseClients[roomId].forEach(client => {
-                    client.res.write(`data: ${JSON.stringify({ teams })}\n\n`);
-                });
-
-                if (updatedRoom.launched) {
-                    clearInterval(intervals[roomId]);
-                    delete intervals[roomId];
-                }
-            }
-        }, 1000);
-    }
+   
 }
 
 export function removeClientFromSSE(roomId: string, client: any): void {
@@ -53,9 +18,17 @@ export function removeClientFromSSE(roomId: string, client: any): void {
         sseClients[roomId] = sseClients[roomId].filter(c => c !== client);
 
         // Si aucun client n'est connecté, arrêter l'intervalle
-        if (sseClients[roomId].length === 0) {
+        if (sseClients[roomId]. length === 0) {
             clearInterval(intervals[roomId]);
             delete intervals[roomId];
         }
+    }
+}
+
+
+export function endGame(roomId: string): void {
+    if (intervals[roomId]) {
+        clearInterval(intervals[roomId]);
+        delete intervals[roomId];
     }
 }
