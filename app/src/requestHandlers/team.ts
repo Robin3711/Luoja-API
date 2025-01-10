@@ -109,7 +109,11 @@ export async function joinTeam(req: Request, res: Response) {
                 id: roomId
             },
             include: {
-                teams: true
+                teams: {
+                    include: {
+                        players: true
+                    }
+                }
             }
         });
 
@@ -117,8 +121,24 @@ export async function joinTeam(req: Request, res: Response) {
             throw new HttpError("Partie non trouvée", 404);
         }
 
+        // Vérifier si l'utilisateur est déjà membre de l'équipe
+        const existingTeamPlayer = await prisma.teamPlayer.findUnique({
+            where: {
+                userId_teamId: { 
+                    userId: user.id,
+                    teamId: teamId
+                }
+            }
+        });
+
         if (room.launched) {
-            throw new HttpError("La partie est déjà lancée", 403);
+            if (!existingTeamPlayer) {
+                throw new HttpError("La partie est déjà lancée, impossible de rejoindre", 403);
+            } else {
+                // L'utilisateur est déjà membre de l'équipe, accéder directement au SSE
+                setupSSE(roomId, req, res);
+                return;
+            }
         }
 
         // Vérifier si l'équipe fait partie de la salle
@@ -141,17 +161,6 @@ export async function joinTeam(req: Request, res: Response) {
         console.log(user.id);
         console.log(req.params.teamId);
 
-        // Vérifier si l'utilisateur est déjà membre de l'équipe
-        const existingTeamPlayer = await prisma.teamPlayer.findUnique({
-            where: {
-                userId_teamId: { 
-                    userId: user.id,
-                    teamId: teamId
-                }
-            }
-        });
-
-        console.log(existingTeamPlayer);
         if (!existingTeamPlayer) {
             console.log("Adding user to team");
             // Ajouter l'utilisateur à la nouvelle équipe
@@ -168,20 +177,7 @@ export async function joinTeam(req: Request, res: Response) {
         }
 
         // Configurer la connexion SSE
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Connection', 'keep-alive');
-
-        // Ajouter le client SSE
-        teamUtils.addClientToSSE(roomId, { res });
-
-        // Envoyer un message initial pour garder la connexion ouverte
-        res.write(`data: ${JSON.stringify({ message: "Connexion établie" })}\n\n`);
-
-        req.on('close', () => {
-            teamUtils.removeClientFromSSE(roomId, { res });
-        });
+        setupSSE(roomId, req, res);
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
@@ -189,6 +185,23 @@ export async function joinTeam(req: Request, res: Response) {
             return res.status(500).json({ error: error.message });
         }
     }
+}
+
+function setupSSE(roomId: string, req: Request, res: Response) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Ajouter le client SSE
+    teamUtils.addClientToSSE(roomId, { res });
+
+    // Envoyer un message initial pour garder la connexion ouverte
+    res.write(`data: ${JSON.stringify({ message: "Connexion établie" })}\n\n`);
+
+    req.on('close', () => {
+        teamUtils.removeClientFromSSE(roomId, { res });
+    });
 }
 
 export async function startTeamRoom(req: Request, res: Response) {
