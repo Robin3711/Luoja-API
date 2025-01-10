@@ -59,11 +59,11 @@ export async function create(req: Request, res: Response) {
             };
         }
 
-        if(gameMode){
+        if (gameMode) {
             gameData.mode = gameMode;
         }
 
-        if(difficulty){
+        if (difficulty) {
             gameData.difficulty = difficulty;
         }
 
@@ -349,7 +349,7 @@ export async function restart(req: Request, res: Response) {
                     }
                 }
             }
-        })
+        });
 
         if (!game) {
             throw new HttpError("Partie non trouvée", 404);
@@ -363,7 +363,17 @@ export async function restart(req: Request, res: Response) {
             }
         }
 
-        req.params.id = game.quiz.id.toString()
+        // Prendre en compte le mode de jeu et la difficulté
+        req.params.id = game.quiz.id.toString();
+
+        if (game.mode) {
+            req.query.gameMode = game.mode;
+        }
+        if (game.difficulty) {
+            req.query.difficulty = game.difficulty;
+        }
+
+        
 
         create(req, res);
     }
