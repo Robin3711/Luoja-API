@@ -37,9 +37,7 @@ export function addClientToSSE(roomId: string, client: any): void {
                     players: team.players.map(player => player.user.userName)
                 }));
 
-                sseClients[roomId].forEach(client => {
-                    client.res.write(`data: ${JSON.stringify({ teams })}\n\n`);
-                });
+                
             }
         }, 1000);
     }

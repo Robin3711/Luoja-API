@@ -67,6 +67,9 @@ export async function startTimer(roomId: string, duration: number): Promise<void
                     }
                 }
             }
+            teamUtils.sseClients[roomId].forEach(client => {
+                client.res.write(`data: ${JSON.stringify({ timer:timers[roomId].remainingTime   })}\n\n`);
+            });
         }, 1000)
     };
 }
