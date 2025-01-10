@@ -59,11 +59,11 @@ export async function create(req: Request, res: Response) {
             };
         }
 
-        if(gameMode){
+        if (gameMode) {
             gameData.mode = gameMode;
         }
 
-        if(difficulty){
+        if (difficulty) {
             gameData.difficulty = difficulty;
         }
 
