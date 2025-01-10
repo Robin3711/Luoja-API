@@ -6,6 +6,8 @@ import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
 import * as teamUtils from "../utils/teamUtils";
 import * as timerUtils from "../utils/teamTimerUtils";
+import { sseClients } from "../utils/teamUtils";
+import { text } from "stream/consumers";
 
 class HttpError extends Error {
     status: number;
@@ -91,52 +93,6 @@ export async function createTeamRoom(req: Request, res: Response) {
     }
 }
 
-export async function listenTeams(req: Request, res: Response) {
-    try {
-        const roomId = req.params.id;
-        const user = await userUtils.getUser(req);
-
-        if (!user) {
-            throw new HttpError("Utilisateur non trouvé", 401);
-        }
-
-        const room = await prisma.roomTeam.findUnique({
-            where: {
-                id: roomId
-            },
-            include: {
-                teams: {
-                    include: {
-                        players: {
-                            include: {
-                                user: true
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        if (!room) {
-            throw new HttpError("Partie non trouvée", 404);
-        }
-
-        const teams = room.teams.map(team => ({
-            name: team.name,
-            id: team.id,
-            players: team.players.map(player => player.user.userName)
-        }));
-
-        return res.status(200).json({ teams });
-    } catch (error: any) {
-        if (error instanceof HttpError) {
-            return res.status(error.status).json({ error: error.message });
-        } else {
-            return res.status(500).json({ error: error.message });
-        }
-    }
-}
-
 
 export async function joinTeam(req: Request, res: Response) {
     try {
@@ -165,6 +121,12 @@ export async function joinTeam(req: Request, res: Response) {
             throw new HttpError("La partie est déjà lancée", 403);
         }
 
+        // Vérifier si l'équipe fait partie de la salle
+        const team = room.teams.find(team => team.id === teamId);
+        if (!team) {
+            throw new HttpError("L'équipe ne fait pas partie de cette salle", 400);
+        }
+
         // Supprimer l'utilisateur des autres équipes
         await prisma.teamPlayer.deleteMany({
             where: {
@@ -175,17 +137,23 @@ export async function joinTeam(req: Request, res: Response) {
             }
         });
 
+        console.log(teamId);
+        console.log(user.id);
+        console.log(req.params.teamId);
+
         // Vérifier si l'utilisateur est déjà membre de l'équipe
         const existingTeamPlayer = await prisma.teamPlayer.findUnique({
             where: {
-                userId_teamId: {
+                userId_teamId: { 
                     userId: user.id,
                     teamId: teamId
                 }
             }
         });
 
+        console.log(existingTeamPlayer);
         if (!existingTeamPlayer) {
+            console.log("Adding user to team");
             // Ajouter l'utilisateur à la nouvelle équipe
             await prisma.teamPlayer.create({
                 data: {
@@ -199,7 +167,6 @@ export async function joinTeam(req: Request, res: Response) {
             });
         }
 
-        
         // Configurer la connexion SSE
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Content-Type', 'text/event-stream');
@@ -453,6 +420,103 @@ export async function verifyTeamAnswer(req: Request, res: Response) {
         }
 
         return res.status(200).json({ correctAnswer: correctAnswer });
+    } catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        } else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+}
+
+export async function listenTeams(req: Request, res: Response) {
+    try {
+        const roomId = req.params.id;
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new HttpError("Utilisateur non trouvé", 401);
+        }
+
+        const room = await prisma.roomTeam.findUnique({
+            where: {
+                id: roomId
+            },
+            include: {
+                teams: {
+                    include: {
+                        players: {
+                            include: {
+                                user: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!room) {
+            throw new HttpError("Partie non trouvée", 404);
+        }
+
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Connection', 'keep-alive');
+
+        sseClients[roomId] = sseClients[roomId] || [];
+        sseClients[roomId].push(res);
+
+        const sendTeams = async () => {
+            const updatedRoom = await prisma.roomTeam.findUnique({
+                where: {
+                    id: roomId
+                },
+                include: {
+                    teams: {
+                        include: {
+                            players: {
+                                include: {
+                                    user: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (!(updatedRoom?.launched)) {
+                console.log(updatedRoom);
+
+                if (updatedRoom) {
+                    const teams = updatedRoom.teams.map(team => ({
+                        name: team.name,
+                        id: team.id,
+                        players: team.players.map(player => player.user.userName)
+                    }));
+                
+
+
+                if (!res.writableEnded) {
+                    res.write(`data: ${JSON.stringify({ teams })}\n\n`);
+                }
+            }
+            }
+            else {
+                // Arrêter l'intervalle
+                res.write(`data: ${JSON.stringify({ text: "partie lancer" })}\n\n`);
+
+                console.log("Stopping interval");
+                clearInterval(interval);
+                //fermer la connexion
+                res.end();
+            }
+        };
+
+        const interval = setInterval(sendTeams, 1000);
+
+       
+
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
