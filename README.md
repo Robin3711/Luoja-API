@@ -536,6 +536,8 @@ Types de message et exemples :
 
 connectionEstablished : Confirme la connexion au flux SSE.
 
+
+
 ```json
 {"eventType":"connectionEstablished"}	
 ```
@@ -664,12 +666,19 @@ Example de requête :
 http://localhost:3000/teamroom/create
 ```
 
-Query :
 
-- quizId : l'id du quizz
-- teams : la liste des équipes
-- timeLimit : la limite de temps en 
+coprt de la requete exemple
 
+```json 
+{
+    "quizId": 1,
+    "teams": [
+        { "name": "TeamA" },
+        { "name": "TeamB" }
+    ],
+    "timeLimit": 30
+}
+```
 Headers :
 - token : Token d'authentification de l'utilisateur.
 
@@ -677,9 +686,124 @@ Valeur de retour : L'identifiant de la room.
 
 ```json
 {
-  "id": "tst-room"
+  "id": "Team-luoja-T5"
 }
 ```
+
+
+#### **GET** /teamroom/:id/listen
+
+
+*Permet de rejoindre une sse temporaire qui afffiche  une partie  *
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/Team-luoja-T5/listen
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+
+Valeur de retour : SSE envoyant les informations de la partie
+
+Types de message et exemples : 
+
+connectionEstablished : Confirme la connexion au flux SSE.
+
+```json
+{
+    "teams": [
+        {
+            "name": "TeamA",
+            "id": 19,
+            "players": []
+        },
+        {
+            "name": "TeamB",
+            "id": 20,
+            "players": []
+        }
+    ]
+}```
+
+
+quand la partie est  lancée 
+
+```json 
+{
+"message":"partie lancer"
+}
+```
+
+
+
+#### **get** /teamroom/:roomId/join/:teamId
+
+*permet de rejoindre une équipe*
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/Team-luoja-T5/join/19
+```
+
+Permet à un utilisateur de rejoindre une équipe dans une room et d'établir une connexion SSE pour recevoir les mises à jour en temps réel.
+
+Paramètres :
+- roomId : ID de la room.
+- teamId : ID de l'équipe 
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+
+
+Valeur de retour : Confirmation de l'ajout de l'utilisateur à l'équipe.
+
+
+Corps de la requête : confirmation 
+
+```
+```
+
+
+
+```json
+{
+    "message": "Connexion établie"
+}
+
+```
+
+affiche la question
+
+```json
+{
+  "question": "Chocolatine ?",
+  "type": "text",
+  "answers": [
+    "Vrai",
+    "False"
+  ]
+}
+```
+
+
+
+```json
+
+{
+  "timer":2
+}
+```
+
+
 
 #### **POST** /teamroom/:id/start
 
@@ -689,7 +813,7 @@ Valeur de retour : L'identifiant de la room.
 Example de requête :
 
 ```
-http://localhost:3000/teamroom/1/start
+http://localhost:3000/teamroom/Team-luoja-T5/start
 ```
 
 Paramètres :
@@ -698,46 +822,13 @@ Paramètres :
 Headers :
 - token : Token d'authentification de l'utilisateur.
 
-#### **GET** /teamroom/:id/listen
-
-
-*Permet d'écouter une partie en équipe*
-
-Example de requête :
-
-```
-http://localhost:3000/teamroom/1/listen
-```
-
-Paramètres :
-- id : ID de la room.
-
-Headers :
-- token : Token d'authentification de l'utilisateur.
-
-
-#### **POST** /teamroom/:roomId/join/:teamId
-
-*permet de rejoindre une équipe*
-
-Example de requête :
-
-```
-http://localhost:3000/teamroom/1/join/1
-```
-Paramètres :
-- roomId : ID de la room.
-- teamId : ID de l'équipe 
-
-Headers :
-- token : Token d'authentification de l'utilisateur.
-
-
-Corps de la requête : confirmation 
-
+Valeur de retour : Confirmation du démarrage de la partie.
 ```json
-{ "message": "Rejoint avec succès" }
+{
+    "message": "Partie démarrée avec succès"
+}
 ```
+
 
 #### **POST** /teamroom/:id/answer
 
@@ -746,8 +837,18 @@ Corps de la requête : confirmation
 Example de requête :
 
 ```
-http://localhost:3000/teamroom/:id/answer
+http://localhost:3000/teamroom/Team-luoja-T5/answer
 ```
+
+corps de la requête exmpele
+```json 
+
+{
+    "answer": "Réponse de l'équipe",
+    "teamId": 19
+}
+```
+
 
 Paramètres :
 - id : ID de la room.
@@ -759,7 +860,7 @@ Corps de la requête : La réponse de l'utilisateur.
 
 ```json
 {
-  "answer": "Vrai"
+    "correctAnswer": "Réponse correcte"
 }
 ```
 

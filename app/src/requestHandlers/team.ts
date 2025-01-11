@@ -157,12 +157,10 @@ export async function joinTeam(req: Request, res: Response) {
             }
         });
 
-        console.log(teamId);
-        console.log(user.id);
-        console.log(req.params.teamId);
+      
 
         if (!existingTeamPlayer) {
-            console.log("Adding user to team");
+
             // Ajouter l'utilisateur à la nouvelle équipe
             await prisma.teamPlayer.create({
                 data: {
@@ -254,13 +252,16 @@ export async function startTeamRoom(req: Request, res: Response) {
         });
 
         const firstQuestion = room.quiz.questions[0];
-        // Attendre 5 secondes avant de lancer la partie
-        await new Promise(resolve => setTimeout(resolve, 5000));
 
         // Envoyer un événement SSE pour informer tous les joueurs de la première question
-        teamUtils.sseClients[roomId].forEach(client => {
-            client.res.write(`data: ${JSON.stringify({ question: firstQuestion })}\n\n`);
-        });
+        if (teamUtils.sseClients[roomId]) {
+            teamUtils.sseClients[roomId].forEach(client => {
+                client.res.write(`data: ${JSON.stringify({ question: firstQuestion })}\n\n`);
+            });
+        }
+        else{
+            throw new HttpError("Aucun client SSE trouvé", 404);
+        }
 
         // Démarrer le timer pour la première question
         timerUtils.startTimer(roomId, room.timeLimit);
@@ -499,8 +500,8 @@ export async function listenTeams(req: Request, res: Response) {
             });
 
             if (!(updatedRoom?.launched)) {
-                console.log(updatedRoom);
 
+                
                 if (updatedRoom) {
                     const teams = updatedRoom.teams.map(team => ({
                         name: team.name,
@@ -519,7 +520,6 @@ export async function listenTeams(req: Request, res: Response) {
                 // Arrêter l'intervalle
                 res.write(`data: ${JSON.stringify({ text: "partie lancer" })}\n\n`);
 
-                console.log("Stopping interval");
                 clearInterval(interval);
                 //fermer la connexion
                 res.end();

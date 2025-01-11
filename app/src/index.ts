@@ -156,7 +156,7 @@ app.get("/teamroom/:id/listen", async (req: Request, res: Response) => {
   roomTeam.listenTeams(req, res);
 });
 
-app.post("/teamroom/:roomId/join/:teamId", async (req: Request, res: Response) => {
+app.get("/teamroom/:roomId/join/:teamId", async (req: Request, res: Response) => {
   roomTeam.joinTeam(req, res);
 });
 
