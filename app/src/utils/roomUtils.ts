@@ -1,4 +1,5 @@
 import { prisma } from "../model/db";
+import * as timerUtils from "./timerUtils";
 
 export let sseClients: Record<string, any[]> = {};
 let intervals: Record<string, NodeJS.Timeout> = {};
@@ -122,6 +123,10 @@ export async function nextQuestion(roomId: string) {
                 sseClients[roomId].forEach(client => {
                     client.res.write(`data: ${JSON.stringify({ eventType: "nextQuestion" })}\n\n`);
                 });
+
+                if (room.gameMode === "team"){
+                    timerUtils.startRoomTimer(roomId, 10);
+                }
             }
         }, 3000);
     }
