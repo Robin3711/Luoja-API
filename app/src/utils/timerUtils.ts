@@ -1,5 +1,6 @@
 import { prisma } from "../model/db";
 import { assert, number, string } from "superstruct";
+import * as roomUtils from "./roomUtils";
 
 export let timers: Record<string, { remainingTime: number, active: boolean, timer: NodeJS.Timeout }> = {};
 
@@ -23,6 +24,27 @@ export async function startTimer(gameId: string, duration: number): Promise<void
             }
         }, 1000)
     };
+}
+
+export async function startRoomTimer(roomId: string, duration: number): Promise<void> {
+    assert(roomId, string());
+    assert(duration, number());
+
+    timers[roomId] = { remainingTime: duration, active: true, timer: 
+        setInterval(async () => {
+            timers[roomId].remainingTime --;
+
+            for (const client of roomUtils.sseClients[roomId]) {
+                client.res.write(`data: ${JSON.stringify({ eventType: "timer", remainingTime: timers[roomId].remainingTime })}\n\n`);
+            }
+
+            if (timers[roomId].remainingTime === 0) {
+                roomUtils.nextQuestion(roomId);
+                clearInterval(timers[roomId].timer);
+            }
+        }, 1000)
+    };
+
 }
 
 export async function interruptTimer(gameId: string): Promise<void> {
