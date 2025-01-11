@@ -536,6 +536,16 @@ export async function create(req: Request, res: Response) {
 
         if (gameMode === "team") {
             const teams = req.body.teams;
+            const difficulty = req.query.difficulty as string;
+
+            await prisma.room.update({
+                where: {
+                    id: roomId
+                },
+                data: {
+                    difficulty: difficulty
+                }
+            });
 
             await prisma.team.createMany({
                 data: teams.map((team: any) => {
