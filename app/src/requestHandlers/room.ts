@@ -63,7 +63,8 @@ export async function currentQuestion(req: Request, res: Response) {
 
         return res.status(200).json({
             question: question.text,
-            answers: answers
+            answers: answers,
+            type: question.type,
         });
     }
     catch (error: any) {
