@@ -78,7 +78,7 @@ model Room {
   questionCursor   Int
   createdAt        DateTime @default(now())
   playerCount      Int      @default(1)
-  timeLimit        Int      @default(30)
+  difficulty       String   @default("any")
   roomPlayers      RoomPlayer[]
   teams            Team[]
   quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
