@@ -363,19 +363,17 @@ export async function restart(req: Request, res: Response) {
             }
         }
 
-        // Prendre en compte le mode de jeu et la difficulté
-        req.params.id = game.quiz.id.toString();
+        const gameMode = game.mode || ''; // Réinitialiser le mode de jeu
+        const difficulty = game.difficulty || ''; // Réinitialiser la difficulté
 
-        if (game.mode) {
-            req.query.gameMode = game.mode;
-        }
-        if (game.difficulty) {
-            req.query.difficulty = game.difficulty;
-        }
+        //Modify request to create a new game
+        req.query = req.query || {};
+        req.query.gameMode = gameMode;
+        req.query.difficulty = difficulty;
 
-        
 
-        create(req, res);
+        // Appeler la fonction create avec les valeurs de req.query
+        return await create(req, res);
     }
     catch (error: any) {
         if (error instanceof HttpError) {
@@ -428,4 +426,3 @@ export async function average(req: Request, res: Response) {
         }
     }
 }
-
