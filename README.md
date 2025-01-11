@@ -501,7 +501,7 @@ Valeur de retour
 Example de requête :
 
 ```
-http://localhost:3000/room/1/create?playerCount=2
+http://localhost:3000/room/1/create?playerCount=2&?difficulty=easy&?gameMode=team
 ```
 
 Paramètres :
@@ -509,6 +509,8 @@ Paramètres :
 
 Query :
 - playerCount : Nombre de joueurs dans la partie.
+- difficulty : Difficulté des questions (optionnel)
+- gameMode : Mode de jeu (optionnel) ("scrum", "team")
 
 Headers :
 - token : Token d'authentification de l'utilisateur.
