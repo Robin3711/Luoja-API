@@ -256,7 +256,7 @@ export async function join(req: Request, res: Response) {
         roomUtils.addClientToSSE(roomId, { res });
 
         // Envoyer un message initial pour garder la connexion ouverte
-        res.write(`data: ${JSON.stringify({ eventType: "connectionEstablished" })}\n\n`);
+        res.write(`data: ${JSON.stringify({ eventType: "connectionEstablished", gameMode: room.gameMode })}\n\n`);
 
         // Envoyer la liste des joueurs à tous les clients
         const playersData = await prisma.roomPlayer.findMany({
