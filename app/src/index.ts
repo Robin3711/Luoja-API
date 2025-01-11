@@ -7,7 +7,6 @@ import * as user from './requestHandlers/user';
 import * as file from './requestHandlers/file';
 import * as timer from './requestHandlers/timer';
 import * as room from './requestHandlers/room';
-import * as roomTeam from './requestHandlers/team';
 
 const app = express();
 const PORT = 3000;
@@ -122,12 +121,20 @@ app.get('/listen/timer', (req: Request, res: Response) => {
   timer.listen(req, res);
 });
 
-app.get("/room/:id/create", async (req: Request, res: Response) => {
+app.post("/room/:id/create", async (req: Request, res: Response) => {
   room.create(req, res);
 });
 
 app.get("/room/:id/join", async (req: Request, res: Response) => {
   room.join(req, res);
+});
+
+app.get("/room/:id/start", async (req: Request, res: Response) => {
+  room.start(req, res);
+});
+
+app.get("/room/:id/joinTeam", async (req: Request, res: Response) => {
+  room.joinTeam(req, res);
 });
 
 app.get("/room/:id/question", async (req: Request, res: Response) => {
@@ -141,29 +148,6 @@ app.post("/room/:id/answer", async (req: Request, res: Response) => {
 app.get("/room/:id/scores", async (req: Request, res: Response) => {
   room.scores(req, res);
 });
-
-
-app.post("/teamroom/create", async (req: Request, res: Response) => {
-  roomTeam.createTeamRoom(req, res);
-});
-
-
-app.post("/teamroom/:id/start", async (req: Request, res: Response) => {
-  roomTeam.startTeamRoom(req, res);
-});
-
-app.get("/teamroom/:id/listen", async (req: Request, res: Response) => {
-  roomTeam.listenTeams(req, res);
-});
-
-app.get("/teamroom/:roomId/join/:teamId", async (req: Request, res: Response) => {
-  roomTeam.joinTeam(req, res);
-});
-
-app.post("/teamroom/:id/answer", async (req: Request, res: Response) => {
-  roomTeam.verifyTeamAnswer(req, res);
-});
-
 
 
 if (PROTOCOL === 'HTTPS') {
