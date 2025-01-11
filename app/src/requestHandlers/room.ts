@@ -464,8 +464,14 @@ export async function start(req: Request, res: Response) {
             throw new HttpError("La partie est déjà lancée", 403);
         }
 
-        if (room.roomPlayers.length < 2) {
-            throw new HttpError("Il faut au moins 2 joueurs pour lancer la partie", 403);
+        // Vérifier que tous les joueurs ont une équipe
+
+        if (room.gameMode === "team") {
+            const playersWithoutTeam = room.roomPlayers.filter(player => player.teamId === null);
+
+            if (playersWithoutTeam.length > 0) {
+                throw new HttpError("Certains joueurs nont pas d'équipe", 403);
+            }
         }
 
         roomUtils.start(roomId);
