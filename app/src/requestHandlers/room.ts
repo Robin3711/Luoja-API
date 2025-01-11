@@ -154,7 +154,7 @@ export async function verifyAnswer(req: Request, res: Response) {
             }
         });
 
-        if (wasCorrect) {
+        if (wasCorrect && room.gameMode === "scrum") {
             
             if (roomUtils.sseClients[roomId]) {
                 roomUtils.sseClients[roomId].forEach(client => {
@@ -166,6 +166,10 @@ export async function verifyAnswer(req: Request, res: Response) {
         }
         else if(roomPlayers.filter(player => player.answered).length === roomPlayers.length) {
             roomUtils.nextQuestion(roomId);
+
+            if (room.gameMode === "team") {
+                roomUtils.interruptRoomTimer(roomId);
+            }
         }
 
         return res.status(200).json({ correctAnswer: correctAnswer });
@@ -349,7 +353,7 @@ export async function joinTeam(req: Request, res: Response) {
             throw new HttpError("Équipe non trouvée", 404);
         }
 
-        // Vérifier si le joueur est déjà dans l'équipe
+        // Vérifier si le joueur est déjà dans la partie
         const roomPlayer = await prisma.roomPlayer.findUnique({
             where: {
                 userId_roomId: {
