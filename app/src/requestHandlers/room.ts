@@ -607,7 +607,7 @@ export async function scores(req: Request, res: Response) {
         if (room.gameMode === "team") {
 
             // On regroupe les joueurs par équipe
-            const teamScores = await Promise.all(
+            const scores = await Promise.all(
                 room.teams.map(async (team) => {
                     const players = room.roomPlayers.filter(rp => rp.teamId === team.id);
                     const totalScore = players.reduce((acc, player) => acc + player.score, 0);
@@ -624,7 +624,7 @@ export async function scores(req: Request, res: Response) {
                 })
             );
 
-            return res.status(200).json({ teamScores });
+            return res.status(200).json({ scores });
         }
 
         // Si d’autres modes existaient
