@@ -367,22 +367,36 @@ export async function joinTeam(req: Request, res: Response) {
             throw new HttpError("Joueur non trouvé dans cette partie", 404);
         }
 
+        // Si le joueur est déjà dans l'équipe cible, on arrête
         if (roomPlayer.teamId === team.id) {
             throw new HttpError("Le joueur est déjà dans cette équipe", 403);
         }
-        else{
+
+        // Permet au joueur de quitter son équipe actuelle et de rejoindre une nouvelle équipe
+        if (roomPlayer.teamId !== null) {
             await prisma.roomPlayer.update({
                 where: {
                     id: roomPlayer.id
                 },
                 data: {
-                    team: {
-                        connect: { id: team.id }
-                    }
+                    teamId: null  // Retirer le joueur de l'équipe précédente
                 }
             });
         }
 
+        // Ajouter le joueur à la nouvelle équipe
+        await prisma.roomPlayer.update({
+            where: {
+                id: roomPlayer.id
+            },
+            data: {
+                team: {
+                    connect: { id: team.id }  // Connecter le joueur à la nouvelle équipe
+                }
+            }
+        });
+
+        // Récupérer la liste mise à jour des équipes
         const teamsData = await prisma.team.findMany({
             where: {
                 roomId: room.id
@@ -403,16 +417,17 @@ export async function joinTeam(req: Request, res: Response) {
             };
         });
 
+        // Envoyer l'event de mise à jour des équipes à tous les clients SSE
         roomUtils.sseClients[roomId].forEach(client => {
             client.res.write(`data: ${JSON.stringify({ eventType: "teams", teams })}\n\n`);
         });
 
-    }
-    catch (error: any) {
+        return res.status(200).json({ message: "Équipe mise à jour avec succès", teams });
+
+    } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
-        }
-        else {
+        } else {
             return res.status(500).json({ error: error.message });
         }
     }
@@ -421,9 +436,6 @@ export async function joinTeam(req: Request, res: Response) {
 export async function start(req: Request, res: Response) {
     try {
         const roomId = req.params.id;
-        const token = req.query.token as string;
-
-        req.headers.token = token;
 
         const user = await userUtils.getUser(req);
 
