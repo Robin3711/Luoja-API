@@ -209,6 +209,11 @@ export async function join(req: Request, res: Response) {
             }
         }
 
+        //Vérifier si le playerCount est atteint
+        if (room.roomPlayers.length >= room.playerCount) {
+            throw new HttpError("La partie est pleine", 403);
+        }
+
         // Vérifier si le joueur est déjà dans la partie
         const existingPlayer = await prisma.roomPlayer.findUnique({
             where: {
@@ -237,7 +242,7 @@ export async function join(req: Request, res: Response) {
             });
 
             // Check if the game should start
-            if (room.playerCount === updatedRoomPlayersCount) {
+            if (room.playerCount === updatedRoomPlayersCount && room.gameMode === "scrum") {
                 roomUtils.start(roomId);
             }
         }
@@ -270,6 +275,33 @@ export async function join(req: Request, res: Response) {
             client.res.write(`data: ${JSON.stringify({ eventType: "playerJoined", players })}\n\n`);
         });
 
+        //Si en mode équipe, envoyer la liste des équipes avec les joueurs
+        if (room.gameMode === "team") {
+            const teamsData = await prisma.team.findMany({
+                where: {
+                    roomId: room.id
+                },
+                include: {
+                    players: {
+                        include: {
+                            user: true
+                        }
+                    }
+                }
+            });
+
+            const teams = teamsData.map(team => {
+                return {
+                    name: team.name,
+                    players: team.players.map(player => player.user.userName)
+                };
+            });
+
+            roomUtils.sseClients[roomId].forEach(client => {
+                client.res.write(`data: ${JSON.stringify({ eventType: "teams", teams })}\n\n`);
+            });
+        }
+
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
@@ -279,11 +311,164 @@ export async function join(req: Request, res: Response) {
     }
 }
 
+export async function joinTeam(req: Request, res: Response) {
+    try {
+        const roomId = req.params.id;
+        const teamName = req.query.teamName;
+        const token = req.query.token as string;
+
+        req.headers.token = token;
+
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new HttpError("Utilisateur non trouvé", 401);
+        }
+
+        const room = await prisma.room.findUnique({
+            where: {
+                id: roomId
+            },
+            include: {
+                teams: true
+            }
+        });
+
+        if (!room) {
+            throw new HttpError("Partie non trouvée", 404);
+        }
+
+        if (room.launched) {
+            throw new HttpError("La partie est déjà lancée", 403);
+        }
+
+        const team = room.teams.find(team => team.name === teamName);
+
+        if (!team) {
+            throw new HttpError("Équipe non trouvée", 404);
+        }
+
+        // Vérifier si le joueur est déjà dans l'équipe
+        const roomPlayer = await prisma.roomPlayer.findUnique({
+            where: {
+                userId_roomId: {
+                    userId: user.id,
+                    roomId: room.id
+                }
+            }
+        });
+
+        if (!roomPlayer) {
+            throw new HttpError("Joueur non trouvé dans cette partie", 404);
+        }
+
+        if (roomPlayer.teamId === team.id) {
+            throw new HttpError("Le joueur est déjà dans cette équipe", 403);
+        }
+        else{
+            await prisma.roomPlayer.update({
+                where: {
+                    id: roomPlayer.id
+                },
+                data: {
+                    team: {
+                        connect: { id: team.id }
+                    }
+                }
+            });
+        }
+
+        const teamsData = await prisma.team.findMany({
+            where: {
+                roomId: room.id
+            },
+            include: {
+                players: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        });
+
+        const teams = teamsData.map(team => {
+            return {
+                name: team.name,
+                players: team.players.map(player => player.user.userName)
+            };
+        });
+
+        roomUtils.sseClients[roomId].forEach(client => {
+            client.res.write(`data: ${JSON.stringify({ eventType: "teams", teams })}\n\n`);
+        });
+
+    }
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+}
+
+export async function start(req: Request, res: Response) {
+    try {
+        const roomId = req.params.id;
+        const token = req.query.token as string;
+
+        req.headers.token = token;
+
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new HttpError("Utilisateur non trouvé", 401);
+        }
+
+        const room = await prisma.room.findUnique({
+            where: {
+                id: roomId
+            },
+            include: {
+                roomPlayers: true
+            }
+        });
+
+        if (!room) {
+            throw new HttpError("Partie non trouvée", 404);
+        }
+
+        if (room.creatorId !== user.id) {
+            throw new HttpError("Seul le créateur de la partie peut la lancer", 403);
+        }
+
+        if (room.launched) {
+            throw new HttpError("La partie est déjà lancée", 403);
+        }
+
+        if (room.roomPlayers.length < 2) {
+            throw new HttpError("Il faut au moins 2 joueurs pour lancer la partie", 403);
+        }
+
+        roomUtils.start(roomId);
+
+        return res.status(200).json({ message: "Partie lancée" });
+    } catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        } else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+}
 
 export async function create(req: Request, res: Response) {
     try {
         const quizId = Number(req.params.id);
         const playerCount = Number(req.query.playerCount);
+        const gameMode = req.query.gameMode as string;
+
         const user = await userUtils.getUser(req);
 
         if (!user) {
@@ -321,9 +506,23 @@ export async function create(req: Request, res: Response) {
                     connect: { id: user.id }
                 },
                 playerCount: playerCount,
-                questionCursor: 0
+                questionCursor: 0,
+                gameMode: gameMode,
             }
         });
+
+        if (gameMode === "team") {
+            const teams = req.body.teams;
+
+            await prisma.team.createMany({
+                data: teams.map((team: any) => {
+                    return {
+                        name: team,
+                        roomId: roomId
+                    };
+                })
+            });
+        }
 
         return res.status(201).json({ id: room.id });
     } catch (error: any) {
@@ -348,9 +547,11 @@ export async function scores(req: Request, res: Response) {
             include: {
                 roomPlayers: {
                     include: {
-                        user: true
+                        user: true,
+                        team: true, // On inclut l’équipe pour pouvoir faire le calcul par équipe
                     }
-                }
+                },
+                teams: true
             }
         });
 
@@ -358,19 +559,49 @@ export async function scores(req: Request, res: Response) {
             throw new HttpError("Partie non trouvée", 404);
         }
 
-        const scores = room.roomPlayers.map(player => {
-            return {
-                userName: player.user.userName,
-                score: player.score
-            };
-        });
+        // Mode "scrum" : scores individuels
+        if (room.gameMode === "scrum") {
+            const scores = room.roomPlayers.map(player => {
+                return {
+                    userName: player.user.userName,
+                    score: player.score
+                };
+            });
+            return res.status(200).json({ scores });
+        }
 
-        return res.status(200).json({ scores });
+        // Mode "team" : scores par équipe (moyenne des scores des membres)
+        if (room.gameMode === "team") {
+
+            // On regroupe les joueurs par équipe
+            const teamScores = await Promise.all(
+                room.teams.map(async (team) => {
+                    const players = room.roomPlayers.filter(rp => rp.teamId === team.id);
+                    const totalScore = players.reduce((acc, player) => acc + player.score, 0);
+                    const avgScore = players.length > 0 ? totalScore / players.length : 0;
+
+                    return {
+                        teamName: team.name,
+                        averageScore: avgScore,
+                        players: players.map(p => ({
+                            userName: p.user.userName,
+                            score: p.score
+                        }))
+                    };
+                })
+            );
+
+            return res.status(200).json({ teamScores });
+        }
+
+        // Si d’autres modes existaient
+        return res.status(200).json({ message: "Mode de jeu inconnu ou non géré" });
+
     } catch (error: any) {
         if (error instanceof HttpError) {
             return res.status(error.status).json({ error: error.message });
         } else {
             return res.status(500).json({ error: error.message });
         }
-    }    
+    }
 }
