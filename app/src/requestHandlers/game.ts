@@ -363,17 +363,15 @@ export async function restart(req: Request, res: Response) {
             }
         }
 
+        // Prendre en compte le mode de jeu et la difficulté
+        const quizId = game.quiz.id.toString();
         const gameMode = game.mode || ''; // Réinitialiser le mode de jeu
         const difficulty = game.difficulty || ''; // Réinitialiser la difficulté
 
-        //Modify request to create a new game
-        req.query = req.query || {};
-        req.query.gameMode = gameMode;
-        req.query.difficulty = difficulty;
-
+     
 
         // Appeler la fonction create avec les valeurs de req.query
-        return await create(req, res);
+        await createWithParams(req, res, quizId, gameMode, difficulty);
     }
     catch (error: any) {
         if (error instanceof HttpError) {
@@ -426,3 +424,82 @@ export async function average(req: Request, res: Response) {
         }
     }
 }
+
+export async function createWithParams(req: Request, res: Response, quizId: string, gameMode: string, difficulty: string) {
+    try {
+        const quizIdNumber = Number(quizId);
+
+        assert(quizIdNumber, integer());
+        assert(gameMode, optional(string()));
+        assert(difficulty, optional(string()));
+
+
+        const quiz = await prisma.quiz.findUnique({
+            where: {
+                id: quizIdNumber
+            },
+            include: {
+                questions: true
+            }
+        });
+
+        if (!quiz) {
+            throw new HttpError("Quiz non trouvé", 404);
+        }
+
+        if (!quiz.public) {
+            throw new HttpError("Quiz non publié", 403);
+        }
+
+        const user = await userUtils.getUser(req);
+
+        const gameId = await gameUtils.getUniqueId();
+
+        const gameData: any = {
+            id: gameId,
+            questionCursor: 0,
+            quiz: {
+                connect: { id: quiz.id }
+            }
+        };
+
+        if (user) {
+            gameData.user = {
+                connect: { id: user.id }
+            };
+        }
+
+        if (gameMode) {
+            gameData.mode = gameMode;
+        }
+
+        if (difficulty) {
+            gameData.difficulty = difficulty;
+        }
+
+        await prisma.game.create({
+            data: gameData
+        });
+
+        const answers = quiz.questions.map(question => ({
+            questionId: question.id,
+            gameId: gameId,
+            correct: false
+        }));
+
+        await prisma.answer.createMany({
+            data: answers
+        });
+
+        return res.status(201).json({ id: gameId });
+    }
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+}
+
