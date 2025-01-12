@@ -59,6 +59,9 @@ export async function start(roomId: string) {
             client.res.write(`data: ${JSON.stringify({ eventType: "gameStart" })}\n\n`);
         });
 
+        // Attendre 1 seconde avant d'envoyer les informations du quiz
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Envoyer les informations du quiz
         sseClients[roomId].forEach(client => {
             client.res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length })}\n\n`);
