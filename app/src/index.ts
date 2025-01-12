@@ -121,12 +121,20 @@ app.get('/listen/timer', (req: Request, res: Response) => {
   timer.listen(req, res);
 });
 
-app.get("/room/:id/create", async (req: Request, res: Response) => {
+app.post("/room/:id/create", async (req: Request, res: Response) => {
   room.create(req, res);
 });
 
 app.get("/room/:id/join", async (req: Request, res: Response) => {
   room.join(req, res);
+});
+
+app.get("/room/:id/start", async (req: Request, res: Response) => {
+  room.start(req, res);
+});
+
+app.get("/room/:id/joinTeam", async (req: Request, res: Response) => {
+  room.joinTeam(req, res);
 });
 
 app.get("/room/:id/question", async (req: Request, res: Response) => {

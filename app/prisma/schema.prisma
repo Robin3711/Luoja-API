@@ -74,10 +74,13 @@ model Room {
   quizId           Int
   creatorId        Int
   launched         Boolean  @default(false)
+  gameMode         String   @default("scrum")
   questionCursor   Int
   createdAt        DateTime @default(now())
-  playerCount      Int      @default(0)
+  playerCount      Int      @default(1)
+  difficulty       String   @default("any")
   roomPlayers      RoomPlayer[]
+  teams            Team[]
   quiz             Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   creator          User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 }
@@ -86,10 +89,20 @@ model RoomPlayer {
   id             Int      @id @default(autoincrement())
   userId         Int
   roomId         String
+  teamId         Int?
   score          Int      @default(0)
   answered       Boolean  @default(false)
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   room           Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  team           Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roomId])
+}
+
+model Team {
+  id        Int        @id @default(autoincrement())
+  name      String
+  roomId    String
+  players   RoomPlayer[]
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }

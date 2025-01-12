@@ -2,7 +2,7 @@
 
 ## Table des matières
 
-[[TOC]]
+[[_TOC_]]
 
 ## Documentation API
 
@@ -334,7 +334,7 @@ Valeur de retour
 
 #### **GET** /game/:id/question
 
-*Permet de récupérer le question courante d'une partie*
+*Permet de récupérer l question courante d'une partie*
 
 Example de requête :
 
@@ -496,10 +496,12 @@ Valeur de retour
 
 #### **GET** /room/:id/create
 
+*Permet de créer une room multijoueur*
+
 Example de requête :
 
 ```
-http://localhost:3000/room/1/create?playerCount=2
+http://localhost:3000/room/1/create?playerCount=2&?difficulty=easy&?gameMode=team
 ```
 
 Paramètres :
@@ -507,6 +509,8 @@ Paramètres :
 
 Query :
 - playerCount : Nombre de joueurs dans la partie.
+- difficulty : Difficulté des questions (optionnel)
+- gameMode : Mode de jeu (optionnel) ("scrum", "team")
 
 Headers :
 - token : Token d'authentification de l'utilisateur.
@@ -534,14 +538,28 @@ Types de message et exemples :
 
 connectionEstablished : Confirme la connexion au flux SSE.
 
+
+
 ```json
-{"eventType":"connectionEstablished"}	
+{"eventType":"connectionEstablished", "gameMode": "room.gameMode"}	
 ```
 
 playerJoined : Liste des joueurs présents dans la room.
 
 ```json
 {"eventType":"playerJoined","players":["test"]}	
+```
+
+teams : Liste des joueurs présents dans la room avec leurs équipes.
+
+```json
+{"eventType":"teams","teams": [{"name": "test", "players": ["test"]}]}	
+```
+
+timer : Notification du timer de la question.
+
+```json
+{"eventType":"timer","remainingTime":10}	
 ```
 
 gameStart : Notification du début de la partie.
@@ -573,6 +591,36 @@ gameEnd : Notification de la fin de la partie.
 ```json
 {"eventType":"gameEnd"}
 ```
+
+#### **POST** /room/:id/question
+
+*Permet de recevoir la question actuelle*
+
+Example de requête :
+
+```
+http://localhost:3000/room/1/question
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : La question courante de la partie.
+
+```json
+{
+  "question": "Chocolatine ?",
+  "type": "text",
+  "answers": [
+    "Vrai",
+    "False"
+  ]
+}
+```
+
 
 #### **POST** /room/:id/answer
 
@@ -619,6 +667,30 @@ Valeur de retour : Les scores des joueurs.
 ```json
 {
   "scores": [{userName: "test", score: 3}]
+}
+```
+
+#### **POST** /room/:id/start
+
+
+*Permet de lancer une partie en équipe*
+
+Example de requête :
+
+```
+http://localhost:3000/teamroom/Team-luoja-T5/start
+```
+
+Paramètres :
+- id : ID de la room.
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour : Confirmation du démarrage de la partie.
+```json
+{
+    "message": "Partie démarrée avec succès"
 }
 ```
 

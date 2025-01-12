@@ -1,4 +1,5 @@
 import { prisma } from "../model/db";
+import * as timerUtils from "./timerUtils";
 
 export let sseClients: Record<string, any[]> = {};
 let intervals: Record<string, NodeJS.Timeout> = {};
@@ -40,8 +41,8 @@ export async function start(roomId: string) {
         throw new Error("Partie non trouvée");
     }
 
-    // Attendre 5 secondes avant de lancer la partie
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Attendre 2 secondes avant de lancer la partie
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     await prisma.room.update({
         where: {
@@ -62,6 +63,10 @@ export async function start(roomId: string) {
         sseClients[roomId].forEach(client => {
             client.res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length })}\n\n`);
         });
+
+        if (room.gameMode === "team"){
+            startRoomTimer(roomId);
+        }
     }
 }
 
@@ -122,7 +127,61 @@ export async function nextQuestion(roomId: string) {
                 sseClients[roomId].forEach(client => {
                     client.res.write(`data: ${JSON.stringify({ eventType: "nextQuestion" })}\n\n`);
                 });
+
+                if (room.gameMode === "team"){
+                    startRoomTimer(roomId);
+                }
             }
         }, 3000);
     }
+}
+
+export async function startRoomTimer(roomId: string) {
+
+    const room = await prisma.room.findUnique({
+        where: {
+            id: roomId
+        }
+    });
+
+    if (!room) {
+        throw new Error("Partie non trouvée");
+    }
+
+    let duration = 0;
+
+    switch (room.difficulty) {
+        case "easy":
+            duration = 30;
+            break;
+        case "medium":
+            duration = 15;
+            break;
+        case "hard":
+            duration = 5;
+            break;
+        default:
+            duration = 15;
+            break;
+    }
+
+    timerUtils.timers[roomId] = { remainingTime: duration, active: true, timer: 
+        setInterval(async () => {
+            timerUtils.timers[roomId].remainingTime --;
+
+            for (const client of sseClients[roomId]) {
+                client.res.write(`data: ${JSON.stringify({ eventType: "timer", remainingTime: timerUtils.timers[roomId].remainingTime })}\n\n`);
+            }
+
+            if (timerUtils.timers[roomId].remainingTime === 0) {
+                nextQuestion(roomId);
+                clearInterval(timerUtils.timers[roomId].timer);
+            }
+        }, 1000)
+    };
+}
+
+export async function interruptRoomTimer(roomId: string): Promise<void> {
+    timerUtils.timers[roomId].active = false;
+    clearTimeout(timerUtils.timers[roomId].timer);
 }

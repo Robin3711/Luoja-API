@@ -1,5 +1,6 @@
 import { prisma } from "../model/db";
 import { assert, number, string } from "superstruct";
+import * as roomUtils from "./roomUtils";
 
 export let timers: Record<string, { remainingTime: number, active: boolean, timer: NodeJS.Timeout }> = {};
 
