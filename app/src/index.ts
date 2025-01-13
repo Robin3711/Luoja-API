@@ -150,7 +150,7 @@ app.get("/room/:id/scores", async (req: Request, res: Response) => {
   room.scores(req, res);
 });
 
-app.post("/ai/complete", async (req: Request, res: Response) => {
+app.post("/ai/generate", async (req: Request, res: Response) => {
   ollama.generateCompletion(req, res);
 });
 
