@@ -23,14 +23,36 @@ export async function generateCompletion(req: Request, res: Response) {
         }
 
         const url = 'http://ollama:11434/api/generate';
-        
+
+        let systemPrompt = '';
+
+        switch(theme) {
+            case 'standard':
+                systemPrompt = 
+                `Tu recevras une question. 
+                Génère 4 réponses possibles, dont la première est correcte. 
+                Assure-toi que chaque réponse soit unique et ne dépasse pas 50 caractères.`;
+                break;
+            case 'humor':
+                systemPrompt = 
+                `Tu recevras une question. 
+                Génère 4 réponses sous forme de blagues, la première étant correcte. 
+                Assure-toi que chaque réponse soit unique et ne dépasse pas 50 caractères.`;
+                break;
+            case 'mix':
+                systemPrompt = 
+                `Tu recevras une question. 
+                Génère 4 réponses mêlant humour et réalisme, la première étant correcte. 
+                Assure-toi que chaque réponse soit unique et ne dépasse pas 50 caractères.`;
+                break;
+            default:
+                throw new Error("Thème invalide");
+        }        
+
         const data = {  
-            model: 'llama3.2:1b',
-            system: 
-            `Tu vas recevoir une question ainsi qu'un thème.
-            Génère 4 réponses possibles qui correspondent au thème, la première étant la bonne réponse.
-            Ne génère pas deux fois la même réponse.`,
-            prompt: `Question: ${question} Theme: ${theme}`,
+            model: 'gemma2:2b',
+            system: systemPrompt,
+            prompt: `Question: ${question}`,
             format: {
                 properties: {
                     answer1: {
