@@ -3,6 +3,8 @@ import { assert, string } from 'superstruct';
 
 import * as userUtils from '../utils/userUtils';
 
+const MODEL = process.env.MODEL
+
 export async function generateCompletion(req: Request, res: Response) {
     try {
         const question = req.body.question;
@@ -50,7 +52,7 @@ export async function generateCompletion(req: Request, res: Response) {
         }        
 
         const data = {  
-            model: 'llama3.2:1b',
+            model: MODEL,
             system: systemPrompt,
             prompt: `Question: ${question}`,
             format: {
