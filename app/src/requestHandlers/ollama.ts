@@ -5,6 +5,8 @@ import * as userUtils from '../utils/userUtils';
 
 const MODEL = process.env.MODEL
 
+let tabCompletionUser: number[] = []
+
 export async function generateCompletion(req: Request, res: Response) {
     try {
         const question = req.body.question;
@@ -13,12 +15,24 @@ export async function generateCompletion(req: Request, res: Response) {
         assert(question, string());
         assert(theme, string());
 
+    
+
         const user = await userUtils.getUser(req);
         
         if (!user) {
             throw new Error("Utilisateur non trouvé");
         }
 
+
+
+       if (tabCompletionUser.includes(user.id)) {
+            throw new Error("Un seul appel à la fois est autorisé");
+        }
+        else
+        {
+            tabCompletionUser.push(user.id)
+        }
+    
         // Vérification de la taille des champs
         if (question.length > 100 || theme.length > 100) {
             throw new Error("Les champs ne peuvent pas dépasser 100 caractères");
@@ -98,6 +112,8 @@ export async function generateCompletion(req: Request, res: Response) {
         const output = JSON.parse(completion.response);
 
         const answers = [output.answer1, output.answer2, output.answer3, output.answer4];
+
+        tabCompletionUser = tabCompletionUser.filter(e => e !== user.id);
 
         res.status(200).json({answers: answers});
 
