@@ -7,6 +7,7 @@ import * as user from './requestHandlers/user';
 import * as file from './requestHandlers/file';
 import * as timer from './requestHandlers/timer';
 import * as room from './requestHandlers/room';
+import * as ollama from './requestHandlers/ollama';
 
 const app = express();
 const PORT = 3000;
@@ -147,6 +148,10 @@ app.post("/room/:id/answer", async (req: Request, res: Response) => {
 
 app.get("/room/:id/scores", async (req: Request, res: Response) => {
   room.scores(req, res);
+});
+
+app.post("/ai/generate", async (req: Request, res: Response) => {
+  ollama.generateCompletion(req, res);
 });
 
 

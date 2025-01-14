@@ -879,7 +879,41 @@ http://localhost:3000/delete/1324353253245.png
 
 Valeur de retour : Le fichier correspondant à l'ID fourni.
 
+### Route pour l'IA Luoja
 
+#### **POST** /ai/complete
+
+Example de requête : 
+```
+http://localhost:3000/ai/complete
+```
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Corps de la requête : Les informations de l'utilisateur.
+
+```json
+{
+  "question": "Qui est le créateur de linux ?",
+  "theme": "standard",
+}
+```
+
+Valeur de retour : Les réponses de l'IA.
+
+```json
+{
+    "answers": [
+        "Linus Torvalds",
+        "Richard Stallman",
+        "Andrew Tanenbaum",
+        "Miles Johnston"
+    ]
+}
+```
+
+La première réponse est la bonne réponse.
 
 
 ## Commande de lancement de l'API en dev
