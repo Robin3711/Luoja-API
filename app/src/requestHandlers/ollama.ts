@@ -2,6 +2,16 @@ import { Request, Response } from 'express';
 import { assert, string } from 'superstruct';
 
 import * as userUtils from '../utils/userUtils';
+import { table } from 'console';
+
+class HttpError extends Error {
+    status: number;
+
+    constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+    }
+}
 
 const MODEL = process.env.MODEL
 
@@ -15,27 +25,15 @@ export async function generateCompletion(req: Request, res: Response) {
         assert(question, string());
         assert(theme, string());
 
-    
-
         const user = await userUtils.getUser(req);
         
         if (!user) {
-            throw new Error("Utilisateur non trouvé");
-        }
-
-
-
-       if (tabCompletionUser.includes(user.id)) {
-            throw new Error("Un seul appel à la fois est autorisé");
-        }
-        else
-        {
-            tabCompletionUser.push(user.id)
+            throw new HttpError("Utilisateur non trouvé", 404);
         }
     
         // Vérification de la taille des champs
         if (question.length > 100 || theme.length > 100) {
-            throw new Error("Les champs ne peuvent pas dépasser 100 caractères");
+            throw new HttpError("Les champs ne peuvent pas dépasser 100 caractères", 400);
         }
 
         const url = 'http://ollama:11434/api/generate';
@@ -62,8 +60,16 @@ export async function generateCompletion(req: Request, res: Response) {
                 Assure-toi que chaque réponse soit unique et ne dépasse pas 50 caractères.`;
                 break;
             default:
-                throw new Error("Thème invalide");
+                throw new HttpError("Thème invalide", 400);
         }        
+
+        if (tabCompletionUser.includes(user.id)) {
+            throw new HttpError("Un seul appel à la fois est autorisé", 400);
+        }
+        else
+        {
+            tabCompletionUser.push(user.id)
+        }
 
         const data = {  
             model: MODEL,
@@ -104,12 +110,12 @@ export async function generateCompletion(req: Request, res: Response) {
         });     
     
         if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            throw new HttpError("L'intelligence artificielle n'est pas disponible", 500);
         }
     
         const completion = await response.json();
 
-        const output = JSON.parse(completion.response);
+        const output = JSON.parse(completion.response);Error
 
         const answers = [output.answer1, output.answer2, output.answer3, output.answer4];
 
@@ -118,7 +124,18 @@ export async function generateCompletion(req: Request, res: Response) {
         res.status(200).json({answers: answers});
 
     } catch (error: any) {
-        console.log(error);
-        res.status(500).json({ error: error.message });
+        if (error instanceof HttpError) {
+            if(error.status === 500) {
+                // On retire tous les utilisateurs de la liste
+                tabCompletionUser = []
+            }
+
+            res.status(error.status).json({error: error.message});
+        }
+        else {
+            res.status(500).json({error: "Erreur interne"});
+            // On retire tous les utilisateurs de la liste
+            tabCompletionUser = []
+        }
     }
   }
