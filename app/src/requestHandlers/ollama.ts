@@ -50,7 +50,7 @@ export async function generateCompletion(req: Request, res: Response) {
         }        
 
         const data = {  
-            model: 'gemma2:2b',
+            model: 'llama3.2:1b',
             system: systemPrompt,
             prompt: `Question: ${question}`,
             format: {
@@ -100,6 +100,7 @@ export async function generateCompletion(req: Request, res: Response) {
         res.status(200).json({answers: answers});
 
     } catch (error: any) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
   }
