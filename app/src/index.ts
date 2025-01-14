@@ -4,6 +4,9 @@ import express, { Request, Response } from "express";
 import * as quiz from './requestHandlers/quiz';
 import * as game from './requestHandlers/game';
 import * as user from './requestHandlers/user';
+import * as file from './requestHandlers/file';
+import * as timer from './requestHandlers/timer';
+import * as room from './requestHandlers/room';
 
 const app = express();
 const PORT = 3000;
@@ -86,6 +89,11 @@ app.get("/game/:id/average", async (req: Request, res: Response) => {
   game.average(req, res);
 });
 
+app.get('/game/:id/timer', (req: Request, res: Response) => {
+  timer.listen(req, res);
+});
+
+
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
 app.get("/quiz/user/game", async (req: Request, res: Response) => {
@@ -109,6 +117,39 @@ app.get('/user/infos', (req: Request, res: Response) => {
   user.infos(req, res);
 });
 
+app.get('/listen/timer', (req: Request, res: Response) => {
+  timer.listen(req, res);
+});
+
+app.post("/room/:id/create", async (req: Request, res: Response) => {
+  room.create(req, res);
+});
+
+app.get("/room/:id/join", async (req: Request, res: Response) => {
+  room.join(req, res);
+});
+
+app.get("/room/:id/start", async (req: Request, res: Response) => {
+  room.start(req, res);
+});
+
+app.get("/room/:id/joinTeam", async (req: Request, res: Response) => {
+  room.joinTeam(req, res);
+});
+
+app.get("/room/:id/question", async (req: Request, res: Response) => {
+  room.currentQuestion(req, res);
+});
+
+app.post("/room/:id/answer", async (req: Request, res: Response) => {
+  room.verifyAnswer(req, res);
+});
+
+app.get("/room/:id/scores", async (req: Request, res: Response) => {
+  room.scores(req, res);
+});
+
+
 if (PROTOCOL === 'HTTPS') {
   // Configuration du serveur HTTPS
   const sslOptions = {
@@ -126,3 +167,27 @@ if (PROTOCOL === 'HTTPS') {
     console.log(`🚀 Serveur HTTP lancé sur http://${DOMAIN}:${PORT}`);
   });
 }
+
+
+app.post('/uploads', (req: Request, res: Response) => {
+  file.uploadFile(req, res);
+});
+
+app.post('/download/:id', (req: Request, res: Response) => {
+  file.downloadFileGame(req, res);
+});
+
+
+app.get('/download/:id', (req: Request, res: Response) => {
+  file.downloadFileU(req, res);
+});
+
+
+
+app.get('/downloadall', (req: Request, res: Response) => {
+  file.downloadAllFiles(req, res);
+});
+
+app.delete('/delete/:fileName', (req: Request, res: Response) => {
+  file.deleteFile(req, res);
+});
