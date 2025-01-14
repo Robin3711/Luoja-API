@@ -281,9 +281,36 @@ export async function deleteFile(req: Request, res: Response) {
   const userDir = `uploads/${user.userName}_${user.id}`;
   const filePath = path.join(userDir, fileName);
 
+
+  const userQuiz = await prisma.quiz.findMany({
+    where: {
+      userId: user.id
+    },
+    include: {
+      questions: true
+    }
+  });
+
+  for (const quiz of userQuiz) {
+
+    for (const question of quiz.questions) {
+      if (question.type === 'image' || question.type === 'audio') {
+        const choices = [question.correctAnswer, question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean);
+        if (choices.includes(fileName)) {
+          return res.status(400).json({ error: 'Fichier utilisé dans une question' });
+        }
+      }
+   
+  }
+}
+
+
+
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Fichier non trouvé' });
   }
+
+  
 
   fs.unlink(filePath, (err) => {
     if (err) {
