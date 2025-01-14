@@ -300,18 +300,13 @@ export async function deleteFile(req: Request, res: Response) {
           return res.status(400).json({ error: 'Fichier utilisé dans une question' });
         }
       }
-   
+    }
   }
-}
-
-
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Fichier non trouvé' });
   }
-
   
-
   fs.unlink(filePath, (err) => {
     if (err) {
       return res.status(500).json({ error: err.message });
