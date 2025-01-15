@@ -496,6 +496,34 @@ Valeur de retour : SSE renvoyant le temps restant avant la fin de la partie.
 }
 ```
 
+
+
+#### **delete** /game/:id/delete
+
+*Permet de supprimer un game*
+
+Example de requête :
+
+```
+http://localhost:3000/game/lucky-humans-learn/delete
+```
+
+Paramètres :
+- id : ID de la game.
+
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour :.
+
+```json
+{
+    "message": "Partie supprimée"
+}
+```
+
+
 #### **GET** /game/:id/restart
 
 *Permet de recommencer une partie*
