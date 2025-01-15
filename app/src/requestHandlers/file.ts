@@ -322,8 +322,20 @@ function cb(arg0: Error, arg1: string) {
 
 
 export function cloneFile(filePath: string, dirsrc : string , dirtarget : string): void {
-  const srcPath = path.join(filePath, dirsrc);
-  const destPath = path.join(filePath, dirtarget);
+  const srcPath = path.join( dirsrc, filePath);
+  const destPath = path.join(dirtarget, filePath);
 
+if  (srcPath == destPath) {  
+  return;
+}
+
+if (!fs.existsSync(srcPath)) {
+  throw new Error('Fichier source non trouvé');
+}
+
+if (fs.existsSync(destPath)) {
+  return;
+}
+fs.mkdirSync(destPath, { recursive: true });
   fs.copyFileSync(srcPath, destPath);
 }

@@ -461,7 +461,10 @@ export async function clone(req: Request, res: Response) {
                 type : question.type
             }
         });
-const dirPath = 'uploads/'+user.userName+'_'+user.id;
+if (!userQuiz) {
+    throw new HttpError("User quiz not found", 404);
+}
+const dirPath = 'uploads/' + userQuiz.userName + '_' + userQuiz.id;
 const  dirTargetPath = 'uploads/'+user.userName+'_'+user.id;
 
         for (let i = 0; i < questions.length; i++) {
