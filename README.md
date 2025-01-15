@@ -404,7 +404,8 @@ Valeur de retour : La réponse de l'utilisateur.
 Example de requête :
 
 ```
-http://localhost:3000/quiz/1/delete```
+http://localhost:3000/quiz/1/delete
+```
 
 Paramètres :
 - id : ID du. quiz
