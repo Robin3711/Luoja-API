@@ -172,6 +172,9 @@ Valeur de retour : L'identifiant du quiz créé.
 }
 ```
 
+
+
+
 #### **GET** /quizFast
 
 *Permet de créer une partie rapide générer automatiquement*
@@ -390,6 +393,31 @@ Valeur de retour : La réponse de l'utilisateur.
 ```json
 {
   "correctAnswer": "Vrai"
+}
+```
+
+
+#### **delete** /quiz/:id/delete
+
+*Permet de supprimer un quiz*
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/delete```
+
+Paramètres :
+- id : ID du. quiz
+
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour :.
+
+```json
+{
+    "message": "Quiz supprimé"
 }
 ```
 
