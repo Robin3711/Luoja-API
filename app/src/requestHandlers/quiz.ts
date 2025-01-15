@@ -575,3 +575,31 @@ export async function score(req : Request, res : Response){
     }
   }
 }
+
+
+
+export async function deleteQuiz(req : Request, res : Response){
+
+    const quizId = req.params.id;
+    const user = await userUtils.getUser(req);
+    if (!user) {
+        throw new HttpError("Utilisateur non trouvé", 401);
+    }
+    const quiz = await prisma.quiz.findUnique({
+        where: { id: Number(quizId) },
+    });
+
+    if (!quiz) {
+        throw new HttpError("Quiz non trouvé", 404);
+    }
+
+    if (quiz.userId !== user.id) {
+        throw new HttpError("Ce quiz ne vous appartient pas", 403);
+    }
+
+    await prisma.quiz.delete({
+        where: { id: Number(quizId) },
+    });
+
+    return res.status(200).json({message: "Quiz supprimé"});
+}
