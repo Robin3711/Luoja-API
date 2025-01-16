@@ -208,17 +208,6 @@ export async function join(req: Request, res: Response) {
             throw new HttpError("Partie non trouvée", 404);
         }
 
-        if (room.launched) {
-            if (!room.roomPlayers.find(player => player.userId === user.id)) {
-                throw new HttpError("La partie est déjà lancée", 403);
-            }
-        }
-
-        //Vérifier si le playerCount est atteint
-        if (room.roomPlayers.length >= room.playerCount) {
-            throw new HttpError("La partie est pleine", 403);
-        }
-
         // Vérifier si le joueur est déjà dans la partie
         const existingPlayer = await prisma.roomPlayer.findUnique({
             where: {
@@ -230,6 +219,15 @@ export async function join(req: Request, res: Response) {
         });
 
         if (!existingPlayer) {
+            //Vérifier si le playerCount est atteint
+            if (room.roomPlayers.length >= room.playerCount) {
+                throw new HttpError("La partie est pleine", 403);
+            }
+
+            if (room.launched) {
+                throw new HttpError("La partie est déjà lancée", 403);
+            }
+
             await prisma.roomPlayer.create({
                 data: {
                     user: {
@@ -497,6 +495,10 @@ export async function create(req: Request, res: Response) {
         if (!user) {
             throw new HttpError("Utilisateur non trouvé", 401);
         }
+
+        if (playerCount > 100){
+            throw new HttpError("Nombre de joueurs maximum dépassé", 403);
+        } 
 
         assert(quizId, integer());
 
