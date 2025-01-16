@@ -5,6 +5,7 @@ import { assert, integer, string } from "superstruct";
 import * as userUtils from "../utils/userUtils";
 import * as gameUtils from "../utils/gameUtils";
 import * as roomUtils from "../utils/roomUtils";
+import { score } from "./quiz";
 
 class HttpError extends Error {
     status: number;
@@ -267,11 +268,9 @@ export async function join(req: Request, res: Response) {
         res.write(`data: ${JSON.stringify({ eventType: "connectionEstablished", gameMode: room.gameMode })}\n\n`);
 
         if(room.launched) {
-            res.write(`data: ${JSON.stringify({ eventType: "gameStart" })}\n\n`);
-            // Attendre 500 millisecondes avant d'envoyer les informations du quiz
-            await new Promise(resolve => setTimeout(resolve, 500));
-            res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length })}\n\n`);
-
+            if (existingPlayer) {
+                await roomUtils.sendGameLaunchedInfo(res, room, existingPlayer);
+            }
         }
         else
         {
