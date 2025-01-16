@@ -200,7 +200,12 @@ export async function join(req: Request, res: Response) {
                 id: roomId
             },
             include: {
-                roomPlayers: true
+                roomPlayers: true,
+                quiz: {
+                    include: {
+                        questions: true
+                    }
+                }
             }
         });
 
@@ -258,8 +263,17 @@ export async function join(req: Request, res: Response) {
         // Ajouter le client SSE
         roomUtils.addClientToSSE(roomId, { res });
 
+
         // Envoyer un message initial pour garder la connexion ouverte
         res.write(`data: ${JSON.stringify({ eventType: "connectionEstablished", gameMode: room.gameMode })}\n\n`);
+
+        if(room.launched) {
+            res.write(`data: ${JSON.stringify({ eventType: "gameStart" })}\n\n`);
+            res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length })}\n\n`);
+
+        }
+
+
 
         // Envoyer la liste des joueurs à tous les clients
         const playersData = await prisma.roomPlayer.findMany({
