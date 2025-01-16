@@ -59,8 +59,8 @@ export async function start(roomId: string) {
             client.res.write(`data: ${JSON.stringify({ eventType: "gameStart" })}\n\n`);
         });
 
-        // Attendre 100 millisecondes avant d'envoyer les informations du quiz
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Attendre 500 millisecondes avant d'envoyer les informations du quiz
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Envoyer les informations du quiz
         sseClients[roomId].forEach(client => {
