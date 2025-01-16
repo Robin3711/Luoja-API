@@ -483,7 +483,7 @@ export async function start(req: Request, res: Response) {
             const playersWithoutTeam = room.roomPlayers.filter(player => player.teamId === null);
 
             if (playersWithoutTeam.length > 0) {
-                throw new HttpError("Certains joueurs nont pas d'équipe", 403);
+                throw new HttpError("Certains joueurs n'ont pas d'équipe", 403);
             }
         }
 
