@@ -172,6 +172,9 @@ Valeur de retour : L'identifiant du quiz créé.
 }
 ```
 
+
+
+
 #### **GET** /quizFast
 
 *Permet de créer une partie rapide générer automatiquement*
@@ -393,6 +396,32 @@ Valeur de retour : La réponse de l'utilisateur.
 }
 ```
 
+
+#### **delete** /quiz/:id/delete
+
+*Permet de supprimer un quiz*
+
+Example de requête :
+
+```
+http://localhost:3000/quiz/1/delete
+```
+
+Paramètres :
+- id : ID du. quiz
+
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour :.
+
+```json
+{
+    "message": "Quiz supprimé"
+}
+```
+
 #### **GET** /game/:id/infos
 
 *Permet de connaitre les informations de la partie*
@@ -467,6 +496,34 @@ Valeur de retour : SSE renvoyant le temps restant avant la fin de la partie.
   "time": 10
 }
 ```
+
+
+
+#### **delete** /game/:id/delete
+
+*Permet de supprimer un game*
+
+Example de requête :
+
+```
+http://localhost:3000/game/lucky-humans-learn/delete
+```
+
+Paramètres :
+- id : ID de la game.
+
+
+Headers :
+- token : Token d'authentification de l'utilisateur.
+
+Valeur de retour :.
+
+```json
+{
+    "message": "Partie supprimée"
+}
+```
+
 
 #### **GET** /game/:id/restart
 
