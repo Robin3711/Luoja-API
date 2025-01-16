@@ -1,3 +1,4 @@
+import { Question, Room, RoomPlayer } from "@prisma/client";
 import { prisma } from "../model/db";
 import * as timerUtils from "./timerUtils";
 
@@ -187,4 +188,12 @@ export async function startRoomTimer(roomId: string) {
 export async function interruptRoomTimer(roomId: string): Promise<void> {
     timerUtils.timers[roomId].active = false;
     clearTimeout(timerUtils.timers[roomId].timer);
+}
+import { Response } from 'express';
+
+export async function sendGameLaunchedInfo(res: Response, room: Room & { quiz: { questions: Question[] } }, existingPlayer: RoomPlayer) {
+    res.write(`data: ${JSON.stringify({ eventType: "gameStart" })}\n\n`);
+    // Attendre 500 millisecondes avant d'envoyer les informations du quiz
+    await new Promise(resolve => setTimeout(resolve, 500));
+    res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length, currentQuestion: room.questionCursor, score: existingPlayer?.score })}\n\n`);
 }
