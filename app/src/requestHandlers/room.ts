@@ -269,6 +269,8 @@ export async function join(req: Request, res: Response) {
 
         if(room.launched) {
             res.write(`data: ${JSON.stringify({ eventType: "gameStart" })}\n\n`);
+            // Attendre 500 millisecondes avant d'envoyer les informations du quiz
+            await new Promise(resolve => setTimeout(resolve, 500));
             res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length })}\n\n`);
 
         }
