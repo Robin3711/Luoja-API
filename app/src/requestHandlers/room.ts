@@ -273,49 +273,52 @@ export async function join(req: Request, res: Response) {
             res.write(`data: ${JSON.stringify({ eventType: "quizInfos", totalQuestion: room.quiz.questions.length })}\n\n`);
 
         }
+        else
+        {
 
-        // Envoyer la liste des joueurs à tous les clients
-        const playersData = await prisma.roomPlayer.findMany({
-            where: {
-                roomId: room.id
-            },
-            include: {
-                user: true
-            }
-        });
-
-        const players = playersData.map(player => player.user.userName);
-
-        // Envoyer la liste des joueurs à tous les clients
-        roomUtils.sseClients[roomId].forEach(client => {
-            client.res.write(`data: ${JSON.stringify({ eventType: "playerJoined", players })}\n\n`);
-        });
-
-        //Si en mode équipe, envoyer la liste des équipes avec les joueurs
-        if (room.gameMode === "team") {
-            const teamsData = await prisma.team.findMany({
+            // Envoyer la liste des joueurs à tous les clients
+            const playersData = await prisma.roomPlayer.findMany({
                 where: {
                     roomId: room.id
                 },
                 include: {
-                    players: {
-                        include: {
-                            user: true
-                        }
-                    }
+                    user: true
                 }
             });
 
-            const teams = teamsData.map(team => {
-                return {
-                    name: team.name,
-                    players: team.players.map(player => player.user.userName)
-                };
+            const players = playersData.map(player => player.user.userName);
+
+            // Envoyer la liste des joueurs à tous les clients
+            roomUtils.sseClients[roomId].forEach(client => {
+                client.res.write(`data: ${JSON.stringify({ eventType: "playerJoined", players })}\n\n`);
             });
 
-            roomUtils.sseClients[roomId].forEach(client => {
-                client.res.write(`data: ${JSON.stringify({ eventType: "teams", teams })}\n\n`);
-            });
+            //Si en mode équipe, envoyer la liste des équipes avec les joueurs
+            if (room.gameMode === "team") {
+                const teamsData = await prisma.team.findMany({
+                    where: {
+                        roomId: room.id
+                    },
+                    include: {
+                        players: {
+                            include: {
+                                user: true
+                            }
+                        }
+                    }
+                });
+
+                const teams = teamsData.map(team => {
+                    return {
+                        name: team.name,
+                        players: team.players.map(player => player.user.userName)
+                    };
+                });
+
+                roomUtils.sseClients[roomId].forEach(client => {
+                    client.res.write(`data: ${JSON.stringify({ eventType: "teams", teams })}\n\n`);
+                });
+            }
         }
 
     } catch (error: any) {
