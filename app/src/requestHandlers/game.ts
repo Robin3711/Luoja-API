@@ -503,3 +503,49 @@ export async function createWithParams(req: Request, res: Response, quizId: stri
     }
 }
 
+
+
+export async function deleteGame(req: Request, res: Response) {
+    try {
+        const gameId = req.params.id;
+
+        assert(gameId, string());
+
+        const game = await prisma.game.findUnique({
+            where: {
+                id: gameId
+            }
+        });
+
+        if (!game) {
+            throw new HttpError("Partie non trouvée", 404);
+        }
+
+        const user = await userUtils.getUser(req);
+
+        if (!user) {
+            throw new HttpError("Utilisateur non trouvé", 404);
+        }
+
+
+        if (user.id !== game.userId) {
+            throw new HttpError("Cette partie ne peut pas être supprimée par ce compte", 403);
+        }
+
+        await prisma.game.delete({
+            where: {
+                id: gameId
+            }
+        });
+
+        return res.status(200).json({ message: "Partie supprimée" });
+    }
+    catch (error: any) {
+        if (error instanceof HttpError) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        else {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+}

@@ -7,6 +7,7 @@ import * as user from './requestHandlers/user';
 import * as file from './requestHandlers/file';
 import * as timer from './requestHandlers/timer';
 import * as room from './requestHandlers/room';
+import * as ollama from './requestHandlers/ollama';
 
 const app = express();
 const PORT = 3000;
@@ -78,6 +79,11 @@ app.get("/quizFast", async (req: Request, res: Response) => {
 });
 
 
+
+app.delete("/quiz/:id/delete", async (req: Request, res: Response) => {
+  quiz.deleteQuiz(req, res);
+});
+
 //Route get pour obtenir la moyenne  de score d'un quiz
 app.get("/game/:id/score", async (req: Request, res: Response) => {
   quiz.score(req, res);
@@ -93,6 +99,10 @@ app.get('/game/:id/timer', (req: Request, res: Response) => {
   timer.listen(req, res);
 });
 
+
+app.delete("/game/:id/delete", async (req: Request, res: Response) => {
+  game.deleteGame(req, res);
+});
 
 // Route get de l'API pour obtenir une liste de quiz jouer par un utilisateur
 
@@ -147,6 +157,10 @@ app.post("/room/:id/answer", async (req: Request, res: Response) => {
 
 app.get("/room/:id/scores", async (req: Request, res: Response) => {
   room.scores(req, res);
+});
+
+app.post("/ai/generate", async (req: Request, res: Response) => {
+  ollama.generateCompletion(req, res);
 });
 
 

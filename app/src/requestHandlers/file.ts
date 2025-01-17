@@ -281,10 +281,32 @@ export async function deleteFile(req: Request, res: Response) {
   const userDir = `uploads/${user.userName}_${user.id}`;
   const filePath = path.join(userDir, fileName);
 
+
+  const userQuiz = await prisma.quiz.findMany({
+    where: {
+      userId: user.id
+    },
+    include: {
+      questions: true
+    }
+  });
+
+  for (const quiz of userQuiz) {
+
+    for (const question of quiz.questions) {
+      if (question.type === 'image' || question.type === 'audio') {
+        const choices = [question.correctAnswer, question.falseAnswer1, question.falseAnswer2, question.falseAnswer3].filter(Boolean);
+        if (choices.includes(fileName)) {
+          return res.status(400).json({ error: 'Fichier utilisé dans une question' });
+        }
+      }
+    }
+  }
+
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Fichier non trouvé' });
   }
-
+  
   fs.unlink(filePath, (err) => {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -300,8 +322,20 @@ function cb(arg0: Error, arg1: string) {
 
 
 export function cloneFile(filePath: string, dirsrc : string , dirtarget : string): void {
-  const srcPath = path.join(filePath, dirsrc);
-  const destPath = path.join(filePath, dirtarget);
+  const srcPath = path.join( dirsrc, filePath);
+  const destPath = path.join(dirtarget, filePath);
 
+if  (srcPath == destPath) {  
+  return;
+}
+
+if (!fs.existsSync(srcPath)) {
+  throw new Error('Fichier source non trouvé');
+}
+
+if (fs.existsSync(destPath)) {
+  return;
+}
+fs.mkdirSync(destPath, { recursive: true });
   fs.copyFileSync(srcPath, destPath);
 }
