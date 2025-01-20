@@ -7,7 +7,7 @@
  Cette API à été développé par par notre équipe de projet constitué d'élèves de 3ème année de BUT informatique à l'IUT Robert-Schuman d'Ilkirch en 2024-2025 : 
 
  - Guillaume Behr (https://github.com/guillaume-behr)
- - Saif Zouaoui-mahjoub
+ - Saif Zouaoui-mahjoub https://github.com/zaouaoua
  - Samuel Marsault (https://github.com/SamuelMarsault)
  - Mattéo Gillig (https://github.com/Spidermatou)
  - Théo Willem (https://github.com/TheoWillem) 
