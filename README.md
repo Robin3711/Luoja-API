@@ -9,8 +9,8 @@
  - Guillaume Behr (https://github.com/guillaume-behr)
  - Saif Zouaoui-mahjoub
  - Samuel Marsault (https://github.com/SamuelMarsault)
- - Mattéo Gillig
- - Théo Willem
+ - Mattéo Gillig (https://github.com/Spidermatou)
+ - Théo Willem (https://github.com/TheoWillem) 
  - Miniotti Robin (https://github.com/Robin3711)
 
 ## Documentation API
