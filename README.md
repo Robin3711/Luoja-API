@@ -1,8 +1,17 @@
 # Mimir - API
 
-## Table des matières
+ API du Projet Luoja réalisé pendant le 5ème semestre du BUT informatique. Luoja est une application permettant de créer et de jouer à des quizz 
 
-[[_TOC_]]
+ ### Collaborateurs
+
+ Cette API à été développé par par notre équipe de projet constitué d'élèves de 3ème année de BUT informatique à l'IUT Robert-Schuman d'Ilkirch en 2024-2025 : 
+
+ - Guillaume Behr (https://github.com/guillaume-behr)
+ - Saif Zouaoui-mahjoub
+ - Samuel Marsault (https://github.com/SamuelMarsault)
+ - Mattéo Gillig
+ - Théo Willem
+ - Miniotti Robin (https://github.com/Robin3711)
 
 ## Documentation API
 
